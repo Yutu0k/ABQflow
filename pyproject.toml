@@ -1,0 +1,31 @@
+[project]
+authors = [{name = "yutu0k", email = "yutu0k@sjtu.edu.cn"}]
+dependencies = [
+	"numpy",
+	"abqpy"
+]
+name = "abaqus_batch_pack"
+requires-python = "== 3.10.*"
+version = "0.1.0"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/abaqus_batch_pack"]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tool.pixi.pypi-dependencies]
+abaqus_batch_pack = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+
+[tool.pixi.dependencies]
+pytest = ">=8.4.1,<9"
+numpy = "*"
+abqpy = "*"

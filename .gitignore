@@ -1,0 +1,11 @@
+# pixi environments
+.pixi
+
+.vscode/
+*.code-workspace
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
