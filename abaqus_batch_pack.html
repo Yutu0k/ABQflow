@@ -1,0 +1,798 @@
+<!doctype html>
+<html class="no-js" lang="zh-cn" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="abaqus_batch_pack" href="modules.html" />
+
+    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
+        <title>abaqus_batch_pack package - Abaqus Batch Package 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Abaqus Batch Package 0.1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">Abaqus Batch Package 0.1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">abaqus_batch_pack</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">abaqus_batch_pack package</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/abaqus_batch_pack.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="abaqus-batch-pack-package">
+<h1>abaqus_batch_pack package<a class="headerlink" href="#abaqus-batch-pack-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-abaqus_batch_pack.abaqus_automation">
+<span id="abaqus-batch-pack-abaqus-automation-module"></span><h2>abaqus_batch_pack.abaqus_automation module<a class="headerlink" href="#module-abaqus_batch_pack.abaqus_automation" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">AbaqusCalculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><span class="pre">JobWorkflowStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'abaqus'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>上下文类，持有并调用一个总的工作流策略来完成任务。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute" title="Link to this definition">¶</a></dt>
+<dd><p>执行由其工作流策略定义的完整任务。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">
+<span class="sig-name descname"><span class="pre">run_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.run_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation" title="Link to this definition">¶</a></dt>
+<dd><p>所有模块化工作流统一使用的运行器：’abaqus job=…’ 命令。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbaqusProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'abaqus'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Run multiple Abaqus calculations in parallel based on a batch configuration.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">
+<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
+<dd><p>Run all calculations in parallel using multiprocessing.
+Returns:</p>
+<blockquote>
+<div><p>list[<cite>dict</cite>]: A list of results for each calculation.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict">
+<span class="sig-name descname"><span class="pre">run_batch_as_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch_as_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict" title="Link to this definition">¶</a></dt>
+<dd><p><strong>Obselete method, kept for backward compatibility.</strong></p>
+<p>Run all calculations in parallel using multiprocessing.
+Returns:</p>
+<blockquote>
+<div><p><cite>dict</cite>: A dictionary of results for each calculation, keyed by job name.</p>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.degenerate_from_array">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">degenerate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#degenerate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array" title="Link to this definition">¶</a></dt>
+<dd><p>Depack results from a batch job into a 2D numpy array.
+Args:</p>
+<blockquote>
+<div><p>results (<cite>list[dict]</cite>): List of results dictionaries from the batch job.
+output_names (<cite>list[str]</cite>): List of output names to extract from each result.
+default_value (optional, default=np.nan): Value to use if an output is missing in a result.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p><cite>np.ndarray</cite>: A 2D numpy array where each row corresponds to a job and each column corresponds to an output name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.generate_from_array">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">generate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_config</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#generate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.generate_from_array" title="Link to this definition">¶</a></dt>
+<dd><p>Generate batch job configurations from a numerical array (numpy or torch).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>samples_array (<cite>np.ndarray</cite> or <cite>torch.Tensor</cite>): size (n_samples, n_dim)
+param_names (<cite>list[str]</cite>): A list of strings of length n_dim specifying the parameter names corresponding to each column of the array.
+base_config (<cite>dict</cite>): The base configuration shared by all tasks.</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>list[dict]</cite>: list of generated batch_jobs_data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-abaqus_batch_pack.strategies">
+<span id="abaqus-batch-pack-strategies-module"></span><h2>abaqus_batch_pack.strategies module<a class="headerlink" href="#module-abaqus_batch_pack.strategies" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ExtractionStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ExtractionStrategy</span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p><cite>ExtractionStrategy</cite> defines how to extract results from the simulation.</p>
+<p>Methods Subclass should implement:
+- extract(context: <cite>AbaqusCalculation</cite>): execute the extraction logic and return a dictionary of results.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ExtractionStrategy.extract">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">InpModifyStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_inp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
+<p>Prepare the job by modify a current INP file.</p>
+<p>Properties in the INP file must be defined as placeholders like {{property_name}}.</p>
+<p><cite>Example INP file</cite>:</p>
+<blockquote>
+<div><p><a href="#id1"><span class="problematic" id="id2">*</span></a>MATERIAL, NAME=STEEL
+<a href="#id3"><span class="problematic" id="id4">*</span></a>ELASTIC
+{{youngs_modulus}}, 0.3
+<a href="#id5"><span class="problematic" id="id6">*</span></a>SOLID SECTION, ELSET=TRUSS, MATERIAL=STEEL
+1.0
+<a href="#id7"><span class="problematic" id="id8">*</span></a>STEP, NAME=Step-1
+<a href="#id9"><span class="problematic" id="id10">*</span></a>STATIC
+<a href="#id11"><span class="problematic" id="id12">*</span></a>BOUNDARY
+1, 1, 3, 0.
+<a href="#id13"><span class="problematic" id="id14">*</span></a>CLOAD
+2, 1, {{load_magnitude}}</p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.JobWorkflowStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">JobWorkflowStrategy</span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#JobWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>最高层级的策略接口，定义了如何执行一个完整的作业。</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#JobWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd><p>执行完整工作流并返回结果字典。</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelGenerationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
+<p>Prepare the job by running a model generation script.
+This script should generate an INP file in the <cite>context.output_dir</cite>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelPropertiesExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
+<blockquote>
+<div><p>通过ASI从MDB获取模型属性的策略 (仿真前)。</p>
+<p class="rubric">用户自定义“模型属性提取”钩子脚本编写规范</p>
+<ol class="arabic simple">
+<li><p><strong>执行环境</strong>: 必须能由 <cite>python</cite> 执行并可以 <cite>from abaqus import mdb</cite>。</p></li>
+<li><dl class="simple">
+<dt><strong>命令行接口</strong>:</dt><dd><ul class="simple">
+<li><p>必须使用 <cite>argparse</cite> 解析参数。</p></li>
+<li><p>必须接收由框架传入的 <cite>–inp_path</cite> 参数。</p></li>
+<li><p>可以定义 <cite>–property</cite> 等自定义参数来指定要提取的属性。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>核心任务</strong>:</dt><dd><ul class="simple">
+<li><p>使用 <cite>mdb.ModelFromInputFile()</cite> 将INP文件加载到内存中。</p></li>
+<li><p>通过ASI查询模型属性，如 <cite>assembly.getMassProperties()</cite>。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>标准输出 (stdout)</strong>:</dt><dd><ul class="simple">
+<li><p><strong>必须**向标准输出打印一个**单一的、可以被Python的`float()`函数转换的数值</strong>。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>错误处理</strong>:</dt><dd><ul class="simple">
+<li><p>必须遵循通用规范。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<p><strong>Example Script</strong>:
+.. code-block:: python</p>
+<blockquote>
+<div><p>import argparse, sys
+from abaqus import mdb</p>
+<dl>
+<dt>if __name__ == “__main__”:</dt><dd><p>parser = argparse.ArgumentParser()
+parser.add_argument(’–odb_path’, required=True)
+# … add your custom args like –node_label …
+args = parser.parse_args()
+extract_with_your_script(args)</p>
+</dd>
+<dt>def extract_with_your_script(args):</dt><dd><dl>
+<dt>try:</dt><dd><p>mdb.ModelFromInputFile(name=’test’, inputFileName=args.inp_path)
+# … mdb access and data extraction logic …
+result = 123.45</p>
+<p># Bypass the default stdout to avoid Abaqus’ print redirection
+sys.__stdout__.write(f”{result}</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+<p>“)</p>
+<blockquote>
+<div><dl class="simple">
+<dt>except Exception as e:</dt><dd><p>print(e, file=sys.stderr)
+sys.exit(1)</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">
+<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModularWorkflowStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModularWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preparation_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><span class="pre">PreparationStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_extraction_strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><span class="pre">ExtractionStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_extraction_strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><span class="pre">ExtractionStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModularWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
+<p>ModularWorkflowStrategy is designed to handle complex workflows by separating preparation, job execution and extraction into distinct strategies.</p>
+<p>Module:
+- Preparation: Prepare the job and export an INP file ready for Abaqus.
+- Execution: Run the Abaqus job using the prepared INP file.
+- Extraction: Extract results from INP/ODB file after the job is complete.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#ModularWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Args:</dt><dd><p>context (<cite>AbaqusCalculation</cite>): A AbaqusCalculation instance</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>dict</cite>: Dict including results/errors</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">MonolithicWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
+<p>MonolithicWorkflowStrategy suites for simple tasks where all operations can be handled in a single script.</p>
+<p>Operations should include:
+- Create part
+- Create Materials
+- Create Section
+- Create Assembly
+- Create Step
+- Create Load
+- Create Mesh
+- Run Abaqus Job
+- Extract results</p>
+<p>Refer to [Cantilever Example](<a class="reference external" href="https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py">https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py</a>) for more details.</p>
+<p class="rubric">用户自定义“一体化”脚本编写规范</p>
+<ol class="arabic simple">
+<li><p><strong>执行环境</strong>: 必须能由 <cite>abaqus python</cite> 执行。</p></li>
+<li><dl class="simple">
+<dt><strong>命令行接口</strong>:</dt><dd><ul class="simple">
+<li><p>必须使用 <cite>argparse</cite> 解析参数。</p></li>
+<li><p>必须接收由框架传入的 <cite>–job_name</cite> 参数，并用它来命名Abaqus Job (<cite>mdb.Job(name=…)</cite>)，以确保输出文件（如.odb）命名一致。</p></li>
+<li><p>可以定义并接收任何自定义参数（如–length, –height等）。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>标准输出 (stdout)</strong>:</dt><dd><ul class="simple">
+<li><p>必须是脚本向框架返回数据的**唯一**通道。</p></li>
+<li><p><strong>必须**在成功执行后，打印一个**合法的、单一的JSON字符串</strong>。此JSON应包含所有结果。</p></li>
+<li><p>推荐JSON中包含一个 ‘status’: ‘COMPLETED’ 键值对。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>错误处理</strong>:</dt><dd><ul class="simple">
+<li><p>整个主逻辑必须被包裹在 <cite>try…except</cite> 块中。</p></li>
+<li><p>发生错误时，必须将错误信息打印到标准错误流 <cite>sys.stderr</cite>。</p></li>
+<li><p>发生错误时，必须以非零状态码退出 <cite>sys.exit(1)</cite>。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<p><strong>脚本骨架示例</strong>:
+.. code-block:: python</p>
+<blockquote>
+<div><p>import argparse, json, sys, abaqus</p>
+<p>parser = argparse.ArgumentParser()
+parser.add_argument(’–job_name’, required=True)
+# — 添加你自己的参数 —
+parser.add_argument(’–my_param’, type=float, required=True)
+args = parser.parse_args()</p>
+<dl class="simple">
+<dt>try:</dt><dd><p># 1. Abaqus 建模…
+# 2. 创建并运行 Job, 必须使用 args.job_name
+mdb.Job(name=args.job_name, …)
+mdb.jobs[args.job_name].submit()
+mdb.jobs[args.job_name].waitForCompletion()
+# 3. 打开 ODB 并后处理…
+results = {‘status’: ‘COMPLETED’, ‘my_result’: 123.45}
+# 4. 打印 JSON 结果
+print(json.dumps(results))</p>
+</dd>
+<dt>except Exception as e:</dt><dd><p>print(f”Error: {e}”, file=sys.stderr)
+sys.exit(1)</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Args:</dt><dd><p>context (<cite>AbaqusCalculation</cite>): A AbaqusCalculation instance</p>
+</dd>
+<dt>Returns:</dt><dd><p><cite>dict</cite>: Dict including results/errors</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.OdbExtractionStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">OdbExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
+<p>Extract results from ODB files using user-defined scripts.</p>
+<p class="rubric">用户自定义“ODB提取”钩子脚本编写规范</p>
+<ol class="arabic simple">
+<li><p><strong>执行环境</strong>: 必须能由 <cite>abaqus python</cite> 执行并可以 <cite>import odbAccess</cite>。</p></li>
+<li><dl class="simple">
+<dt><strong>命令行接口</strong>:</dt><dd><ul class="simple">
+<li><p>必须使用 <cite>argparse</cite> 解析参数。</p></li>
+<li><p>必须接收由框架传入的 <cite>–odb_path</cite> 参数。</p></li>
+<li><p>可以定义任何自定义参数来定位数据（如 <cite>–step</cite>, <cite>–node_label</cite> 等）可以在post_extraction.hooks字段中配置使用。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>核心任务</strong>:</dt><dd><ul class="simple">
+<li><p>打开 <cite>odb_path</cite> 指定的ODB文件，并提取所需数据。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>标准输出 (stdout)</strong>:</dt><dd><ul class="simple">
+<li><p><strong>必须**向标准输出打印一个**单一的、可以被Python的`float()`函数转换的数值</strong>。不要打印任何其他信息。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>错误处理</strong>:</dt><dd><ul class="simple">
+<li><p>必须遵循通用规范中的错误处理流程。</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<p><strong>Example Script</strong>:
+.. code-block:: python</p>
+<blockquote>
+<div><p>import argparse, sys, odbAccess</p>
+<dl class="simple">
+<dt>if __name__ == “__main__”:</dt><dd><p>parser = argparse.ArgumentParser()
+parser.add_argument(’–odb_path’, required=True)
+# … add your custom args like –node_label …
+args = parser.parse_args()
+extract_with_your_script(args)</p>
+</dd>
+<dt>def extract_with_your_script(args):</dt><dd><dl class="simple">
+<dt>try:</dt><dd><p>odb = odbAccess.openOdb(args.odb_path)
+# … odb access and data extraction logic …
+result = 123.45
+print(result)</p>
+</dd>
+<dt>except Exception as e:</dt><dd><p>print(e, file=sys.stderr)
+sys.exit(1)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">
+<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.PreparationStrategy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">PreparationStrategy</span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#PreparationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p><cite>PreparationStrategy</cite> prepares the job with <strong>generating an INP file</strong>.</p>
+<p>Methods Subclass should implement:
+- prepare(context: <cite>AbaqusCalculation</cite>): generate one INP file in <cite>context.output_dir</cite></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.PreparationStrategy.prepare">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/abaqus_batch_pack/strategies.html#PreparationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.PreparationStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-abaqus_batch_pack">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-abaqus_batch_pack" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="modules.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">abaqus_batch_pack</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, yutu0k
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">abaqus_batch_pack package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-abaqus_batch_pack.abaqus_automation">abaqus_batch_pack.abaqus_automation module</a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.execute()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.run_simulation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch_as_dict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-abaqus_batch_pack.strategies">abaqus_batch_pack.strategies module</a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">ExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">ModularWorkflowStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">ModularWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">OdbExtractionStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">OdbExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy"><code class="docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">PreparationStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-abaqus_batch_pack">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=013e8d9e"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    </body>
+</html>
