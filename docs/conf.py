@@ -8,6 +8,7 @@
 
 import os
 import sys
+import furo
 sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'Abaqus Batch Package'
@@ -31,5 +32,5 @@ language = 'zh-cn'
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = 'furo'
 html_static_path = ['_static']

@@ -1,0 +1,27 @@
+name: Deploy Sphinx Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.4.1
+
+      - name: Build documentation using Pixi
+        run: |
+          pixi run sphinx-build docs docs/_build/html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
