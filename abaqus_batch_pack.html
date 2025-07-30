@@ -277,23 +277,55 @@
 <p>Run multiple Abaqus calculations in parallel based on a batch configuration.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">
-<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'list'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
 <dd><p>Run all calculations in parallel using multiprocessing.
-Returns:</p>
+Args:</p>
 <blockquote>
-<div><p>list[<cite>dict</cite>]: A list of results for each calculation.</p>
-</div></blockquote>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict">
-<span class="sig-name descname"><span class="pre">run_batch_as_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch_as_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict" title="Link to this definition">¶</a></dt>
-<dd><p><strong>Obselete method, kept for backward compatibility.</strong></p>
-<p>Run all calculations in parallel using multiprocessing.
-Returns:</p>
+<div><p>num_parallel_jobs (<cite>int</cite>): Number of parallel jobs to run.
+output_type (<cite>str</cite>): Type of output, either ‘list’ or ‘dict’.</p>
 <blockquote>
-<div><p><cite>dict</cite>: A dictionary of results for each calculation, keyed by job name.</p>
+<div><ul>
+<li><p>‘list’: Returns a list of results for each calculation.</p>
+<blockquote>
+<div><p>Example:
+[</p>
+<blockquote>
+<div><dl class="simple">
+<dt>{</dt><dd><p>‘total_mass’: 0.000320662622552476,
+‘max_stress_mises’: 4525.26025390625,
+‘max_displacement’: 4.189039707183838,
+‘status’: ‘COMPLETED’,
+‘job_name’: ‘test_inp_based_job’</p>
+</dd>
+</dl>
 </div></blockquote>
+<p>]</p>
+</div></blockquote>
+</li>
+<li><p>‘dict’: Returns a dictionary mapping job names to their results.</p>
+<blockquote>
+<div><p>Example:
+{</p>
+<blockquote>
+<div><dl class="simple">
+<dt>‘test_inp_based_job’: {</dt><dd><p>‘total_mass’: 0.000320662622552476,
+‘max_stress_mises’: 4525.26025390625,
+‘max_displacement’: 4.189039707183838,
+‘status’: ‘COMPLETED’}</p>
+</dd>
+</dl>
+<p>…</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>list[<cite>dict</cite>] or dict[<cite>str</cite>, <cite>dict</cite>]: results of all calculations.</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -732,7 +764,6 @@ sys.exit(1)</p>
 </li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor</span></code></a><ul>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
-<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch_as_dict()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>

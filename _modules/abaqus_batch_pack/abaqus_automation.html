@@ -246,7 +246,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm.rich</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobWorkflowStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">ModularWorkflowStrategy</span><span class="p">,</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">,</span> 
@@ -416,8 +418,8 @@
 			<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 			
 			<span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_robust_json_extractor</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-			<span class="nb">print</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-			<span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+			<span class="n">pp</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
 			<span class="k">return</span> <span class="n">out</span>
 
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
@@ -492,41 +494,58 @@
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_batch">
 <a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;list&#39;</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Run all calculations in parallel using multiprocessing.</span>
-<span class="sd">		Returns:</span>
-<span class="sd">			list[`dict`]: A list of results for each calculation.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">with</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">num_parallel_jobs</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-			<span class="n">results_from_workers</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_run_workflow_worker</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">)</span>
-	
-		<span class="n">result_list</span> <span class="o">=</span> <span class="p">[]</span>
-		<span class="k">for</span> <span class="n">calc</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="n">results_from_workers</span><span class="p">):</span>
-			<span class="n">result</span><span class="p">[</span><span class="s1">&#39;job_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">job_name</span>
-			<span class="n">result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-		<span class="k">return</span> <span class="n">result_list</span></div>
+<span class="sd">		Args:</span>
+<span class="sd">			num_parallel_jobs (`int`): Number of parallel jobs to run.</span>
+<span class="sd">			output_type (`str`): Type of output, either &#39;list&#39; or &#39;dict&#39;.</span>
+<span class="sd">				- &#39;list&#39;: Returns a list of results for each calculation.</span>
+<span class="sd">					</span>
+<span class="sd">					Example:</span>
+<span class="sd">					[</span>
+<span class="sd">						{</span>
+<span class="sd">							&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">							&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">							&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">							&#39;status&#39;: &#39;COMPLETED&#39;,</span>
+<span class="sd">							&#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
+<span class="sd">						},</span>
+<span class="sd">						...</span>
+<span class="sd">					]</span>
 
-	
-<div class="viewcode-block" id="BatchAbaqusProcessor.run_batch_as_dict">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch_as_dict">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch_as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		**Obselete method, kept for backward compatibility.**</span>
-<span class="sd">		</span>
-<span class="sd">		Run all calculations in parallel using multiprocessing.</span>
+<span class="sd">				- &#39;dict&#39;: Returns a dictionary mapping job names to their results.</span>
+
+<span class="sd">					Example:</span>
+<span class="sd">					{</span>
+<span class="sd">						&#39;test_inp_based_job&#39;: {</span>
+<span class="sd">							&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">							&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">							&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">							&#39;status&#39;: &#39;COMPLETED&#39;}</span>
+<span class="sd">						...</span>
+<span class="sd">					}</span>
 <span class="sd">		Returns:</span>
-<span class="sd">			`dict`: A dictionary of results for each calculation, keyed by job name.</span>
+<span class="sd">			list[`dict`] or dict[`str`, `dict`]: results of all calculations.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">with</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">num_parallel_jobs</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-			<span class="n">results_from_workers</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_run_workflow_worker</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">)</span>
-		<span class="k">return</span> <span class="p">{</span><span class="n">calc</span><span class="o">.</span><span class="n">job_name</span><span class="p">:</span> <span class="n">result</span> <span class="k">for</span> <span class="n">calc</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="n">results_from_workers</span><span class="p">)}</span></div>
+			<span class="n">results_from_workers</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_run_workflow_worker</span><span class="p">,</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Running calculations&quot;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;job&quot;</span><span class="p">))</span>
+
+		<span class="k">if</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;dict&#39;</span><span class="p">:</span>
+			<span class="k">return</span> <span class="p">{</span><span class="n">calc</span><span class="o">.</span><span class="n">job_name</span><span class="p">:</span> <span class="n">result</span> <span class="k">for</span> <span class="n">calc</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="n">results_from_workers</span><span class="p">)}</span>
+		<span class="k">elif</span> <span class="n">output_type</span> <span class="o">==</span> <span class="s1">&#39;list&#39;</span><span class="p">:</span>
+			<span class="n">result_list</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="k">for</span> <span class="n">calc</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="n">results_from_workers</span><span class="p">):</span>
+				<span class="n">result</span><span class="p">[</span><span class="s1">&#39;job_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">job_name</span>
+				<span class="n">result_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">result_list</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported output type: </span><span class="si">{</span><span class="n">output_type</span><span class="si">}</span><span class="s2">. Use &#39;list&#39; or &#39;dict&#39;.&quot;</span><span class="p">)</span></div>
 </div>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_run_workflow_worker</span><span class="p">(</span><span class="n">calc_instance</span><span class="p">):</span>
 	<span class="k">return</span> <span class="n">calc_instance</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
-
 
 <div class="viewcode-block" id="generate_from_array">
 <a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.generate_from_array">[docs]</a>
