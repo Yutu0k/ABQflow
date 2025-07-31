@@ -197,10 +197,15 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.abaqus_automation.html">abaqus_batch_pack.abaqus_automation module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.status.html">abaqus_batch_pack.status module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.strategies.html">abaqus_batch_pack.strategies module</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -254,7 +259,7 @@
 <span class="c1"># ==================================</span>
 
 <div class="viewcode-block" id="PreparationStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	`PreparationStrategy` prepares the job with **generating an INP file**.</span>
@@ -264,7 +269,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PreparationStrategy.prepare">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="k">pass</span></div>
@@ -272,14 +277,16 @@
 
 
 <div class="viewcode-block" id="InpModifyStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.InpModifyStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.InpModifyStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Prepare the job by modify a current INP file.</span>
 
 <span class="sd">	Properties in the INP file must be defined as placeholders like {{property_name}}.</span>
 <span class="sd">	</span>
-<span class="sd">	`Example INP file`:</span>
+<span class="sd">	Example</span>
+<span class="sd">	-------</span>
+<span class="sd">	Example INP file::</span>
 
 <span class="sd">		*MATERIAL, NAME=STEEL</span>
 <span class="sd">		*ELASTIC</span>
@@ -299,7 +306,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="n">data_params</span>
 	
 <div class="viewcode-block" id="InpModifyStrategy.prepare">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.InpModifyStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.InpModifyStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify]: Based on INP file &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 		<span class="k">try</span><span class="p">:</span>
@@ -318,7 +325,7 @@
 
 
 <div class="viewcode-block" id="ModelGenerationStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelGenerationStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelGenerationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelGenerationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Prepare the job by running a model generation script.</span>
@@ -329,7 +336,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_params</span> <span class="o">=</span> <span class="n">script_params</span>
 
 <div class="viewcode-block" id="ModelGenerationStrategy.prepare">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 		<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">]</span>
@@ -351,7 +358,7 @@
 <span class="c1"># ==================================</span>
 
 <div class="viewcode-block" id="ExtractionStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	`ExtractionStrategy` defines how to extract results from the simulation.</span>
@@ -361,7 +368,7 @@
 <span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="ExtractionStrategy.extract">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy.extract">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="k">pass</span></div>
@@ -369,47 +376,57 @@
 
 
 <div class="viewcode-block" id="OdbExtractionStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.OdbExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.OdbExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OdbExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-	<span class="c1"># TODO: Docstring</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Extract results from ODB files using user-defined scripts.</span>
 <span class="sd">	</span>
-<span class="sd">	.. rubric:: 用户自定义“ODB提取”钩子脚本编写规范</span>
+<span class="sd">	.. rubric::</span>
 
-<span class="sd">	1.  **执行环境**: 必须能由 `abaqus python` 执行并可以 `import odbAccess`。</span>
-<span class="sd">	2.  **命令行接口**:</span>
-<span class="sd">			- 必须使用 `argparse` 解析参数。</span>
-<span class="sd">			- 必须接收由框架传入的 `--odb_path` 参数。</span>
-<span class="sd">			- 可以定义任何自定义参数来定位数据（如 `--step`, `--node_label` 等）可以在post_extraction.hooks字段中配置使用。</span>
-<span class="sd">	3.  **核心任务**:</span>
-<span class="sd">			- 打开 `odb_path` 指定的ODB文件，并提取所需数据。</span>
-<span class="sd">	4.  **标准输出 (stdout)**:</span>
-<span class="sd">			- **必须**向标准输出打印一个**单一的、可以被Python的`float()`函数转换的数值**。不要打印任何其他信息。</span>
-<span class="sd">	5.  **错误处理**:</span>
-<span class="sd">			- 必须遵循通用规范中的错误处理流程。</span>
+<span class="sd">		1.  **执行环境**: `abaqus python` / `python` (if `abaqpy` is installed)</span>
+<span class="sd">		2.  **命令行接口**:</span>
+<span class="sd">			- 必须使用 `argparse` 解析参数</span>
+<span class="sd">			- 必须接收由框架传入的 `--odb_path` 和 `--tasks_json`</span>
+<span class="sd">			- 可以定义任何自定义参数来定位数据(如 `--step`, `--node_label` 等)</span>
+<span class="sd">		3.  **标准输出 (stdout)**:</span>
+<span class="sd">			- 使用`sys.__stdout__.write(json.dumps(result))` 重定向输出</span>
 
-<span class="sd">	**Example Script**:</span>
-<span class="sd">	.. code-block:: python</span>
 
-<span class="sd">		import argparse, sys, odbAccess</span>
+<span class="sd">	.. Example::</span>
+
+<span class="sd">		import argparse, sys, json</span>
+<span class="sd">		import odbAccess</span>
 
 <span class="sd">		if __name__ == &quot;__main__&quot;:</span>
 <span class="sd">			parser = argparse.ArgumentParser()</span>
-<span class="sd">			parser.add_argument(&#39;--odb_path&#39;, required=True)</span>
-<span class="sd">			# ... add your custom args like --node_label ...</span>
-<span class="sd">			args = parser.parse_args()</span>
-<span class="sd">			extract_with_your_script(args)</span>
+<span class="sd">			parser.add_argument(&#39;--odb_path&#39;, type=str, required=True)</span>
+<span class="sd">			parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
 
-<span class="sd">		def extract_with_your_script(args):</span>
+<span class="sd">			# ... add your custom args like --node_label ...</span>
+<span class="sd">			args, unknown = parser.parse_known_args()</span>
+<span class="sd">			extract_with_your_script(args.odb_path, args.tasks_json, **kwargs)</span>
+
+<span class="sd">		def extract_with_your_script(odb_path, tasks_json, **kwargs):</span>
 <span class="sd">			try:</span>
+<span class="sd">				# Retrieve tasks</span>
+<span class="sd">				with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
+<span class="sd">					task_list = json.load(f)</span>
+
 <span class="sd">				odb = odbAccess.openOdb(args.odb_path)</span>
-<span class="sd">				# ... odb access and data extraction logic ...</span>
-<span class="sd">				result = 123.45</span>
-<span class="sd">				print(result)</span>
+
+<span class="sd">				for task in task_list:</span>
+<span class="sd">					result_name = task[&#39;result_name&#39;]</span>
+<span class="sd">					try:</span>
+<span class="sd">						results[result_name] = 123.45</span>
+<span class="sd">					except Exception as e:</span>
+<span class="sd">						results[result_name] = None</span>
+<span class="sd">						sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\n&quot;)</span>
+<span class="sd">				</span>
+<span class="sd">				odb.close()</span>
+<span class="sd">				sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\n&quot;)</span>
 
 <span class="sd">			except Exception as e:</span>
-<span class="sd">				print(e, file=sys.stderr)</span>
+<span class="sd">				sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\n&quot;)</span>
 <span class="sd">				sys.exit(1)</span>
 <span class="sd">	</span>
 <span class="sd">	</span>
@@ -427,7 +444,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="OdbExtractionStrategy.extract">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [OdbExtract]: Start extracting from ODB...&quot;</span><span class="p">)</span>
 
@@ -460,51 +477,56 @@
 
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelPropertiesExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-	<span class="c1"># TODO: Docstring</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	通过ASI从MDB获取模型属性的策略 (仿真前)。</span>
+<span class="sd">	Extract results from INP files using user-defined scripts.</span>
 
-<span class="sd">	.. rubric:: 用户自定义“模型属性提取”钩子脚本编写规范</span>
+<span class="sd">	.. rubric::</span>
 
-<span class="sd">	1.  **执行环境**: 必须能由 `python` 执行并可以 `from abaqus import mdb`。</span>
-<span class="sd">	2.  **命令行接口**:</span>
-<span class="sd">		- 必须使用 `argparse` 解析参数。</span>
-<span class="sd">		- 必须接收由框架传入的 `--inp_path` 参数。</span>
-<span class="sd">		- 可以定义 `--property` 等自定义参数来指定要提取的属性。</span>
-<span class="sd">	3.  **核心任务**:</span>
-<span class="sd">		- 使用 `mdb.ModelFromInputFile()` 将INP文件加载到内存中。</span>
-<span class="sd">		- 通过ASI查询模型属性，如 `assembly.getMassProperties()`。</span>
-<span class="sd">	4.  **标准输出 (stdout)**:</span>
-<span class="sd">		- **必须**向标准输出打印一个**单一的、可以被Python的`float()`函数转换的数值**。</span>
-<span class="sd">	5.  **错误处理**:</span>
-<span class="sd">		- 必须遵循通用规范。</span>
+<span class="sd">		1.  **执行环境**: `abaqus cae noGui=` / `python` (if `abaqpy` is installed)</span>
+<span class="sd">		2.  **命令行接口**:</span>
+<span class="sd">			- 必须使用 `argparse` 解析参数</span>
+<span class="sd">			- 必须接收由框架传入的 `--inp_path` 和 `--tasks_json` 参数</span>
+<span class="sd">			- 可以定义 `--property` 等自定义参数来指定要提取的属性。</span>
+<span class="sd">		3.  **标准输出 (stdout)**:</span>
+<span class="sd">			- 使用`sys.__stdout__.write(json.dumps(result))` 重定向输出</span>
 
-<span class="sd">	**Example Script**:</span>
-<span class="sd">	.. code-block:: python</span>
+<span class="sd">	.. Example::</span>
 
 <span class="sd">		import argparse, sys</span>
 <span class="sd">		from abaqus import mdb</span>
 
 <span class="sd">		if __name__ == &quot;__main__&quot;:</span>
 <span class="sd">			parser = argparse.ArgumentParser()</span>
-<span class="sd">			parser.add_argument(&#39;--odb_path&#39;, required=True)</span>
+<span class="sd">			parser.add_argument(&#39;--inp_path&#39;, type=str, required=True)</span>
+<span class="sd">			parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
+
 <span class="sd">			# ... add your custom args like --node_label ...</span>
-<span class="sd">			args = parser.parse_args()</span>
-<span class="sd">			extract_with_your_script(args)</span>
+<span class="sd">			args, unknown = parser.parse_known_args()</span>
+<span class="sd">			extract_with_your_script(args.inp_path, args.tasks_json, **kwargs)</span>
 
-<span class="sd">		def extract_with_your_script(args):</span>
+<span class="sd">		def extract_with_your_script(inp_path, tasks_json, **kwargs):</span>
 <span class="sd">			try:</span>
-<span class="sd">				mdb.ModelFromInputFile(name=&#39;test&#39;, inputFileName=args.inp_path)</span>
-<span class="sd">				# ... mdb access and data extraction logic ...</span>
-<span class="sd">				result = 123.45</span>
+<span class="sd">				# Retrieve tasks</span>
+<span class="sd">				with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
+<span class="sd">					task_list = json.load(f)</span>
 
-<span class="sd">				# Bypass the default stdout to avoid Abaqus&#39; print redirection</span>
-<span class="sd">				sys.__stdout__.write(f&quot;{result}\n&quot;)</span>
+<span class="sd">				mdb.ModelFromInputFile()</span>
+
+<span class="sd">				for task in task_list:</span>
+<span class="sd">					result_name = task[&#39;result_name&#39;]</span>
+<span class="sd">					try:</span>
+<span class="sd">						results[result_name] = 123.45</span>
+<span class="sd">					except Exception as e:</span>
+<span class="sd">						results[result_name] = None</span>
+<span class="sd">						sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\n&quot;)</span>
+<span class="sd">				</span>
+<span class="sd">				mdb.close()</span>
+<span class="sd">				sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\n&quot;)</span>
 
 <span class="sd">			except Exception as e:</span>
-<span class="sd">				print(e, file=sys.stderr)</span>
+<span class="sd">				sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\n&quot;)</span>
 <span class="sd">				sys.exit(1)</span>
 <span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
@@ -521,7 +543,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy.extract">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [ModelPropsExtract]: Start extracting from INP...&quot;</span><span class="p">)</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
@@ -553,20 +575,25 @@
 <span class="c1"># 工作流策略 (Workflow Strategies)</span>
 <span class="c1"># ==================================</span>
 <div class="viewcode-block" id="JobWorkflowStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.JobWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobWorkflowStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;最高层级的策略接口，定义了如何执行一个完整的作业。&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Defines the interface for job workflow strategies.</span>
+
+<span class="sd">	Methods Subclass should implement:</span>
+<span class="sd">	- execute(context: `AbaqusCalculation`): execute the complete workflow and return a dictionary of results.</span>
+
+<span class="sd">	&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;执行完整工作流并返回结果字典。&quot;&quot;&quot;</span>
 		<span class="k">pass</span></div>
 </div>
 
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	MonolithicWorkflowStrategy suites for simple tasks where all operations can be handled in a single script.</span>
@@ -585,9 +612,9 @@
 <span class="sd">	Refer to [Cantilever Example](https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py) for more details.</span>
 
 <span class="sd">	</span>
-<span class="sd">	.. rubric:: 用户自定义“一体化”脚本编写规范</span>
+<span class="sd">	.. rubric:: </span>
 
-<span class="sd">	1.  **执行环境**: 必须能由 `abaqus python` 执行。</span>
+<span class="sd">	1.  **执行环境**: `abaqus python` / `python` (if `abaqpy` is installed)</span>
 <span class="sd">	2.  **命令行接口**:</span>
 <span class="sd">		- 必须使用 `argparse` 解析参数。</span>
 <span class="sd">		- 必须接收由框架传入的 `--job_name` 参数，并用它来命名Abaqus Job (`mdb.Job(name=...)`)，以确保输出文件（如.odb）命名一致。</span>
@@ -596,13 +623,8 @@
 <span class="sd">		- 必须是脚本向框架返回数据的**唯一**通道。</span>
 <span class="sd">		- **必须**在成功执行后，打印一个**合法的、单一的JSON字符串**。此JSON应包含所有结果。</span>
 <span class="sd">		- 推荐JSON中包含一个 &#39;status&#39;: &#39;COMPLETED&#39; 键值对。</span>
-<span class="sd">	4.  **错误处理**:</span>
-<span class="sd">		- 整个主逻辑必须被包裹在 `try...except` 块中。</span>
-<span class="sd">		- 发生错误时，必须将错误信息打印到标准错误流 `sys.stderr`。</span>
-<span class="sd">		- 发生错误时，必须以非零状态码退出 `sys.exit(1)`。</span>
 
-<span class="sd">	**脚本骨架示例**:</span>
-<span class="sd">	.. code-block:: python</span>
+<span class="sd">	.. Example::</span>
 
 <span class="sd">		import argparse, json, sys, abaqus</span>
 <span class="sd">		</span>
@@ -633,7 +655,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span>
@@ -669,7 +691,7 @@
 
 
 <div class="viewcode-block" id="ModularWorkflowStrategy">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	ModularWorkflowStrategy is designed to handle complex workflows by separating preparation, job execution and extraction into distinct strategies.</span>
@@ -692,7 +714,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span> <span class="o">=</span> <span class="n">post_extraction_strategies</span>
 
 <div class="viewcode-block" id="ModularWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span>

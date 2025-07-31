@@ -197,10 +197,15 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.abaqus_automation.html">abaqus_batch_pack.abaqus_automation module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.status.html">abaqus_batch_pack.status module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.strategies.html">abaqus_batch_pack.strategies module</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -262,13 +267,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 
 <div class="viewcode-block" id="BatchAbortedError">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbortedError">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbortedError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbortedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 	<span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="AbaqusCalculation">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusCalculation</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;上下文类，持有并调用一个总的工作流策略来完成任务。&quot;&quot;&quot;</span>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">workflow_strategy</span><span class="p">:</span> <span class="n">JobWorkflowStrategy</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">abaqus_exe</span><span class="o">=</span><span class="s1">&#39;abaqus&#39;</span><span class="p">):</span>
@@ -286,9 +291,8 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 延迟初始化日志记录器</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.execute">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;执行由其工作流策略定义的完整任务。&quot;&quot;&quot;</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
 		
@@ -310,10 +314,10 @@
 		<span class="k">return</span> <span class="n">logger</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.run_simulation">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		所有模块化工作流统一使用的运行器：&#39;abaqus job=...&#39; 命令。</span>
+<span class="sd">		Use &#39;abaqus job=..., input=inp_file, cpus=num_cpu&#39; to run simulation.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executor [CLI]: run &#39;abaqus job=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 		<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;job=&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;input=&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;cpus=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cpus</span><span class="p">),</span> <span class="s1">&#39;interactive&#39;</span><span class="p">]</span>
@@ -444,7 +448,7 @@
 			<span class="k">return</span> <span class="n">out</span>
 
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;执行钩子脚本 &#39;</span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; 失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run extraction &#39;</span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="n">stderr_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
 			<span class="n">stdout_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured stderr:</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -458,7 +462,7 @@
 
 
 <div class="viewcode-block" id="BatchAbaqusProcessor">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbaqusProcessor</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Run multiple Abaqus calculations in parallel based on a batch configuration.	</span>
@@ -691,10 +695,11 @@
 		<span class="k">return</span> <span class="n">calcs</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_batch">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;list&#39;</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Run all calculations in parallel using multiprocessing.</span>
+<span class="sd">		</span>
 <span class="sd">		Args:</span>
 <span class="sd">			num_parallel_jobs (`int`): Number of parallel jobs to run.</span>
 <span class="sd">			output_type (`str`): Type of output, either &#39;list&#39; or &#39;dict&#39;.</span>
@@ -797,7 +802,7 @@
 <span class="c1"># -------------------------------------------------------------</span>
 <span class="c1"># Utils for batch job generation and result extraction</span>
 <div class="viewcode-block" id="generate_from_array">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.generate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.generate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_array</span><span class="p">(</span><span class="n">samples_array</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">base_config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Generate batch job configurations from a numerical array (numpy or torch).</span>
@@ -832,7 +837,7 @@
 
 
 <div class="viewcode-block" id="degenerate_from_array">
-<a class="viewcode-back" href="../../abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.degenerate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.degenerate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_names</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Depack results from a batch job into a 2D numpy array.</span>
