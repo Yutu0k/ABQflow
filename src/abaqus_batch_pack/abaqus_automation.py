@@ -3,6 +3,9 @@ import logging
 import json
 import uuid
 import functools
+import sys
+import shutil
+import re
 
 import subprocess
 from multiprocessing import Pool
@@ -17,6 +20,9 @@ from .strategies import (ModularWorkflowStrategy, MonolithicWorkflowStrategy,
 						OdbExtractionStrategy, ModelPropertiesExtractionStrategy)
 from .utils.helpers import check_abqpy_installed
 from .status import JobStatus
+
+class BatchAbortedError(Exception):
+	pass
 
 class AbaqusCalculation:
 	"""上下文类，持有并调用一个总的工作流策略来完成任务。"""
@@ -44,7 +50,7 @@ class AbaqusCalculation:
 		self.logger.info(f"======== Workflow Finished: {self.job_name} ========")
 		return results
 
-	def _setup_logging(self):
+	def _setup_logging(self) -> logging.Logger:
 		logger = logging.getLogger(self.job_name)
 		logger.setLevel(logging.INFO)
 		if logger.hasHandlers():
@@ -203,17 +209,192 @@ class BatchAbaqusProcessor:
 	"""
 	Run multiple Abaqus calculations in parallel based on a batch configuration.	
 	"""
-	def __init__(self, batch_data, base_output_dir, cpus_per_job, abaqus_exe='abaqus'):
+	def __init__(
+		self,
+		batch_data: list[dict],
+		base_output_dir: str,
+		cpus_per_job: int,
+		abaqus_exe: str='abaqus',
+		duplicate_mode: str='interactive',
+	):
 		self.batch_data = batch_data
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
 		self.abaqus_exe = abaqus_exe
+
+		self.duplicate_mode = duplicate_mode.lower()
+		self._overwrite_all = None  # None: 未决定, True: 全部覆盖, False: 全部跳过
+
+
+		self.logger = self._setup_logging()
+
 		self.calculations = self._initialize_calculations()
 
+	def _setup_logging(self) -> logging.Logger:
+		logger = logging.getLogger('BatchAbaqusProcessor')
+		logger.setLevel(logging.INFO)
+		if logger.hasHandlers():
+			logger.handlers.clear()
+		log_file_path = os.path.join(self.base_output_dir, 'batch_processor.log')
+		handler = logging.FileHandler(log_file_path, mode='a')
+		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+		handler.setFormatter(formatter)
+		logger.addHandler(handler)
+
+		logger.info("======== Batch Processor Start ========")
+		logger.info(f"Duplicate mode: {self.duplicate_mode}")
+
+		return logger
+	
+	def _get_name_pattern(self, job_name: str) -> tuple[str, bool]:
+		"""
+		Retrieve a pattern for the job name.
+
+		Examples:
+			>>> _get_name_pattern('job_123')
+			('job_*', True)
+			>>> _get_name_pattern('job')
+			('job', False)
+			>>> _get_name_pattern('job_123_v2')
+			('job_*', True)
+			>>> _get_name_pattern('job_v2')
+			('job_*', True)
+			>>> _get_name_pattern('job_v2_123')
+			('job_v2_*', True)
+		"""
+		match = re.match(r'^(.*?)_?(\d+)$', job_name)
+		if match:
+			return f"{match.group(1)}_*", True
+		return job_name, False
+
+	def _find_available_job_name(self, original_name: str, base_dir: str) -> str:
+		version = 2
+		while True:
+			new_name = f"{original_name}_v{version}"
+			new_path = os.path.join(base_dir, new_name)
+			if not os.path.isdir(new_path):
+				return new_name
+			version += 1
+		
+
 	def _initialize_calculations(self):
+		# 1. 检查输出冲突
+		conflicts = [cfg for cfg in self.batch_data if os.path.isdir(os.path.join(self.base_output_dir, cfg['job_name']))]
+		decisions = {} # 存储对每个冲突任务的决策: {'job_name': 'skip' | 'overwrite' | 'new_name'}
+		pattern_decisions = {} # 存储对特定命名模式的决策 {'pattern_name': 'skip' | 'overwrite' | 'rename'}
+
+		if conflicts:
+			conflict_names = [c['job_name'] for c in conflicts]
+			self.logger.warning(f"Job output directory exists - Num:{len(conflicts)}, Names: {', '.join(conflict_names)}")
+
+			if self.duplicate_mode == 'fail':
+				raise FileExistsError(f"Mode[Fail] - Batch processing aborted since jobs exist: {', '.join(conflict_names)}")
+			if self.duplicate_mode == 'skip':
+				self.logger.info(f"Mode[Skip] - Skipping existing jobs: {', '.join(conflict_names)}")
+				for name in conflict_names: 
+					decisions[name] = 'skip'
+			if self.duplicate_mode == 'overwrite':
+				self.logger.info(f"Mode[Overwrite] - Overwriting existing jobs: {', '.join(conflict_names)}")
+				for name in conflict_names:
+					decisions[name] = 'overwrite'
+			if self.duplicate_mode == 'interactive':
+				overwrite_all, skip_all = False, False
+				for job_config in conflicts:
+					job_name = job_config['job_name']
+					if overwrite_all:
+						decisions[job_name] = 'overwrite'
+						continue
+					if skip_all:
+						decisions[job_name] = 'skip'
+						continue
+
+					pattern, has_pattern = self._get_name_pattern(job_name)
+					if has_pattern and pattern in pattern_decisions:
+						decision = pattern_decisions[pattern]
+						if decision == 'skip' or decision == 'overwrite':
+							decisions[job_name] = decision
+						else: # decision is 'rename'
+							decisions[job_name] = self._find_available_job_name(job_name, self.base_output_dir)
+						continue
+
+					while True:
+						prompt = (f"\n Job '{job_name}' already exists. Choose one option from below:\n"
+									f"  [o]verwrite:       overwrite this job\n"
+									f"  [s]kip:            skip this job\n"
+									f"  [r]ename:          rename and run (e.g., '{job_name}_v2')\n"
+									f"  [O]verwrite All:   overwrite all the following jobs\n"
+									f"  [S]kip All:        skip all the following jobs\n"
+									f"  [P]attern:         apply the decisions to similar jobs with '{job_name}'\n"
+									f"  [A]bort:           abort the batch processing\n"
+									f"  >>> ")
+						response = input(prompt).strip()
+						if response == 'o':
+							decisions[job_name] = 'overwrite'
+							break
+						elif response == 's':
+							decisions[job_name] = 'skip'
+							break
+						elif response == 'r':
+							new_name = self._find_available_job_name(job_name, self.base_output_dir)
+							decisions[job_name] = new_name
+							break
+						elif response == 'O':
+							overwrite_all = True
+							decisions[job_name] = 'overwrite'
+							break
+						elif response == 'S':
+							skip_all = True
+							decisions[job_name] = 'skip'
+							break
+						elif response == 'P':
+							while True:
+								sub_prompt = (f"  -> Apply decisions to similar jobs with '{pattern}':\n"
+					  							f"  [o]verwrite all \n"
+												f"  [s]kip all? \n"
+												f"  [r]ename all (e.g., '{pattern.replace('*', '')}_v2')\n"
+												f"  >>> ")
+								sub_res = input(sub_prompt).lower().strip()
+								if sub_res in ['o', 'overwrite']:
+									pattern_decisions[pattern] = 'overwrite'
+									decisions[job_name] = 'overwrite'
+									break
+								elif sub_res in ['s', 'skip']:
+									pattern_decisions[pattern] = 'skip'
+									decisions[job_name] = 'skip'
+									break
+								elif sub_res in ['r', 'rename']:
+									pattern_decisions[pattern] = 'rename'
+									decisions[job_name] = self._find_available_job_name(job_name, self.base_output_dir)
+									break									
+								else: 
+									print("  Invalid input, please try again.")
+							break
+						elif response == 'a':
+							raise BatchAbortedError("User aborted the batch processing.")
+						else: 
+							print("Invalid input, please try again.")
+
+		# 2. 初始化计算实例
 		calcs = []
 
 		for job_config in self.batch_data:
+			original_job_name = job_config['job_name']
+
+			decision = decisions.get(original_job_name)
+
+			if decision == 'skip':
+				self.logger.info(f"  - Skipping job: {original_job_name}")
+				continue
+			
+			if decision == 'overwrite':
+				self.logger.info(f"  - Overwriting job: {original_job_name} (removing old directory)")
+				shutil.rmtree(os.path.join(self.base_output_dir, original_job_name))		
+			
+			elif decision is not None: # 'new_name'
+				self.logger.info(f"  - Renaming job: {original_job_name} -> {decision}")
+				job_config['job_name'] = decision
+
+
 			workflow_type = job_config.get('workflow', 'modular')
 
 			workflow_strategy: JobWorkflowStrategy
@@ -251,6 +432,8 @@ class BatchAbaqusProcessor:
 				abaqus_exe=self.abaqus_exe
 			)
 			calcs.append(calc)
+
+		self.logger.info("======== Batch Processor Finished ========")
 		return calcs
 
 	def run_batch(self, num_parallel_jobs: int, output_type: str = 'list'):
@@ -320,22 +503,23 @@ class BatchAbaqusProcessor:
 			pool.join()
 		
 		if output_type == 'dict':
-			final_results_dict = {}
+			final_results = {}
 			for res in async_results:
 				job_name, job_result = res.get()
 				if job_result and isinstance(job_result, dict):
-					final_results_dict[job_name] = job_result
-			return final_results_dict
+					final_results[job_name] = job_result
 		elif output_type == 'list':
-			final_results_list = []
+			final_results = []
 			for res in async_results:	# res: `multiprocessing.pool.AsyncResult`, use .get() to retrieve the result	
 				job_name, job_result = res.get()
 				if job_result and isinstance(job_result, dict):
 					job_result['job_name'] = job_name
-					final_results_list.append(job_result)
-			return final_results_list
+					final_results.append(job_result)
 		else:
 			raise ValueError(f"Unsupported output type: {output_type}. Use 'list' or 'dict'.")
+
+		
+		return final_results
 
 # -------------------------------------------------------------
 # Helper functions for multiprocessing
