@@ -442,33 +442,32 @@ class BatchAbaqusProcessor:
 		Args:
 			num_parallel_jobs (`int`): Number of parallel jobs to run.
 			output_type (`str`): Type of output, either 'list' or 'dict'.
-				- 'list': Returns a list of results for each calculation.
-					
-					Example:
-					[
-						{
-							'total_mass': 0.000320662622552476,
-							'max_stress_mises': 4525.26025390625,
-							'max_displacement': 4.189039707183838,
-							'status': 'COMPLETED',
-							'job_name': 'test_inp_based_job'
-						},
-						...
-					]
-
-				- 'dict': Returns a dictionary mapping job names to their results.
-
-					Example:
-					{
-						'test_inp_based_job': {
-							'total_mass': 0.000320662622552476,
-							'max_stress_mises': 4525.26025390625,
-							'max_displacement': 4.189039707183838,
-							'status': 'COMPLETED'}
-						...
-					}
 		Returns:
 			list[`dict`] or dict[`str`, `dict`]: results of all calculations.
+
+		Example:
+			>>> processor.run_batch(num_parallel_jobs=4, output_type='list')
+			[
+				{
+					'total_mass': 0.000320662622552476,
+					'max_stress_mises': 4525.26025390625,
+					'max_displacement': 4.189039707183838,
+					'status': 'COMPLETED',
+					'job_name': 'test_inp_based_job'
+				},
+				...
+			]
+
+			>>> processor.run_batch(num_parallel_jobs=4, output_type='dict')
+			{
+				'test_inp_based_job': {
+					'total_mass': 0.000320662622552476,
+					'max_stress_mises': 4525.26025390625,
+					'max_displacement': 4.189039707183838,
+					'status': 'COMPLETED'}
+				...
+			}
+
 		"""
 		total_tasks = len(self.calculations)
 

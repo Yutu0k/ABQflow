@@ -43,29 +43,39 @@ base_job_template = {
 	]
 }
 
+job_w_different_name = {
+	'workflow': 'modular',
+	'job_name': 'test_inp_based_job',
+	'type': 'inp_based',
+	'base_inp_path': './test/test_file/planar_stress_template.inp',
+	'params': {'youngs_modulus': 200000, 'load_magnitude': 2000},
+	
+	'pre_extraction': [
+		{
+			'script_path': './test/test_file/get_total_mass.py',
+			'tasks': [
+				{'result_name': 'total_mass'},
+			]
+		},
+	],
+	'post_extraction': [
+		{
+			'script_path': './test/test_file/get_max_stress_mises.py', 
+			'tasks': [
+				{'result_name': 'max_stress_mises'},
+				{'result_name': 'max_displacement'},
+			]
+		}
+	]
+}
+
 
 CPU_PER_JOB = 4
-BATCH_SIZE = 1
+BATCH_SIZE = 4
 ABAQUS_CAE = 'C:/Applications/SIMULIA/Commands/abaqus.bat'
 OUTPUT_DIR = "C:/SJTU/Projects_Code/24_Abaqus_Pack/test/output"
 
-# @pytest.mark.dependency(name="test_generate_from_array")
-@pytest.mark.skip
-def test_generate_from_array():
-	param_names = ['youngs_modulus', 'load_magnitude']
-	param_values = np.array([
-		[200000, 2000],
-		[210000, 3000],
-		[220000, 4000],
-		[230000, 5000]
-	])
-
-	batch_jobs_data = generate_from_array(param_values, param_names, base_job_template)
-
-	assert len(batch_jobs_data) == 4, "生成的批处理作业数量不正确"
-
 # @pytest.mark.dependency(depends=["test_generate_from_array"])
-@pytest.mark.skip
 def test_run():
 	param_names = ['youngs_modulus', 'load_magnitude']
 	param_values = np.array([
@@ -75,6 +85,8 @@ def test_run():
 
 	batch_jobs_data = generate_from_array(param_values, param_names, base_job_template)
 
+	batch_jobs_data.append(job_w_different_name)
+
 	processor = BatchAbaqusProcessor(
 		batch_data=batch_jobs_data,
 		base_output_dir=OUTPUT_DIR,
@@ -82,6 +94,7 @@ def test_run():
 		cpus_per_job=CPU_PER_JOB,
 	)
 
-	results = processor.run_batch(num_parallel_jobs=BATCH_SIZE)
+	print(len(processor.calculations))
 
+	results = processor.run_batch(num_parallel_jobs=BATCH_SIZE)
 	print(results)

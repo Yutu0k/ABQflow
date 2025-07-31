@@ -53,15 +53,15 @@ BATCH_SIZE = 2
 ABAQUS_CAE = 'C:/Applications/SIMULIA/Commands/abaqus.bat'
 OUTPUT_DIR = "C:/SJTU/Projects_Code/24_Abaqus_Pack/test/output"
 
-processor = BatchAbaqusProcessor(
-	batch_data=test_batch_job,
-	base_output_dir=OUTPUT_DIR,
-	abaqus_exe=ABAQUS_CAE,
-	cpus_per_job= CPU_PER_JOB,
-)
 
 @pytest.mark.skip
 def test_total():
+	processor = BatchAbaqusProcessor(
+		batch_data=test_batch_job,
+		base_output_dir=OUTPUT_DIR,
+		abaqus_exe=ABAQUS_CAE,
+		cpus_per_job= CPU_PER_JOB,
+	)
 	results = processor.run_batch(num_parallel_jobs=BATCH_SIZE)
 	results1 = processor.run_batch(num_parallel_jobs=BATCH_SIZE, output_type='dict')
 	print(results)

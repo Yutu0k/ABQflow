@@ -51,14 +51,16 @@ class JobStatusManager:
 			self._current_status = JobStatus.SIMULATION_SUCCESS
 
 	def record_extraction(self, results: dict):
-		# TODO
 		# 只要有一个结果是None，就认为提取步骤有问题。
 		if any(v is None for v in results.values()):
-			# 即使提取失败，仿真本身也算成功，所以不改变 _is_successful
 			if self._is_successful: 
 				self._current_status = JobStatus.EXTRACTION_FAILED
 				self.error_message = "One or more extraction tasks failed."
 	
 	def get_final_status(self) -> JobStatus:
-		# TODO
-		...
+		if self._is_successful:		# Preparation / Simulation没问题
+			if self._current_status == JobStatus.EXTRACTION_FAILED:
+				return JobStatus.EXTRACTION_FAILED
+			return JobStatus.COMPLETED
+		else:
+			return self._current_status
