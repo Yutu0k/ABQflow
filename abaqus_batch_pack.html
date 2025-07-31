@@ -283,47 +283,34 @@ Args:</p>
 <blockquote>
 <div><p>num_parallel_jobs (<cite>int</cite>): Number of parallel jobs to run.
 output_type (<cite>str</cite>): Type of output, either ‘list’ or ‘dict’.</p>
-<blockquote>
-<div><ul>
-<li><p>‘list’: Returns a list of results for each calculation.</p>
-<blockquote>
-<div><p>Example:
-[</p>
-<blockquote>
-<div><dl class="simple">
-<dt>{</dt><dd><p>‘total_mass’: 0.000320662622552476,
-‘max_stress_mises’: 4525.26025390625,
-‘max_displacement’: 4.189039707183838,
-‘status’: ‘COMPLETED’,
-‘job_name’: ‘test_inp_based_job’</p>
-</dd>
-</dl>
 </div></blockquote>
-<p>]</p>
-</div></blockquote>
-</li>
-<li><p>‘dict’: Returns a dictionary mapping job names to their results.</p>
-<blockquote>
-<div><p>Example:
-{</p>
-<blockquote>
-<div><dl class="simple">
-<dt>‘test_inp_based_job’: {</dt><dd><p>‘total_mass’: 0.000320662622552476,
-‘max_stress_mises’: 4525.26025390625,
-‘max_displacement’: 4.189039707183838,
-‘status’: ‘COMPLETED’}</p>
-</dd>
-</dl>
-<p>…</p>
-</div></blockquote>
-<p>}</p>
-</div></blockquote>
-</li>
-</ul>
-</div></blockquote>
-</div></blockquote>
-<dl class="simple">
+<dl>
 <dt>Returns:</dt><dd><p>list[<cite>dict</cite>] or dict[<cite>str</cite>, <cite>dict</cite>]: results of all calculations.</p>
+</dd>
+<dt>Example:</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;list&#39;</span><span class="p">)</span>
+<span class="go">[</span>
+<span class="go">        {</span>
+<span class="go">                &#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="go">                &#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="go">                &#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="go">                &#39;status&#39;: &#39;COMPLETED&#39;,</span>
+<span class="go">                &#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
+<span class="go">        },</span>
+<span class="go">        ...</span>
+<span class="go">]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">)</span>
+<span class="go">{</span>
+<span class="go">        &#39;test_inp_based_job&#39;: {</span>
+<span class="go">                &#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="go">                &#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="go">                &#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="go">                &#39;status&#39;: &#39;COMPLETED&#39;}</span>
+<span class="go">        ...</span>
+<span class="go">}</span>
+</pre></div>
+</div>
 </dd>
 </dl>
 </dd></dl>

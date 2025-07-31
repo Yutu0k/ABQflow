@@ -698,33 +698,32 @@
 <span class="sd">		Args:</span>
 <span class="sd">			num_parallel_jobs (`int`): Number of parallel jobs to run.</span>
 <span class="sd">			output_type (`str`): Type of output, either &#39;list&#39; or &#39;dict&#39;.</span>
-<span class="sd">				- &#39;list&#39;: Returns a list of results for each calculation.</span>
-<span class="sd">					</span>
-<span class="sd">					Example:</span>
-<span class="sd">					[</span>
-<span class="sd">						{</span>
-<span class="sd">							&#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="sd">							&#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="sd">							&#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="sd">							&#39;status&#39;: &#39;COMPLETED&#39;,</span>
-<span class="sd">							&#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
-<span class="sd">						},</span>
-<span class="sd">						...</span>
-<span class="sd">					]</span>
-
-<span class="sd">				- &#39;dict&#39;: Returns a dictionary mapping job names to their results.</span>
-
-<span class="sd">					Example:</span>
-<span class="sd">					{</span>
-<span class="sd">						&#39;test_inp_based_job&#39;: {</span>
-<span class="sd">							&#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="sd">							&#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="sd">							&#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="sd">							&#39;status&#39;: &#39;COMPLETED&#39;}</span>
-<span class="sd">						...</span>
-<span class="sd">					}</span>
 <span class="sd">		Returns:</span>
 <span class="sd">			list[`dict`] or dict[`str`, `dict`]: results of all calculations.</span>
+
+<span class="sd">		Example:</span>
+<span class="sd">			&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;list&#39;)</span>
+<span class="sd">			[</span>
+<span class="sd">				{</span>
+<span class="sd">					&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">					&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">					&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">					&#39;status&#39;: &#39;COMPLETED&#39;,</span>
+<span class="sd">					&#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
+<span class="sd">				},</span>
+<span class="sd">				...</span>
+<span class="sd">			]</span>
+
+<span class="sd">			&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;dict&#39;)</span>
+<span class="sd">			{</span>
+<span class="sd">				&#39;test_inp_based_job&#39;: {</span>
+<span class="sd">					&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">					&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">					&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">					&#39;status&#39;: &#39;COMPLETED&#39;}</span>
+<span class="sd">				...</span>
+<span class="sd">			}</span>
+
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">total_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">)</span>
 
