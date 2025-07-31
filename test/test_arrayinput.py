@@ -21,6 +21,7 @@ from abaqus_batch_pack.strategies import (
 base_job_template = {
 	'workflow': 'modular',
 	'type': 'inp_based',
+	'job_name': 'inp_based_job',
 	'base_inp_path': './test/test_file/planar_stress_template.inp',
 
 	'pre_extraction': [
@@ -63,7 +64,7 @@ def test_generate_from_array():
 	assert len(batch_jobs_data) == 4, "生成的批处理作业数量不正确"
 
 @pytest.mark.dependency(depends=["test_generate_from_array"])
-def test_run_async():
+def test_run():
 	param_names = ['youngs_modulus', 'load_magnitude']
 	param_values = np.array([
 		[200000, 2000],
@@ -79,6 +80,6 @@ def test_run_async():
 		cpus_per_job=CPU_PER_JOB,
 	)
 
-	results = processor.run_batch_async(num_parallel_jobs=BATCH_SIZE)
+	results = processor.run_batch(num_parallel_jobs=BATCH_SIZE)
 
 	print(results)

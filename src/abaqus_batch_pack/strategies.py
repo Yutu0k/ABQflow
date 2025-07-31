@@ -7,6 +7,8 @@ from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
 	from .abaqus_automation import AbaqusCalculation
 
+from .status import JobStatus, JobStatusManager
+
 # ==================================
 # 准备策略 (Preparation Strategies)
 # ==================================
@@ -360,21 +362,23 @@ class MonolithicWorkflowStrategy(JobWorkflowStrategy):
 		command = [context.abaqus_exe, 'python', self.script_path]
 		for key, value in self.params.items():
 			command.extend([f'--{key}', str(value)])
-		
+
 		try:
 			process = subprocess.run(command, check=True, capture_output=True, text=True, cwd=context.output_dir)
 			results = json.loads(process.stdout)
+			if 'status' not in results:
+				results['status'] = JobStatus.COMPLETED
 			context.logger.info("Monolithic script run successfully.")
 			return results
 		except subprocess.CalledProcessError as e:
 			context.logger.error(f"Monolithic script run failed[Caused by `multiprocessing`]. STDERR:\n{e.stderr}")
-			return {'status': 'MONOLITHIC_SCRIPT_FAILED', 'error': e.stderr}
-		except json.JSONDecodeError:
-			context.logger.error(f"Unable to decode JSON from script output[Caused by script output code]. STDOUT:\n{process.stdout}")
-			return {'status': 'JSON_DECODE_ERROR', 'stdout': process.stdout}
+			return {'status': JobStatus.MONOLITHIC_SCRIPT_FAILED, 'error': e.stderr}
+		except json.JSONDecodeError as e:
+			context.logger.error(f"Unable to decode JSON from script output[Caused by script output code]. STDOUT:\n{getattr(e, 'doc', '')}")
+			return {'status': JobStatus.JSON_DECODE_ERROR, 'error': str(e)}
 		except Exception as e:
 			context.logger.error(f"Script Error[Caused by Abaqus script]: {e}")
-			return {'status': 'SCRIPT_ERROR', 'error': str(e)}
+			return {'status': JobStatus.SCRIPT_ERROR, 'error': str(e)}
 
 class ModularWorkflowStrategy(JobWorkflowStrategy):
 	"""
@@ -409,22 +413,38 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		"""
 
 		context.logger.info("Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...")
+		status_manager = JobStatusManager()
 		all_results = {}
 
+		# 1. Preparation
 		if not self.preparation_strategy.prepare(context):
-			return {'status': 'PREPARATION_FAILED'}
-		
-		for strategy in self.pre_extraction_strategies:
-			all_results.update(strategy.extract(context))
-
-		run_successful = context.run_simulation(cpus=context.cpus_per_job)
-
-		if run_successful:
-			for strategy in self.post_extraction_strategies:
-				all_results.update(strategy.extract(context))
-			if 'status' not in all_results:
-				all_results['status'] = 'COMPLETED'
+			status_manager.record_preparation(success=False)
+			all_results['status'] = status_manager.get_final_status()
+			return all_results
 		else:
-			all_results['status'] = 'SIMULATION_FAILED'
+			status_manager.record_preparation(success=True)
+			
+		# 2. Pre-extraction
+		for strategy in self.pre_extraction_strategies:
+			pre_ext_results = strategy.extract(context)
+			status_manager.record_extraction(pre_ext_results)
+			all_results.update(pre_ext_results)
+
+		# 3. Run simulation
+		run_successful = context.run_simulation(cpus=context.cpus_per_job)
+		if not run_successful:
+			status_manager.record_simulation(success=False)
+			all_results['status'] = status_manager.get_final_status()
+			return all_results
+		else:
+			status_manager.record_simulation(success=True)
+
+		# 4. Post-extraction
+		for strategy in self.post_extraction_strategies:
+			post_ext_results = strategy.extract(context)
+			status_manager.record_extraction(post_ext_results)
+			all_results.update(post_ext_results)
+
+		all_results['status'] = status_manager.get_final_status()
 		
 		return all_results

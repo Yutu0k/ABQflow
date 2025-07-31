@@ -3,7 +3,6 @@ authors = [{name = "yutu0k", email = "yutu0k@sjtu.edu.cn"}]
 dependencies = [
 	"numpy",
 	"abqpy",
-	"tqdm",
 	"rich"
 ]
 name = "abaqus_batch_pack"
@@ -29,10 +28,10 @@ abaqus_batch_pack = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 numpy = "*"
-abqpy = "*"
 pytest = ">=8.4.1,<9"
 sphinx = ">=8.1.3,<9"
 furo = ">=2024.8.6,<2025"
 tqdm = ">=4.67.1,<5"
 rich = ">=14.1.0,<15"
 pytest-dependency = ">=0.5.1,<0.6"
+abqpy = ">=2025.9,<2026"

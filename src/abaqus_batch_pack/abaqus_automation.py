@@ -7,15 +7,16 @@ import functools
 import subprocess
 from multiprocessing import Pool
 
-import pprint as pp
+from pprint import pprint
 import numpy as np
-from tqdm.rich import tqdm
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
 from .strategies import JobWorkflowStrategy
 from .strategies import (ModularWorkflowStrategy, MonolithicWorkflowStrategy, 
 						InpModifyStrategy, ModelGenerationStrategy,
 						OdbExtractionStrategy, ModelPropertiesExtractionStrategy)
-
+from .utils.helpers import check_abqpy_installed
+from .status import JobStatus
 
 class AbaqusCalculation:
 	"""上下文类，持有并调用一个总的工作流策略来完成任务。"""
@@ -83,10 +84,16 @@ class AbaqusCalculation:
 			result_name = hook.pop('result_name')
 			script_path = hook.pop('script_path')
 			
-			if common_args.get('--inp_path'):
+			# 移除对于abqpy的依赖
+			has_abqpy = check_abqpy_installed()
+			if has_abqpy:
 				command = ['python', script_path]
 			else:
-				command = [self.abaqus_exe, 'python', script_path]
+				if common_args.get('--inp_path'):
+					command = [self.abaqus_exe, 'cae noGUI=', script_path]
+				else:
+					command = [self.abaqus_exe, 'python', script_path]
+			
 
 			# 添加通用参数
 			for key, value in common_args.items():
@@ -158,10 +165,15 @@ class AbaqusCalculation:
 			with open(temp_json_path, 'w', encoding='utf-8') as f:
 				json.dump(tasks, f, indent=4)
 
-			if common_args.get('--inp_path'):
+			# 移除对于abqpy的依赖
+			has_abqpy = check_abqpy_installed()
+			if has_abqpy:
 				command = ['python', script_path]
 			else:
-				command = [self.abaqus_exe, 'python', script_path]
+				if common_args.get('--inp_path'):
+					command = [self.abaqus_exe, 'cae noGUI=', script_path]
+				else:
+					command = [self.abaqus_exe, 'python', script_path]
 
 			for key, value in common_args.items():
 				command.extend([key, value])
@@ -241,55 +253,7 @@ class BatchAbaqusProcessor:
 			calcs.append(calc)
 		return calcs
 
-	def run_batch_blocking(self, num_parallel_jobs: int, output_type: str = 'list'):
-		"""
-		Run all calculations in parallel using multiprocessing.
-		Args:
-			num_parallel_jobs (`int`): Number of parallel jobs to run.
-			output_type (`str`): Type of output, either 'list' or 'dict'.
-				- 'list': Returns a list of results for each calculation.
-					
-					Example:
-					[
-						{
-							'total_mass': 0.000320662622552476,
-							'max_stress_mises': 4525.26025390625,
-							'max_displacement': 4.189039707183838,
-							'status': 'COMPLETED',
-							'job_name': 'test_inp_based_job'
-						},
-						...
-					]
-
-				- 'dict': Returns a dictionary mapping job names to their results.
-
-					Example:
-					{
-						'test_inp_based_job': {
-							'total_mass': 0.000320662622552476,
-							'max_stress_mises': 4525.26025390625,
-							'max_displacement': 4.189039707183838,
-							'status': 'COMPLETED'}
-						...
-					}
-		Returns:
-			list[`dict`] or dict[`str`, `dict`]: results of all calculations.
-		"""
-		with Pool(processes=num_parallel_jobs) as pool:
-			results_from_workers = pool.map(_run_workflow_worker, tqdm(self.calculations, desc="Running calculations", unit="job"))
-
-		if output_type == 'dict':
-			return {calc.job_name: result for calc, result in zip(self.calculations, results_from_workers)}
-		elif output_type == 'list':
-			result_list = []
-			for calc, result in zip(self.calculations, results_from_workers):
-				result['job_name'] = calc.job_name
-				result_list.append(result)
-			return result_list
-		else:
-			raise ValueError(f"Unsupported output type: {output_type}. Use 'list' or 'dict'.")
-
-	def run_batch_async(self, num_parallel_jobs: int, output_type: str = 'list'):
+	def run_batch(self, num_parallel_jobs: int, output_type: str = 'list'):
 		"""
 		Run all calculations in parallel using multiprocessing.
 		Args:
@@ -324,10 +288,21 @@ class BatchAbaqusProcessor:
 			list[`dict`] or dict[`str`, `dict`]: results of all calculations.
 		"""
 		total_tasks = len(self.calculations)
+
+		progress_columns = [
+			SpinnerColumn(),
+			TextColumn("[progress.description]{task.description}", justify="right"),
+			BarColumn(),
+			TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+			TextColumn("({task.completed} of {task.total})"),
+			TimeElapsedColumn(),
+		]
 		
-		with tqdm(total=total_tasks, desc="异步任务进度", unit="job") as pbar:
-			success_callback = functools.partial(_log_success_callback, pbar)
-			error_callback = functools.partial(_log_error_callback, pbar)
+		with Progress(*progress_columns) as progress:
+			main_task = progress.add_task("[bold blue]Running calculations...", total=total_tasks)
+
+			success_callback = functools.partial(_log_success_callback, progress, main_task)
+			error_callback = functools.partial(_log_error_callback, progress, main_task)
 
 			pool = Pool(processes=num_parallel_jobs)
 			async_results = []
@@ -364,27 +339,22 @@ class BatchAbaqusProcessor:
 
 # -------------------------------------------------------------
 # Helper functions for multiprocessing
-def _run_workflow_worker(calc_instance: AbaqusCalculation):
-	return calc_instance.execute()
-
 def _run_workflow_worker_async(calc_instance: AbaqusCalculation):
 	results = calc_instance.execute()
 	return (calc_instance.job_name, results)
 
 # Async callbacks
-def _log_success_callback(pbar, result_tuple):
+def _log_success_callback(progress, task_id, result_tuple):
 	job_name, results = result_tuple
-	status = results.get('status', 'N/A')
-	pbar.set_description(f"{job_name} Finished (Status: {status})")
-	pbar.update(1)
+	status = results.get('status', JobStatus.UNKNOWN)
+	progress.update(task_id, advance=1, description=f"{job_name} Finished (Status: {status})")
 
-def _log_error_callback(pbar, exception):
+def _log_error_callback(progress, task_id, exception):
 	# TODO: 不知道什么情况会error
-	pbar.set_description(f"❌ 失败: 一个任务遇到错误 ({type(exception).__name__})")
-	pbar.update(1)
+	progress.update(task_id, advance=1, description=f"❌ 失败: 一个任务遇到错误 ({type(exception).__name__})")
 
 # -------------------------------------------------------------
-
+# Utils for batch job generation and result extraction
 def generate_from_array(samples_array, param_names, base_config) -> list[dict]:
 	"""
 	Generate batch job configurations from a numerical array (numpy or torch).
@@ -410,8 +380,9 @@ def generate_from_array(samples_array, param_names, base_config) -> list[dict]:
 		sample_values = samples_array[i, :]
 		job_params = dict(zip(param_names, sample_values))
 		job_config = base_config.copy()
+		job_name = job_config.pop('job_name', 'job_array_run_')
 		job_config['params'] = job_params
-		job_config['job_name'] = f"job_array_run_{i+1:04d}" # e.g., job_array_run_0001
+		job_config['job_name'] = f"{job_name}_{i+1:04d}" # e.g., job_array_run_0001
 		batch_jobs_data.append(job_config)
 		
 	return batch_jobs_data
