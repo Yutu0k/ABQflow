@@ -573,10 +573,12 @@ def generate_from_array(samples_array, param_names, base_config) -> list[dict]:
 def degenerate_from_array(results, output_names, default_value=np.nan) -> np.ndarray:
 	"""
 	Depack results from a batch job into a 2D numpy array.
+
 	Args:
 		results (`list[dict]`): List of results dictionaries from the batch job.
 		output_names (`list[str]`): List of output names to extract from each result.
 		default_value (optional, default=np.nan): Value to use if an output is missing in a result.
+		
 	Returns:
 		`np.ndarray`: A 2D numpy array where each row corresponds to a job and each column corresponds to an output name.
 	"""

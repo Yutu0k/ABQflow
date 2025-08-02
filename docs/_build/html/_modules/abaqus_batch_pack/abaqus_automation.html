@@ -197,7 +197,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -841,10 +841,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_names</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Depack results from a batch job into a 2D numpy array.</span>
+
 <span class="sd">	Args:</span>
 <span class="sd">		results (`list[dict]`): List of results dictionaries from the batch job.</span>
 <span class="sd">		output_names (`list[str]`): List of output names to extract from each result.</span>
 <span class="sd">		default_value (optional, default=np.nan): Value to use if an output is missing in a result.</span>
+<span class="sd">		</span>
 <span class="sd">	Returns:</span>
 <span class="sd">		`np.ndarray`: A 2D numpy array where each row corresponds to a job and each column corresponds to an output name.</span>
 <span class="sd">	&quot;&quot;&quot;</span>

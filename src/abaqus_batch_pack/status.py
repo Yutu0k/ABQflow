@@ -5,6 +5,9 @@ from enum import Enum
 from typing import Dict, Any
 
 class JobStatus(Enum):
+	"""
+	JobStatus defines the status of a job in the Abaqus batch pack workflow.
+	"""
 	CREATED = "CREATED"
 	COMPLETED = "COMPLETED"
 

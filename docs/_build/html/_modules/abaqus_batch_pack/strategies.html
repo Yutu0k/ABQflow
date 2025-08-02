@@ -197,7 +197,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+  <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -262,16 +262,14 @@
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	`PreparationStrategy` prepares the job with **generating an INP file**.</span>
-<span class="sd">	</span>
-<span class="sd">	Methods Subclass should implement:</span>
-<span class="sd">	- prepare(context: `AbaqusCalculation`): generate one INP file in `context.output_dir`</span>
+<span class="sd">	PreparationStrategy prepares the job with **generating an INP file**.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PreparationStrategy.prepare">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Generate one INP file in `context.output_dir`&quot;&quot;&quot;</span>
 		<span class="k">pass</span></div>
 </div>
 
@@ -283,22 +281,25 @@
 <span class="sd">	Prepare the job by modify a current INP file.</span>
 
 <span class="sd">	Properties in the INP file must be defined as placeholders like {{property_name}}.</span>
-<span class="sd">	</span>
-<span class="sd">	Example</span>
-<span class="sd">	-------</span>
-<span class="sd">	Example INP file::</span>
 
-<span class="sd">		*MATERIAL, NAME=STEEL</span>
-<span class="sd">		*ELASTIC</span>
-<span class="sd">		{{youngs_modulus}}, 0.3</span>
-<span class="sd">		*SOLID SECTION, ELSET=TRUSS, MATERIAL=STEEL</span>
-<span class="sd">		1.0</span>
-<span class="sd">		*STEP, NAME=Step-1</span>
-<span class="sd">		*STATIC</span>
-<span class="sd">		*BOUNDARY</span>
-<span class="sd">		1, 1, 3, 0.</span>
-<span class="sd">		*CLOAD</span>
-<span class="sd">		2, 1, {{load_magnitude}}	</span>
+<span class="sd">	Attributes:</span>
+<span class="sd">		base_inp_path (str): The path to the base INP file.</span>
+<span class="sd">		data_params (dict): A dictionary of parameters to replace in the INP file.</span>
+<span class="sd">	</span>
+<span class="sd">	Example INP file:</span>
+<span class="sd">		.. code-block:: text</span>
+
+<span class="sd">			*MATERIAL, NAME=STEEL</span>
+<span class="sd">			*ELASTIC</span>
+<span class="sd">			{{youngs_modulus}}, 0.3</span>
+<span class="sd">			*SOLID SECTION, ELSET=TRUSS, MATERIAL=STEEL</span>
+<span class="sd">			1.0</span>
+<span class="sd">			*STEP, NAME=Step-1</span>
+<span class="sd">			*STATIC</span>
+<span class="sd">			*BOUNDARY</span>
+<span class="sd">			1, 1, 3, 0.</span>
+<span class="sd">			*CLOAD</span>
+<span class="sd">			2, 1, {{load_magnitude}}</span>
 <span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_inp_path</span><span class="p">,</span> <span class="n">data_params</span><span class="p">):</span>
@@ -330,6 +331,11 @@
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Prepare the job by running a model generation script.</span>
 <span class="sd">	This script should generate an INP file in the `context.output_dir`.</span>
+
+<span class="sd">	Attributes:</span>
+<span class="sd">		model_script_path (str): The path to the model generation script.</span>
+<span class="sd">		script_params (dict): A dictionary of parameters to pass to the script.</span>
+<span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_script_path</span><span class="p">,</span> <span class="n">script_params</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span> <span class="o">=</span> <span class="n">model_script_path</span>
@@ -360,17 +366,12 @@
 <div class="viewcode-block" id="ExtractionStrategy">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	`ExtractionStrategy` defines how to extract results from the simulation.</span>
-
-<span class="sd">	Methods Subclass should implement:</span>
-<span class="sd">	- extract(context: `AbaqusCalculation`): execute the extraction logic and return a dictionary of results.</span>
-<span class="sd">	</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;ExtractionStrategy defines how to extract results from the simulation.&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="ExtractionStrategy.extract">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy.extract">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Execute the extraction logic and return a dictionary of results.&quot;&quot;&quot;</span>
 		<span class="k">pass</span></div>
 </div>
 
@@ -379,57 +380,60 @@
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.OdbExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OdbExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	</span>
 <span class="sd">	Extract results from ODB files using user-defined scripts.</span>
-<span class="sd">	</span>
-<span class="sd">	.. rubric::</span>
 
-<span class="sd">		1.  **执行环境**: `abaqus python` / `python` (if `abaqpy` is installed)</span>
-<span class="sd">		2.  **命令行接口**:</span>
-<span class="sd">			- 必须使用 `argparse` 解析参数</span>
-<span class="sd">			- 必须接收由框架传入的 `--odb_path` 和 `--tasks_json`</span>
-<span class="sd">			- 可以定义任何自定义参数来定位数据(如 `--step`, `--node_label` 等)</span>
-<span class="sd">		3.  **标准输出 (stdout)**:</span>
-<span class="sd">			- 使用`sys.__stdout__.write(json.dumps(result))` 重定向输出</span>
+<span class="sd">	Execution Environment:</span>
+<span class="sd">		- `abaqus python`</span>
+<span class="sd">		- `python` (if `abaqpy` is installed)</span>
+<span class="sd">	Command-line Interface:</span>
+<span class="sd">		- Use `argparse` to parse arguments</span>
+<span class="sd">		- Required:</span>
+<span class="sd">			- `--odb_path`: Path to the ODB file</span>
+<span class="sd">			- `--tasks_json`: Path to a JSON file containing tasks to extract</span>
 
+<span class="sd">	Standard Output:</span>
+<span class="sd">		- Use `sys.__stdout__.write(json.dumps(result))` to redirect output</span>
 
-<span class="sd">	.. Example::</span>
+<span class="sd">	Example:</span>
+<span class="sd">		.. code-block:: python</span>
 
-<span class="sd">		import argparse, sys, json</span>
-<span class="sd">		import odbAccess</span>
+<span class="sd">			import argparse, sys, json</span>
+<span class="sd">			import odbAccess</span>
 
-<span class="sd">		if __name__ == &quot;__main__&quot;:</span>
-<span class="sd">			parser = argparse.ArgumentParser()</span>
-<span class="sd">			parser.add_argument(&#39;--odb_path&#39;, type=str, required=True)</span>
-<span class="sd">			parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
+<span class="sd">			if __name__ == &quot;__main__&quot;:</span>
+<span class="sd">				parser = argparse.ArgumentParser()</span>
+<span class="sd">				parser.add_argument(&#39;--odb_path&#39;, type=str, required=True)</span>
+<span class="sd">				parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
 
-<span class="sd">			# ... add your custom args like --node_label ...</span>
-<span class="sd">			args, unknown = parser.parse_known_args()</span>
-<span class="sd">			extract_with_your_script(args.odb_path, args.tasks_json, **kwargs)</span>
+<span class="sd">				# ... add your custom args like --node_label ...</span>
+<span class="sd">				args, unknown = parser.parse_known_args()</span>
+<span class="sd">				extract_with_your_script(args.odb_path, args.tasks_json, **kwargs)</span>
 
-<span class="sd">		def extract_with_your_script(odb_path, tasks_json, **kwargs):</span>
-<span class="sd">			try:</span>
-<span class="sd">				# Retrieve tasks</span>
-<span class="sd">				with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
-<span class="sd">					task_list = json.load(f)</span>
+<span class="sd">			def extract_with_your_script(odb_path, tasks_json, **kwargs):</span>
+<span class="sd">				try:</span>
+<span class="sd">					# Retrieve tasks</span>
+<span class="sd">					with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
+<span class="sd">						task_list = json.load(f)</span>
 
-<span class="sd">				odb = odbAccess.openOdb(args.odb_path)</span>
+<span class="sd">					odb = odbAccess.openOdb(args.odb_path)</span>
 
-<span class="sd">				for task in task_list:</span>
-<span class="sd">					result_name = task[&#39;result_name&#39;]</span>
-<span class="sd">					try:</span>
-<span class="sd">						results[result_name] = 123.45</span>
-<span class="sd">					except Exception as e:</span>
-<span class="sd">						results[result_name] = None</span>
-<span class="sd">						sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\n&quot;)</span>
-<span class="sd">				</span>
-<span class="sd">				odb.close()</span>
-<span class="sd">				sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\n&quot;)</span>
+<span class="sd">					for task in task_list:</span>
+<span class="sd">						result_name = task[&#39;result_name&#39;]</span>
+<span class="sd">						try:</span>
+<span class="sd">							results[result_name] = 123.45</span>
+<span class="sd">						except Exception as e:</span>
+<span class="sd">							results[result_name] = None</span>
+<span class="sd">							sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\\n&quot;)</span>
+<span class="sd">					</span>
+<span class="sd">					odb.close()</span>
+<span class="sd">					sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\\n&quot;)</span>
 
-<span class="sd">			except Exception as e:</span>
-<span class="sd">				sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\n&quot;)</span>
-<span class="sd">				sys.exit(1)</span>
-<span class="sd">	</span>
-<span class="sd">	</span>
+<span class="sd">				except Exception as e:</span>
+<span class="sd">					sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\\n&quot;)</span>
+<span class="sd">					sys.exit(1)</span>
+<span class="sd">		</span>
+<span class="sd">		</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">):</span>
 		<span class="c1"># hooks:</span>
@@ -482,54 +486,57 @@
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Extract results from INP files using user-defined scripts.</span>
 
-<span class="sd">	.. rubric::</span>
+<span class="sd">	Execution Environment:</span>
+<span class="sd">		- `abaqus cae noGui=...`</span>
+<span class="sd">		- `python` (if `abaqpy` is installed)</span>
 
-<span class="sd">		1.  **执行环境**: `abaqus cae noGui=` / `python` (if `abaqpy` is installed)</span>
-<span class="sd">		2.  **命令行接口**:</span>
-<span class="sd">			- 必须使用 `argparse` 解析参数</span>
-<span class="sd">			- 必须接收由框架传入的 `--inp_path` 和 `--tasks_json` 参数</span>
-<span class="sd">			- 可以定义 `--property` 等自定义参数来指定要提取的属性。</span>
-<span class="sd">		3.  **标准输出 (stdout)**:</span>
-<span class="sd">			- 使用`sys.__stdout__.write(json.dumps(result))` 重定向输出</span>
+<span class="sd">	Command-line Interface:</span>
+<span class="sd">		- Use `argparse` to parse arguments</span>
+<span class="sd">		- Required:</span>
+<span class="sd">			- `--inp_path`</span>
+<span class="sd">			- `--tasks_json`</span>
 
-<span class="sd">	.. Example::</span>
+<span class="sd">	Standard Output:</span>
+<span class="sd">		- Use `sys.__stdout__.write(json.dumps(result))` to redirect output</span>
 
-<span class="sd">		import argparse, sys</span>
-<span class="sd">		from abaqus import mdb</span>
+<span class="sd">	Example:</span>
+<span class="sd">		.. code-block:: python</span>
 
-<span class="sd">		if __name__ == &quot;__main__&quot;:</span>
-<span class="sd">			parser = argparse.ArgumentParser()</span>
-<span class="sd">			parser.add_argument(&#39;--inp_path&#39;, type=str, required=True)</span>
-<span class="sd">			parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
+<span class="sd">			import argparse, sys</span>
+<span class="sd">			from abaqus import mdb</span>
 
-<span class="sd">			# ... add your custom args like --node_label ...</span>
-<span class="sd">			args, unknown = parser.parse_known_args()</span>
-<span class="sd">			extract_with_your_script(args.inp_path, args.tasks_json, **kwargs)</span>
+<span class="sd">			if __name__ == &quot;__main__&quot;:</span>
+<span class="sd">				parser = argparse.ArgumentParser()</span>
+<span class="sd">				parser.add_argument(&#39;--inp_path&#39;, type=str, required=True)</span>
+<span class="sd">				parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
 
-<span class="sd">		def extract_with_your_script(inp_path, tasks_json, **kwargs):</span>
-<span class="sd">			try:</span>
-<span class="sd">				# Retrieve tasks</span>
-<span class="sd">				with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
-<span class="sd">					task_list = json.load(f)</span>
+<span class="sd">				# ... add your custom args like --node_label ...</span>
+<span class="sd">				args, unknown = parser.parse_known_args()</span>
+<span class="sd">				extract_with_your_script(args.inp_path, args.tasks_json, **kwargs)</span>
 
-<span class="sd">				mdb.ModelFromInputFile()</span>
+<span class="sd">			def extract_with_your_script(inp_path, tasks_json, **kwargs):</span>
+<span class="sd">				try:</span>
+<span class="sd">					with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
+<span class="sd">						task_list = json.load(f)</span>
 
-<span class="sd">				for task in task_list:</span>
-<span class="sd">					result_name = task[&#39;result_name&#39;]</span>
-<span class="sd">					try:</span>
-<span class="sd">						results[result_name] = 123.45</span>
-<span class="sd">					except Exception as e:</span>
-<span class="sd">						results[result_name] = None</span>
-<span class="sd">						sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\n&quot;)</span>
-<span class="sd">				</span>
-<span class="sd">				mdb.close()</span>
-<span class="sd">				sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\n&quot;)</span>
+<span class="sd">					mdb.ModelFromInputFile()</span>
 
-<span class="sd">			except Exception as e:</span>
-<span class="sd">				sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\n&quot;)</span>
-<span class="sd">				sys.exit(1)</span>
-<span class="sd">	</span>
+<span class="sd">					for task in task_list:</span>
+<span class="sd">						result_name = task[&#39;result_name&#39;]</span>
+<span class="sd">						try:</span>
+<span class="sd">							results[result_name] = 123.45</span>
+<span class="sd">						except Exception as e:</span>
+<span class="sd">							results[result_name] = None</span>
+<span class="sd">							sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\\n&quot;)</span>
+<span class="sd">					</span>
+<span class="sd">					mdb.close()</span>
+<span class="sd">					sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\\n&quot;)</span>
+
+<span class="sd">				except Exception as e:</span>
+<span class="sd">					sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\\n&quot;)</span>
+<span class="sd">					sys.exit(1)</span>
 <span class="sd">	&quot;&quot;&quot;</span>
+
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">):</span>
 		<span class="c1"># hooks:</span>
 		<span class="c1"># [</span>
@@ -569,7 +576,6 @@
 		<span class="k">return</span> <span class="n">all_results</span></div>
 </div>
 
-	
 
 <span class="c1"># ==================================</span>
 <span class="c1"># 工作流策略 (Workflow Strategies)</span>
@@ -579,15 +585,12 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">JobWorkflowStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Defines the interface for job workflow strategies.</span>
-
-<span class="sd">	Methods Subclass should implement:</span>
-<span class="sd">	- execute(context: `AbaqusCalculation`): execute the complete workflow and return a dictionary of results.</span>
-
 <span class="sd">	&quot;&quot;&quot;</span>
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Execute the complete workflow and return a dictionary of results.&quot;&quot;&quot;</span>
 		<span class="k">pass</span></div>
 </div>
 
@@ -598,58 +601,58 @@
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	MonolithicWorkflowStrategy suites for simple tasks where all operations can be handled in a single script.</span>
 
-<span class="sd">	Operations should include:</span>
+<span class="sd">	Operations include:</span>
 <span class="sd">	- Create part</span>
-<span class="sd">	- Create Materials</span>
-<span class="sd">	- Create Section</span>
-<span class="sd">	- Create Assembly</span>
-<span class="sd">	- Create Step</span>
-<span class="sd">	- Create Load</span>
-<span class="sd">	- Create Mesh</span>
-<span class="sd">	- Run Abaqus Job</span>
+<span class="sd">	- Create materials</span>
+<span class="sd">	- Create section</span>
+<span class="sd">	- Create assembly</span>
+<span class="sd">	- Create step</span>
+<span class="sd">	- Create load</span>
+<span class="sd">	- Create mesh</span>
+<span class="sd">	- Run Abaqus job</span>
 <span class="sd">	- Extract results</span>
 
-<span class="sd">	Refer to [Cantilever Example](https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py) for more details.</span>
+<span class="sd">	Refer to the `Cantilever Example &lt;https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py&gt;`_ for more details.</span>
 
-<span class="sd">	</span>
-<span class="sd">	.. rubric:: </span>
+<span class="sd">	Execution Environment:</span>
+<span class="sd">		- Run with `abaqus cae noGUI=` or `python` (if `abaqpy` is installed)</span>
 
-<span class="sd">	1.  **执行环境**: `abaqus python` / `python` (if `abaqpy` is installed)</span>
-<span class="sd">	2.  **命令行接口**:</span>
-<span class="sd">		- 必须使用 `argparse` 解析参数。</span>
-<span class="sd">		- 必须接收由框架传入的 `--job_name` 参数，并用它来命名Abaqus Job (`mdb.Job(name=...)`)，以确保输出文件（如.odb）命名一致。</span>
-<span class="sd">		- 可以定义并接收任何自定义参数（如--length, --height等）。</span>
-<span class="sd">	3.  **标准输出 (stdout)**:</span>
-<span class="sd">		- 必须是脚本向框架返回数据的**唯一**通道。</span>
-<span class="sd">		- **必须**在成功执行后，打印一个**合法的、单一的JSON字符串**。此JSON应包含所有结果。</span>
-<span class="sd">		- 推荐JSON中包含一个 &#39;status&#39;: &#39;COMPLETED&#39; 键值对。</span>
+<span class="sd">	Command-Line Interface:</span>
+<span class="sd">		- Must use `argparse` to parse arguments</span>
+<span class="sd">		- Must accept a `--job_name` argument passed by the framework, and use it as the name of the Abaqus Job (`mdb.Job(name=...)`)</span>
+<span class="sd">		- May accept any custom arguments (e.g. `--length`, `--height`, etc.)</span>
 
-<span class="sd">	.. Example::</span>
+<span class="sd">	Standard Output (stdout):</span>
+<span class="sd">		- **Must** be the **only** way to return results to the framework</span>
+<span class="sd">		- On successful execution, print a **single valid JSON string**</span>
+<span class="sd">		- It is recommended to include a `&quot;status&quot;: &quot;COMPLETED&quot;` key in the JSON</span>
 
-<span class="sd">		import argparse, json, sys, abaqus</span>
-<span class="sd">		</span>
-<span class="sd">		parser = argparse.ArgumentParser()</span>
-<span class="sd">		parser.add_argument(&#39;--job_name&#39;, required=True)</span>
-<span class="sd">		# --- 添加你自己的参数 ---</span>
-<span class="sd">		parser.add_argument(&#39;--my_param&#39;, type=float, required=True)</span>
-<span class="sd">		args = parser.parse_args()</span>
-<span class="sd">		</span>
-<span class="sd">		try:</span>
-<span class="sd">			# 1. Abaqus 建模...</span>
-<span class="sd">			# 2. 创建并运行 Job, 必须使用 args.job_name</span>
-<span class="sd">			mdb.Job(name=args.job_name, ...)</span>
-<span class="sd">			mdb.jobs[args.job_name].submit()</span>
-<span class="sd">			mdb.jobs[args.job_name].waitForCompletion()</span>
-<span class="sd">			# 3. 打开 ODB 并后处理...</span>
-<span class="sd">			results = {&#39;status&#39;: &#39;COMPLETED&#39;, &#39;my_result&#39;: 123.45}</span>
-<span class="sd">			# 4. 打印 JSON 结果</span>
-<span class="sd">			print(json.dumps(results))</span>
-<span class="sd">		except Exception as e:</span>
-<span class="sd">			print(f&quot;Error: {e}&quot;, file=sys.stderr)</span>
-<span class="sd">			sys.exit(1)</span>
+<span class="sd">	Example:</span>
+<span class="sd">		.. code-block:: python</span>
 
+<span class="sd">			import argparse, json, sys, abaqus</span>
 
+<span class="sd">			parser = argparse.ArgumentParser()</span>
+<span class="sd">			parser.add_argument(&#39;--job_name&#39;, required=True)</span>
+<span class="sd">			# --- Add your own arguments ---</span>
+<span class="sd">			parser.add_argument(&#39;--my_param&#39;, type=float, required=True)</span>
+<span class="sd">			args = parser.parse_args()</span>
+
+<span class="sd">			try:</span>
+<span class="sd">				# 1. Abaqus modeling...</span>
+<span class="sd">				# 2. Create and run job with args.job_name</span>
+<span class="sd">				mdb.Job(name=args.job_name, ...)</span>
+<span class="sd">				mdb.jobs[args.job_name].submit()</span>
+<span class="sd">				mdb.jobs[args.job_name].waitForCompletion()</span>
+<span class="sd">				# 3. Open ODB and post-process...</span>
+<span class="sd">				results = {&#39;status&#39;: &#39;COMPLETED&#39;, &#39;my_result&#39;: 123.45}</span>
+<span class="sd">				# 4. Print JSON result</span>
+<span class="sd">				print(json.dumps(results))</span>
+<span class="sd">			except Exception as e:</span>
+<span class="sd">				print(f&quot;Error: {e}&quot;, file=sys.stderr)</span>
+<span class="sd">				sys.exit(1)</span>
 <span class="sd">	&quot;&quot;&quot;</span>
+
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_path</span> <span class="o">=</span> <span class="n">script_path</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
@@ -697,8 +700,11 @@
 <span class="sd">	ModularWorkflowStrategy is designed to handle complex workflows by separating preparation, job execution and extraction into distinct strategies.</span>
 
 <span class="sd">	Module:</span>
+
 <span class="sd">	- Preparation: Prepare the job and export an INP file ready for Abaqus.</span>
+
 <span class="sd">	- Execution: Run the Abaqus job using the prepared INP file.</span>
+<span class="sd">	</span>
 <span class="sd">	- Extraction: Extract results from INP/ODB file after the job is complete.</span>
 
 <span class="sd">	&quot;&quot;&quot;</span>
