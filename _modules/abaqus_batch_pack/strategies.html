@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>abaqus_batch_pack.strategies - abaqus_batch_pack 0.2.0 documentation</title>
+        <title>abaqus_batch_pack.strategies - abaqus_batch_pack 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">abaqus_batch_pack 0.2.0 documentation</div></a>
+      <a href="../../index.html"><div class="brand">abaqus_batch_pack 0.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">abaqus_batch_pack 0.2.0 documentation</span>
+  <span class="sidebar-brand-text">abaqus_batch_pack 0.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,12 +200,7 @@
   <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.abaqus_automation.html">abaqus_batch_pack.abaqus_automation module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.status.html">abaqus_batch_pack.status module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../source/abaqus_batch_pack.strategies.html">abaqus_batch_pack.strategies module</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
 </ul>
 </li>
 </ul>
@@ -243,525 +238,313 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for abaqus_batch_pack.strategies</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">TYPE_CHECKING</span>
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-	<span class="kn">from</span><span class="w"> </span><span class="nn">.abaqus_automation</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusCalculation</span>
+<span></span><span class="sd">&quot;&quot;&quot;Job workflow strategies — refactored to depend on (JobContext, AbaqusRunner, Logger) only.</span>
 
+<span class="sd">Fixes: B5/B6 (execution environment), B7 (JSON via sentinel), B8 (placeholder validation), B9 (error message).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">extract_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobStatusManager</span>
 
-<span class="c1"># ----------------------- 前处理 -------------------------</span>
+<span class="c1"># Regex for {{placeholder}} in INP files (B8)</span>
+<span class="n">_PLACEHOLDER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{\{(\w+)\}\}&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># ======================== Preparation Strategies ========================</span>
 <div class="viewcode-block" id="PreparationStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	PreparationStrategy prepares the job with **generating an INP file**.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Generate an INP file in ctx.output_dir.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="PreparationStrategy.prepare">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
-	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Generate one INP file in `context.output_dir`&quot;&quot;&quot;</span>
-		<span class="k">pass</span></div>
-</div>
+	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span></div>
+
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span></div>
+
 
 
 <div class="viewcode-block" id="InpModifyStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.InpModifyStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.InpModifyStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Prepare the job by modify a current INP file.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Replace {{placeholders}} in a base INP file. Validates coverage (B8).&quot;&quot;&quot;</span>
 
-<span class="sd">	Properties in the INP file must be defined as placeholders like {{property_name}}.</span>
-
-<span class="sd">	Attributes:</span>
-<span class="sd">		base_inp_path (str): The path to the base INP file.</span>
-<span class="sd">		data_params (dict): A dictionary of parameters to replace in the INP file.</span>
-<span class="sd">	</span>
-<span class="sd">	Example INP file:</span>
-<span class="sd">		.. code-block:: text</span>
-
-<span class="sd">			*MATERIAL, NAME=STEEL</span>
-<span class="sd">			*ELASTIC</span>
-<span class="sd">			{{youngs_modulus}}, 0.3</span>
-<span class="sd">			*SOLID SECTION, ELSET=TRUSS, MATERIAL=STEEL</span>
-<span class="sd">			1.0</span>
-<span class="sd">			*STEP, NAME=Step-1</span>
-<span class="sd">			*STATIC</span>
-<span class="sd">			*BOUNDARY</span>
-<span class="sd">			1, 1, 3, 0.</span>
-<span class="sd">			*CLOAD</span>
-<span class="sd">			2, 1, {{load_magnitude}}</span>
-<span class="sd">	</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_inp_path</span><span class="p">,</span> <span class="n">data_params</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_inp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span> <span class="o">=</span> <span class="n">base_inp_path</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="n">data_params</span>
-	
+
 <div class="viewcode-block" id="InpModifyStrategy.prepare">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.InpModifyStrategy.prepare">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify]: Based on INP file &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.InpModifyStrategy.prepare">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify]: Based on INP file &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span> 
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 				<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-			<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-				<span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{{{</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="se">}}}}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span> 
-				<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully create INP file: </span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">True</span>
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify] failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span></div>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify] failed reading INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+
+		<span class="c1"># B8: detect missing/unused placeholders</span>
+		<span class="n">found</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
+		<span class="n">given</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+		<span class="k">if</span> <span class="n">missing</span> <span class="o">:=</span> <span class="n">found</span> <span class="o">-</span> <span class="n">given</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP placeholders missing parameters: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+		<span class="k">if</span> <span class="n">unused</span> <span class="o">:=</span> <span class="n">given</span> <span class="o">-</span> <span class="n">found</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameters not used in INP: </span><span class="si">{</span><span class="n">unused</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+		<span class="n">content</span> <span class="o">=</span> <span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+			<span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]),</span> <span class="n">content</span><span class="p">)</span>
+
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully created INP file: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">True</span></div>
 </div>
 
 
-<div class="viewcode-block" id="ModelGenerationStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelGenerationStrategy">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ModelGenerationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Prepare the job by running a model generation script.</span>
-<span class="sd">	This script should generate an INP file in the `context.output_dir`.</span>
 
-<span class="sd">	Attributes:</span>
-<span class="sd">		model_script_path (str): The path to the model generation script.</span>
-<span class="sd">		script_params (dict): A dictionary of parameters to pass to the script.</span>
-<span class="sd">	</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_script_path</span><span class="p">,</span> <span class="n">script_params</span><span class="p">):</span>
+<div class="viewcode-block" id="ModelGenerationStrategy">
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelGenerationStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelGenerationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Run a model-generation script to produce an INP file.&quot;&quot;&quot;</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">script_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span> <span class="o">=</span> <span class="n">model_script_path</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_params</span> <span class="o">=</span> <span class="n">script_params</span>
 
 <div class="viewcode-block" id="ModelGenerationStrategy.prepare">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-		<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">]</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="c1"># Model generation needs CAE kernel (mdb) → needs_cae_kernel=True (B6 fix)</span>
+		<span class="n">cmd</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_base_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-			<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
-		<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">job_name</span><span class="p">])</span>
+			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
+		<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">job_name</span><span class="p">])</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully generated model.&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
+			<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+						<span class="n">cwd</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">runner</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully generated model.&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
 		<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration] fail. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration] failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span></div>
 </div>
 
 
 
-
-<span class="c1"># ----------------------- 后处理 -------------------------</span>
+<span class="c1"># ======================== Extraction Strategies ========================</span>
 <div class="viewcode-block" id="ExtractionStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;ExtractionStrategy defines how to extract results from the simulation.&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract results from simulation outputs.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="ExtractionStrategy.extract">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ExtractionStrategy.extract">[docs]</a>
 	<span class="nd">@abstractmethod</span>
-	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Execute the extraction logic and return a dictionary of results.&quot;&quot;&quot;</span>
-		<span class="k">pass</span></div>
-</div>
+	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span></div>
+
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span></div>
+
 
 
 <div class="viewcode-block" id="OdbExtractionStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.OdbExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.OdbExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OdbExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	</span>
-<span class="sd">	Extract results from ODB files using user-defined scripts.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract results from ODB via hook scripts. Uses odbAccess environment.&quot;&quot;&quot;</span>
 
-<span class="sd">	Execution Environment:</span>
-<span class="sd">		- `abaqus python`</span>
-<span class="sd">		- `python` (if `abaqpy` is installed)</span>
-<span class="sd">	Command-line Interface:</span>
-<span class="sd">		- Use `argparse` to parse arguments</span>
-<span class="sd">		- Required:</span>
-<span class="sd">			- `--odb_path`: Path to the ODB file</span>
-<span class="sd">			- `--tasks_json`: Path to a JSON file containing tasks to extract</span>
-
-<span class="sd">	Standard Output:</span>
-<span class="sd">		- Use `sys.__stdout__.write(json.dumps(result))` to redirect output</span>
-
-<span class="sd">	Example:</span>
-<span class="sd">		.. code-block:: python</span>
-
-<span class="sd">			import argparse, sys, json</span>
-<span class="sd">			import odbAccess</span>
-
-<span class="sd">			if __name__ == &quot;__main__&quot;:</span>
-<span class="sd">				parser = argparse.ArgumentParser()</span>
-<span class="sd">				parser.add_argument(&#39;--odb_path&#39;, type=str, required=True)</span>
-<span class="sd">				parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
-
-<span class="sd">				# ... add your custom args like --node_label ...</span>
-<span class="sd">				args, unknown = parser.parse_known_args()</span>
-<span class="sd">				extract_with_your_script(args.odb_path, args.tasks_json, **kwargs)</span>
-
-<span class="sd">			def extract_with_your_script(odb_path, tasks_json, **kwargs):</span>
-<span class="sd">				try:</span>
-<span class="sd">					# Retrieve tasks</span>
-<span class="sd">					with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
-<span class="sd">						task_list = json.load(f)</span>
-
-<span class="sd">					odb = odbAccess.openOdb(args.odb_path)</span>
-
-<span class="sd">					for task in task_list:</span>
-<span class="sd">						result_name = task[&#39;result_name&#39;]</span>
-<span class="sd">						try:</span>
-<span class="sd">							results[result_name] = 123.45</span>
-<span class="sd">						except Exception as e:</span>
-<span class="sd">							results[result_name] = None</span>
-<span class="sd">							sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\\n&quot;)</span>
-<span class="sd">					</span>
-<span class="sd">					odb.close()</span>
-<span class="sd">					sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\\n&quot;)</span>
-
-<span class="sd">				except Exception as e:</span>
-<span class="sd">					sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\\n&quot;)</span>
-<span class="sd">					sys.exit(1)</span>
-<span class="sd">		</span>
-<span class="sd">		</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">):</span>
-		<span class="c1"># hooks:</span>
-		<span class="c1"># [</span>
-		<span class="c1"># 	{</span>
-		<span class="c1"># 		&#39;script_path&#39;: &#39;./test/test_file/get_total_mass.py&#39;,</span>
-		<span class="c1"># 		&#39;tasks&#39;: [</span>
-		<span class="c1"># 			{&#39;result_name&#39;: &#39;total_mass&#39;},</span>
-		<span class="c1"># 		]</span>
-		<span class="c1"># 	},</span>
-		<span class="c1"># ],</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="OdbExtractionStrategy.extract">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [OdbExtract]: Start extracting from ODB...&quot;</span><span class="p">)</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [OdbExtract]: Start extracting from ODB...&quot;</span><span class="p">)</span>
 
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">odb_path</span><span class="p">):</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ODB file does not exist : </span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">odb_path</span><span class="si">}</span><span class="s2">, unable to extract from ODB.&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ODB file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
 				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]:</span>
 					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
-		
+
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-			<span class="c1"># hook:</span>
-			<span class="c1"># {</span>
-			<span class="c1"># 	&#39;result_name&#39;: &#39;max_stress_mises&#39;, </span>
-			<span class="c1"># 	&#39;script_path&#39;: &#39;./get_max_stress_mises.py&#39;, </span>
-			<span class="c1"># }</span>
 			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">]</span>
 			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run ODB hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks in total)&quot;</span><span class="p">)</span>
-			<span class="n">results_from_script</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">_run_single_hook</span><span class="p">(</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run ODB hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
+			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
 				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
 				<span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
-				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">odb_path</span><span class="p">}</span>
-			<span class="p">)</span>
-			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results_from_script</span><span class="p">)</span>
+				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">},</span>
+				<span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>   <span class="c1"># odbAccess, not mdb</span>
+			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">all_results</span></div>
 </div>
+
 
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelPropertiesExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Extract results from INP files using user-defined scripts.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract results from INP via hook scripts. Uses CAE kernel (mdb).&quot;&quot;&quot;</span>
 
-<span class="sd">	Execution Environment:</span>
-<span class="sd">		- `abaqus cae noGui=...`</span>
-<span class="sd">		- `python` (if `abaqpy` is installed)</span>
-
-<span class="sd">	Command-line Interface:</span>
-<span class="sd">		- Use `argparse` to parse arguments</span>
-<span class="sd">		- Required:</span>
-<span class="sd">			- `--inp_path`</span>
-<span class="sd">			- `--tasks_json`</span>
-
-<span class="sd">	Standard Output:</span>
-<span class="sd">		- Use `sys.__stdout__.write(json.dumps(result))` to redirect output</span>
-
-<span class="sd">	Example:</span>
-<span class="sd">		.. code-block:: python</span>
-
-<span class="sd">			import argparse, sys</span>
-<span class="sd">			from abaqus import mdb</span>
-
-<span class="sd">			if __name__ == &quot;__main__&quot;:</span>
-<span class="sd">				parser = argparse.ArgumentParser()</span>
-<span class="sd">				parser.add_argument(&#39;--inp_path&#39;, type=str, required=True)</span>
-<span class="sd">				parser.add_argument(&#39;--tasks_json&#39;, type=str, required=True)</span>
-
-<span class="sd">				# ... add your custom args like --node_label ...</span>
-<span class="sd">				args, unknown = parser.parse_known_args()</span>
-<span class="sd">				extract_with_your_script(args.inp_path, args.tasks_json, **kwargs)</span>
-
-<span class="sd">			def extract_with_your_script(inp_path, tasks_json, **kwargs):</span>
-<span class="sd">				try:</span>
-<span class="sd">					with open(tasks_json_path, &#39;r&#39;, encoding=&#39;utf-8&#39;) as f: </span>
-<span class="sd">						task_list = json.load(f)</span>
-
-<span class="sd">					mdb.ModelFromInputFile()</span>
-
-<span class="sd">					for task in task_list:</span>
-<span class="sd">						result_name = task[&#39;result_name&#39;]</span>
-<span class="sd">						try:</span>
-<span class="sd">							results[result_name] = 123.45</span>
-<span class="sd">						except Exception as e:</span>
-<span class="sd">							results[result_name] = None</span>
-<span class="sd">							sys.__stderr__.write(f&quot;  - Sub-task &#39;{result_name}&#39; failed: {e}\\n&quot;)</span>
-<span class="sd">					</span>
-<span class="sd">					mdb.close()</span>
-<span class="sd">					sys.__stdout__.write(json.dumps(results, indent=4) + &quot;\\n&quot;)</span>
-
-<span class="sd">				except Exception as e:</span>
-<span class="sd">					sys.__stderr__.write(f&quot;Fatal error in xxxx.py: {e}\\n&quot;)</span>
-<span class="sd">					sys.exit(1)</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">):</span>
-		<span class="c1"># hooks:</span>
-		<span class="c1"># [</span>
-		<span class="c1"># 	{</span>
-		<span class="c1"># 		&#39;script_path&#39;: &#39;./test/test_file/get_total_mass.py&#39;,</span>
-		<span class="c1"># 		&#39;tasks&#39;: [</span>
-		<span class="c1"># 			{&#39;result_name&#39;: &#39;total_mass&#39;},</span>
-		<span class="c1"># 		]</span>
-		<span class="c1"># 	},</span>
-		<span class="c1"># ]</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy.extract">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [ModelPropsExtract]: Start extracting from INP...&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP file does not exist: </span><span class="si">{</span><span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">, unable to extract model properties.&quot;</span><span class="p">)</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [ModelPropsExtract]: Start extracting from INP...&quot;</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]:</span> 
+				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]:</span>
 					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
-		
+
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-			<span class="c1"># {</span>
-			<span class="c1"># 	&#39;script_path&#39;: &#39;./test/test_file/get_total_mass.py&#39;,</span>
-			<span class="c1"># 	&#39;tasks&#39;: [</span>
-			<span class="c1"># 		{&#39;result_name&#39;: &#39;total_mass&#39;},</span>
-			<span class="c1"># 	]</span>
-			<span class="c1"># }</span>
-			<span class="n">script_path</span><span class="p">,</span> <span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">],</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run model property hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> jobs in total)&quot;</span><span class="p">)</span>
-			<span class="n">results_from_script</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">_run_single_hook</span><span class="p">(</span><span class="n">script_path</span><span class="p">,</span> <span class="n">tasks</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">:</span> <span class="n">context</span><span class="o">.</span><span class="n">inp_path</span><span class="p">})</span>
-			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results_from_script</span><span class="p">)</span>
+			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">]</span>
+			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run model property hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
+			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
+				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
+				<span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
+				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">},</span>
+				<span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    <span class="c1"># needs mdb</span>
+			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">all_results</span></div>
 </div>
 
 
-<span class="c1"># ==================================</span>
-<span class="c1"># 工作流策略 (Workflow Strategies)</span>
-<span class="c1"># ==================================</span>
+
+<span class="c1"># ======================== Workflow Strategies ========================</span>
+
 <div class="viewcode-block" id="JobWorkflowStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.JobWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobWorkflowStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Defines the interface for job workflow strategies.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Top-level workflow: preparation → extraction → simulation → extraction.&quot;&quot;&quot;</span>
+
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">[docs]</a>
 	<span class="nd">@abstractmethod</span>
-	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Execute the complete workflow and return a dictionary of results.&quot;&quot;&quot;</span>
-		<span class="k">pass</span></div>
-</div>
+	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span></div>
+
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span></div>
+
 
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	MonolithicWorkflowStrategy suites for simple tasks where all operations can be handled in a single script.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Single-script workflow. Execution environment depends on abqpy presence (B5/B6 fix).&quot;&quot;&quot;</span>
 
-<span class="sd">	Operations include:</span>
-<span class="sd">	- Create part</span>
-<span class="sd">	- Create materials</span>
-<span class="sd">	- Create section</span>
-<span class="sd">	- Create assembly</span>
-<span class="sd">	- Create step</span>
-<span class="sd">	- Create load</span>
-<span class="sd">	- Create mesh</span>
-<span class="sd">	- Run Abaqus job</span>
-<span class="sd">	- Extract results</span>
-
-<span class="sd">	Refer to the `Cantilever Example &lt;https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py&gt;`_ for more details.</span>
-
-<span class="sd">	Execution Environment:</span>
-<span class="sd">		- Run with `abaqus cae noGUI=` or `python` (if `abaqpy` is installed)</span>
-
-<span class="sd">	Command-Line Interface:</span>
-<span class="sd">		- Must use `argparse` to parse arguments</span>
-<span class="sd">		- Must accept a `--job_name` argument passed by the framework, and use it as the name of the Abaqus Job (`mdb.Job(name=...)`)</span>
-<span class="sd">		- May accept any custom arguments (e.g. `--length`, `--height`, etc.)</span>
-
-<span class="sd">	Standard Output (stdout):</span>
-<span class="sd">		- **Must** be the **only** way to return results to the framework</span>
-<span class="sd">		- On successful execution, print a **single valid JSON string**</span>
-<span class="sd">		- It is recommended to include a `&quot;status&quot;: &quot;COMPLETED&quot;` key in the JSON</span>
-
-<span class="sd">	Example:</span>
-<span class="sd">		.. code-block:: python</span>
-
-<span class="sd">			import argparse, json, sys, abaqus</span>
-
-<span class="sd">			parser = argparse.ArgumentParser()</span>
-<span class="sd">			parser.add_argument(&#39;--job_name&#39;, required=True)</span>
-<span class="sd">			# --- Add your own arguments ---</span>
-<span class="sd">			parser.add_argument(&#39;--my_param&#39;, type=float, required=True)</span>
-<span class="sd">			args = parser.parse_args()</span>
-
-<span class="sd">			try:</span>
-<span class="sd">				# 1. Abaqus modeling...</span>
-<span class="sd">				# 2. Create and run job with args.job_name</span>
-<span class="sd">				mdb.Job(name=args.job_name, ...)</span>
-<span class="sd">				mdb.jobs[args.job_name].submit()</span>
-<span class="sd">				mdb.jobs[args.job_name].waitForCompletion()</span>
-<span class="sd">				# 3. Open ODB and post-process...</span>
-<span class="sd">				results = {&#39;status&#39;: &#39;COMPLETED&#39;, &#39;my_result&#39;: 123.45}</span>
-<span class="sd">				# 4. Print JSON result</span>
-<span class="sd">				print(json.dumps(results))</span>
-<span class="sd">			except Exception as e:</span>
-<span class="sd">				print(f&quot;Error: {e}&quot;, file=sys.stderr)</span>
-<span class="sd">				sys.exit(1)</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_path</span> <span class="o">=</span> <span class="n">script_path</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
-		<span class="bp">self</span><span class="p">,</span>
-		<span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span>
-	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		Args:</span>
-<span class="sd">			context (`AbaqusCalculation`): A AbaqusCalculation instance</span>
-<span class="sd">		Returns:</span>
-<span class="sd">			`dict`: Dict including results/errors</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Workflow [MonolithicWorkflow]: Run Monolithic Script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-		<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">context</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="p">]</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Workflow [MonolithicWorkflow]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="c1"># B5/B6 fix: monolithic scripts use CAE kernel (mdb), not &#39;abaqus python&#39;</span>
+		<span class="n">cmd</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_base_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-			<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
+			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
 
 		<span class="k">try</span><span class="p">:</span>
-			<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
-			<span class="n">results</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+			<span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+								<span class="n">cwd</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">runner</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+			<span class="n">results</span> <span class="o">=</span> <span class="n">extract_json</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>              <span class="c1"># B7: sentinel-based extraction</span>
 			<span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
 				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monolithic script run successfully.&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monolithic script run successfully.&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="n">results</span>
 		<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Monolithic script run failed[Caused by `multiprocessing`]. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Monolithic script failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># B9: correct message</span>
 			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="p">}</span>
-		<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to decode JSON from script output[Caused by script output code]. STDOUT:</span><span class="se">\n</span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;doc&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to decode JSON from script output. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">JSON_DECODE_ERROR</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Script Error[Caused by Abaqus script]: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Script Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">SCRIPT_ERROR</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span></div>
 </div>
 
 
+
 <div class="viewcode-block" id="ModularWorkflowStrategy">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	ModularWorkflowStrategy is designed to handle complex workflows by separating preparation, job execution and extraction into distinct strategies.</span>
-
-<span class="sd">	Module:</span>
-
-<span class="sd">	- Preparation: Prepare the job and export an INP file ready for Abaqus.</span>
-
-<span class="sd">	- Execution: Run the Abaqus job using the prepared INP file.</span>
-<span class="sd">	</span>
-<span class="sd">	- Extraction: Extract results from INP/ODB file after the job is complete.</span>
-
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Preparation → pre-extraction → simulation → post-extraction.&quot;&quot;&quot;</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">preparation_strategy</span><span class="p">:</span> <span class="n">PreparationStrategy</span><span class="p">,</span>
 		<span class="n">pre_extraction_strategies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="p">],</span>
-		<span class="n">post_extraction_strategies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="p">]</span>
+		<span class="n">post_extraction_strategies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="p">],</span>
 	<span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span> <span class="o">=</span> <span class="n">preparation_strategy</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span> <span class="o">=</span> <span class="n">pre_extraction_strategies</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span> <span class="o">=</span> <span class="n">post_extraction_strategies</span>
 
 <div class="viewcode-block" id="ModularWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
-		<span class="bp">self</span><span class="p">,</span>
-		<span class="n">context</span><span class="p">:</span> <span class="n">AbaqusCalculation</span>
-	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		Args:</span>
-<span class="sd">			context (`AbaqusCalculation`): A AbaqusCalculation instance</span>
-<span class="sd">		Returns:</span>
-<span class="sd">			`dict`: Dict including results/errors</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-
-		<span class="n">context</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...&quot;</span><span class="p">)</span>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...&quot;</span><span class="p">)</span>
 		<span class="n">status_manager</span> <span class="o">=</span> <span class="n">JobStatusManager</span><span class="p">()</span>
-		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">all_results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
 
 		<span class="c1"># 1. Preparation</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
 			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 			<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
 			<span class="k">return</span> <span class="n">all_results</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			
+		<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
 		<span class="c1"># 2. Pre-extraction</span>
 		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span><span class="p">:</span>
-			<span class="n">pre_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+			<span class="n">pre_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
 			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
 
-		<span class="c1"># 3. Run simulation</span>
-		<span class="n">run_successful</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">run_simulation</span><span class="p">(</span><span class="n">cpus</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">)</span>
+		<span class="c1"># 3. Simulation</span>
+		<span class="n">run_successful</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_solver</span><span class="p">()</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">run_successful</span><span class="p">:</span>
 			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 			<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
 			<span class="k">return</span> <span class="n">all_results</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">status_manager</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 		<span class="c1"># 4. Post-extraction</span>
 		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span><span class="p">:</span>
-			<span class="n">post_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+			<span class="n">post_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
 			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
 
 		<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-		
 		<span class="k">return</span> <span class="n">all_results</span></div>
 </div>
 
@@ -797,7 +580,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=7b883671"></script>
+</div><script src="../../_static/documentation_options.js?v=e4caa2eb"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
