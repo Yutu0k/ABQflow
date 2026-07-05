@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="abaqus_batch_pack.status module" href="abaqus_batch_pack.status.html" /><link rel="prev" title="abaqus_batch_pack package" href="abaqus_batch_pack.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>abaqus_batch_pack.abaqus_automation module - abaqus_batch_pack 0.2.0 documentation</title>
+        <title>abaqus_batch_pack.abaqus_automation module - abaqus_batch_pack 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">abaqus_batch_pack 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">abaqus_batch_pack 0.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">abaqus_batch_pack 0.2.0 documentation</span>
+  <span class="sidebar-brand-text">abaqus_batch_pack 0.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -251,122 +251,148 @@
         <article role="main" id="furo-main-content">
           <section id="module-abaqus_batch_pack.abaqus_automation">
 <span id="abaqus-batch-pack-abaqus-automation-module"></span><h1>abaqus_batch_pack.abaqus_automation module<a class="headerlink" href="#module-abaqus_batch_pack.abaqus_automation" title="Link to this heading">¶</a></h1>
+<p>Abaqus batch processing — refactored architecture.</p>
+<p>Thin AbaqusCalculation wrapper, ProcessPoolExecutor + JobOutcome for async (fix Q2),
+plan/prepare split (fix B12), resource planning, JobSpec pipeline.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">AbaqusCalculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><span class="pre">JobWorkflowStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'abaqus'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">AbaqusCalculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abaqus'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>上下文类，持有并调用一个总的工作流策略来完成任务。</p>
+<p>Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.</p>
+<p>No side effects in __init__ (fix B12). Logger is lazy.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute" title="Link to this definition">¶</a></dt>
+<dd><p>使用workflow_strategy跑一个任务(<cite>workflow_strategy.execute()</cite>), return results dict (status + outputs).</p>
+</dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">
-<span class="sig-name descname"><span class="pre">run_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.run_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation" title="Link to this definition">¶</a></dt>
-<dd><p>Use ‘abaqus job=…, input=inp_file, cpus=num_cpu’ to run simulation.</p>
-</dd></dl>
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbaqusProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abaqus'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'interactive'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbaqusProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">batch_data:</span> <span class="pre">list[dict]</span> <span class="pre">|</span> <span class="pre">list[~abaqus_batch_pack.spec.JobSpec],</span> <span class="pre">base_output_dir:</span> <span class="pre">str,</span> <span class="pre">cpus_per_job:</span> <span class="pre">int,</span> <span class="pre">abaqus_exe:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'abaqus',</span> <span class="pre">duplicate_mode:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'fail',</span> <span class="pre">prompt_fn=&lt;built-in</span> <span class="pre">function</span> <span class="pre">input&gt;,</span> <span class="pre">timeout:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Run multiple Abaqus calculations in parallel based on a batch configuration.</p>
+<p>Orchestrate batch Abaqus jobs. plan/prepare/run_batch split (fix B12).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.plan">
+<span class="sig-name descname"><span class="pre">plan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.plan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.plan" title="Link to this definition">¶</a></dt>
+<dd><p>Plan job execution: {job_name: ‘run’|’skip’|’overwrite’<a href="#id1"><span class="problematic" id="id2">|</span></a>new_name}. No directories touched.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.prepare">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.prepare" title="Link to this definition">¶</a></dt>
+<dd><p>Apply plan decisions (rmtree, rename) and build AbaqusCalculation list.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">
-<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'list'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
-<dd><p>Run all calculations in parallel using multiprocessing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>num_parallel_jobs</strong> (<cite>int</cite>) – Number of parallel jobs to run.</p></li>
-<li><p><strong>output_type</strong> (<cite>str</cite>) – Type of output, either ‘list’ or ‘dict’.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>results of all calculations.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list[<cite>dict</cite>] or dict[<cite>str</cite>, <cite>dict</cite>]</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;list&#39;</span><span class="p">)</span>
-<span class="go">[</span>
-<span class="go">        {</span>
-<span class="go">                &#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="go">                &#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="go">                &#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="go">                &#39;status&#39;: &#39;COMPLETED&#39;,</span>
-<span class="go">                &#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
-<span class="go">        },</span>
-<span class="go">        ...</span>
-<span class="go">]</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">processor</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">)</span>
-<span class="go">{</span>
-<span class="go">        &#39;test_inp_based_job&#39;: {</span>
-<span class="go">                &#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="go">                &#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="go">                &#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="go">                &#39;status&#39;: &#39;COMPLETED&#39;}</span>
-<span class="go">        ...</span>
-<span class="go">}</span>
-</pre></div>
-</div>
+<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">license_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="abaqus_batch_pack.abaqus_automation.JobOutcome"><span class="pre">JobOutcome</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
+<dd><p>Execute all calculations. One failure does not affect others (fix Q2-1).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">plan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.plan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd><p>针对batch_data中的每个JobSpec, 检查base_output_dir下是否存在同名目录</p>
+<p>Return {job_name: ‘run’|’skip’|’overwrite’<a href="#id4"><span class="problematic" id="id5">|</span></a>new_name}. No directories touched.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decisions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">¶</a></dt>
+<dd><p>Apply plan decisions (rmtree, rename) and build AbaqusCalculation list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">license_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="abaqus_batch_pack.abaqus_automation.JobOutcome"><span class="pre">JobOutcome</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Link to this definition">¶</a></dt>
+<dd><p>Execute all calculations. One failure does not affect others (fix Q2-1).</p>
 </dd></dl>
 
 </dd></dl>
 
-<dl class="py exception">
-<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbortedError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbortedError</span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbortedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbortedError" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.JobOutcome">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">JobOutcome</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#JobOutcome"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Unified result envelope. Status is always a string (JSON-serializable).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.JobOutcome.error">
+<span class="sig-name descname"><span class="pre">error</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.error" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.JobOutcome.job_name">
+<span class="sig-name descname"><span class="pre">job_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.job_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.JobOutcome.results">
+<span class="sig-name descname"><span class="pre">results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.results" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.JobOutcome.status">
+<span class="sig-name descname"><span class="pre">status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.degenerate_from_array">
-<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">degenerate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#degenerate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array" title="Link to this definition">¶</a></dt>
-<dd><p>Depack results from a batch job into a 2D numpy array.</p>
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">degenerate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="abaqus_batch_pack.abaqus_automation.JobOutcome"><span class="pre">JobOutcome</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">nan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_completed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#degenerate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array" title="Link to this definition">¶</a></dt>
+<dd><p>Extract a 2D array from outcomes. Natural sort, status-aware (fix B16).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.generate_from_array">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">generate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_spec</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobSpec" title="abaqus_batch_pack.spec.JobSpec"><span class="pre">JobSpec</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#generate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.generate_from_array" title="Link to this definition">¶</a></dt>
+<dd><p>Generate JobSpecs from a parameter array. Deep-copies base_spec (fix Q3 shallow copy).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>results</strong> (<cite>list[dict]</cite>) – List of results dictionaries from the batch job.</p></li>
-<li><p><strong>output_names</strong> (<cite>list[str]</cite>) – List of output names to extract from each result.</p></li>
-<li><p><strong>default_value</strong> (<em>optional</em><em>, </em><em>default=np.nan</em>) – Value to use if an output is missing in a result.</p></li>
+<li><p><strong>samples_array</strong> – shape (N, D) — numpy array or torch tensor.</p></li>
+<li><p><strong>param_names</strong> – list of D strings.</p></li>
+<li><p><strong>base_spec</strong> – JobSpec or dict (compat). Each row overrides preparation/monolithic params.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A 2D numpy array where each row corresponds to a job and each column corresponds to an output name.</p>
+<dd class="field-even"><p>N specs with zero-padded names (e.g. job_0001).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>np.ndarray</cite></p>
+<dd class="field-odd"><p>list[<a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobSpec" title="abaqus_batch_pack.JobSpec">JobSpec</a>]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.generate_from_array">
-<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">generate_from_array</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_config</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#generate_from_array"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.generate_from_array" title="Link to this definition">¶</a></dt>
-<dd><p>Generate batch job configurations from a numerical array (numpy or torch).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>samples_array</strong> (<cite>np.ndarray</cite> or <cite>torch.Tensor</cite>) – size (n_samples, n_dim)</p></li>
-<li><p><strong>param_names</strong> (<cite>list[str]</cite>) – A list of strings of length n_dim specifying the parameter names corresponding to each column of the array.</p></li>
-<li><p><strong>base_config</strong> (<cite>dict</cite>) – The base configuration shared by all tasks.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>list of generated batch_jobs_data.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>list[dict]</cite></p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.outcomes_to_dict">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="abaqus_batch_pack.abaqus_automation.JobOutcome"><span class="pre">JobOutcome</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#outcomes_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.outcomes_to_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Convert outcomes to {job_name: {…}} format. Raises on duplicate names (fix B14/B15).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.outcomes_to_list">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome" title="abaqus_batch_pack.abaqus_automation.JobOutcome"><span class="pre">JobOutcome</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#outcomes_to_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.outcomes_to_list" title="Link to this definition">¶</a></dt>
+<dd><p>Convert outcomes to old list-of-dicts format.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.plan_parallelism">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">plan_parallelism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">license_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserve_cores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#plan_parallelism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.plan_parallelism" title="Link to this definition">¶</a></dt>
+<dd><p>Compute actual parallelism from CPU and license constraints.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.solver_tokens">
+<span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">solver_tokens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#solver_tokens"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.solver_tokens" title="Link to this definition">¶</a></dt>
+<dd><p>Abaqus license token formula: T(n) = ceil(5 * n^0.422).</p>
 </dd></dl>
 
 </section>
@@ -429,16 +455,31 @@
 <li><a class="reference internal" href="#">abaqus_batch_pack.abaqus_automation module</a><ul>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation</span></code></a><ul>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.execute()</span></code></a></li>
-<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.run_simulation()</span></code></a></li>
+<li><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.execute()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.plan"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.plan()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.prepare"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.prepare()</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
+<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.plan()</span></code></a></li>
+<li><a class="reference internal" href="#id6"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.prepare()</span></code></a></li>
+<li><a class="reference internal" href="#id7"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbortedError"><code class="docutils literal notranslate"><span class="pre">BatchAbortedError</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome"><code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code></a><ul>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.error"><code class="docutils literal notranslate"><span class="pre">JobOutcome.error</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.job_name"><code class="docutils literal notranslate"><span class="pre">JobOutcome.job_name</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.results"><code class="docutils literal notranslate"><span class="pre">JobOutcome.results</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.JobOutcome.status"><code class="docutils literal notranslate"><span class="pre">JobOutcome.status</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.outcomes_to_dict"><code class="docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.outcomes_to_list"><code class="docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.plan_parallelism"><code class="docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a></li>
+<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.solver_tokens"><code class="docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -450,7 +491,7 @@
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=7b883671"></script>
+</div><script src="../_static/documentation_options.js?v=e4caa2eb"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

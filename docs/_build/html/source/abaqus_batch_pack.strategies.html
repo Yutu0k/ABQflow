@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="abaqus_batch_pack.status module" href="abaqus_batch_pack.status.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>abaqus_batch_pack.strategies module - abaqus_batch_pack 0.2.0 documentation</title>
+        <title>abaqus_batch_pack.strategies module - abaqus_batch_pack 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">abaqus_batch_pack 0.2.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">abaqus_batch_pack 0.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">abaqus_batch_pack 0.2.0 documentation</span>
+  <span class="sidebar-brand-text">abaqus_batch_pack 0.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -251,68 +251,29 @@
         <article role="main" id="furo-main-content">
           <section id="module-abaqus_batch_pack.strategies">
 <span id="abaqus-batch-pack-strategies-module"></span><h1>abaqus_batch_pack.strategies module<a class="headerlink" href="#module-abaqus_batch_pack.strategies" title="Link to this heading">¶</a></h1>
+<p>Job workflow strategies — refactored to depend on (JobContext, AbaqusRunner, Logger) only.</p>
+<p>Fixes: B5/B6 (execution environment), B7 (JSON via sentinel), B8 (placeholder validation), B9 (error message).</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ExtractionStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ExtractionStrategy</span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
-<p>ExtractionStrategy defines how to extract results from the simulation.</p>
+<p>Extract results from simulation outputs.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ExtractionStrategy.extract">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
-<dd><p>Execute the extraction logic and return a dictionary of results.</p>
-</dd></dl>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">InpModifyStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_inp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">InpModifyStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_inp_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
-<p>Prepare the job by modify a current INP file.</p>
-<p>Properties in the INP file must be defined as placeholders like {{property_name}}.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy.base_inp_path">
-<span class="sig-name descname"><span class="pre">base_inp_path</span></span><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy.base_inp_path" title="Link to this definition">¶</a></dt>
-<dd><p>The path to the base INP file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy.data_params">
-<span class="sig-name descname"><span class="pre">data_params</span></span><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy.data_params" title="Link to this definition">¶</a></dt>
-<dd><p>A dictionary of parameters to replace in the INP file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl>
-<dt>Example INP file:</dt><dd><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>*MATERIAL, NAME=STEEL
-*ELASTIC
-{{youngs_modulus}}, 0.3
-*SOLID SECTION, ELSET=TRUSS, MATERIAL=STEEL
-1.0
-*STEP, NAME=Step-1
-*STATIC
-*BOUNDARY
-1, 1, 3, 0.
-*CLOAD
-2, 1, {{load_magnitude}}
-</pre></div>
-</div>
-</dd>
-</dl>
+<p>Replace {{placeholders}} in a base INP file. Validates coverage (B8).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.InpModifyStrategy.prepare">
-<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy.prepare" title="Link to this definition">¶</a></dt>
-<dd><p>Generate one INP file in <cite>context.output_dir</cite></p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#InpModifyStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.InpModifyStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -320,120 +281,35 @@
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.JobWorkflowStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">JobWorkflowStrategy</span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#JobWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
-<p>Defines the interface for job workflow strategies.</p>
+<p>Top-level workflow: preparation → extraction → simulation → extraction.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.JobWorkflowStrategy.execute">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#JobWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
-<dd><p>Execute the complete workflow and return a dictionary of results.</p>
-</dd></dl>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#JobWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelGenerationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelGenerationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_script_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
-<p>Prepare the job by running a model generation script.
-This script should generate an INP file in the <cite>context.output_dir</cite>.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy.model_script_path">
-<span class="sig-name descname"><span class="pre">model_script_path</span></span><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.model_script_path" title="Link to this definition">¶</a></dt>
-<dd><p>The path to the model generation script.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy.script_params">
-<span class="sig-name descname"><span class="pre">script_params</span></span><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.script_params" title="Link to this definition">¶</a></dt>
-<dd><p>A dictionary of parameters to pass to the script.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
+<p>Run a model-generation script to produce an INP file.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare">
-<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare" title="Link to this definition">¶</a></dt>
-<dd><p>Generate one INP file in <cite>context.output_dir</cite></p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelGenerationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelPropertiesExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModelPropertiesExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
-<p>Extract results from INP files using user-defined scripts.</p>
-<dl class="simple">
-<dt>Execution Environment:</dt><dd><ul class="simple">
-<li><p><cite>abaqus cae noGui=…</cite></p></li>
-<li><p><cite>python</cite> (if <cite>abaqpy</cite> is installed)</p></li>
-</ul>
-</dd>
-<dt>Command-line Interface:</dt><dd><ul class="simple">
-<li><p>Use <cite>argparse</cite> to parse arguments</p></li>
-<li><dl class="simple">
-<dt>Required:</dt><dd><ul>
-<li><p><cite>–inp_path</cite></p></li>
-<li><p><cite>–tasks_json</cite></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-<dt>Standard Output:</dt><dd><ul class="simple">
-<li><p>Use <cite>sys.__stdout__.write(json.dumps(result))</cite> to redirect output</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">abaqus</span><span class="w"> </span><span class="kn">import</span> <span class="n">mdb</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># ... add your custom args like --node_label ...</span>
-        <span class="n">args</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
-        <span class="n">extract_with_your_script</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">tasks_json</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_with_your_script</span><span class="p">(</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">tasks_json</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tasks_json_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                        <span class="n">task_list</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-                <span class="n">mdb</span><span class="o">.</span><span class="n">ModelFromInputFile</span><span class="p">()</span>
-
-                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">task_list</span><span class="p">:</span>
-                        <span class="n">result_name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
-                        <span class="k">try</span><span class="p">:</span>
-                                <span class="n">results</span><span class="p">[</span><span class="n">result_name</span><span class="p">]</span> <span class="o">=</span> <span class="mf">123.45</span>
-                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                                <span class="n">results</span><span class="p">[</span><span class="n">result_name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-                                <span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Sub-task &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-                <span class="n">mdb</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fatal error in xxxx.py: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Extract results from INP via hook scripts. Uses CAE kernel (mdb).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract">
-<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
-<dd><p>Execute the extraction logic and return a dictionary of results.</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModelPropertiesExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModelPropertiesExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -441,177 +317,35 @@ This script should generate an INP file in the <cite>context.output_dir</cite>.<
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModularWorkflowStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">ModularWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preparation_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="abaqus_batch_pack.strategies.PreparationStrategy"><span class="pre">PreparationStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_extraction_strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><span class="pre">ExtractionStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_extraction_strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><span class="pre">ExtractionStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModularWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
-<p>ModularWorkflowStrategy is designed to handle complex workflows by separating preparation, job execution and extraction into distinct strategies.</p>
-<p>Module:</p>
-<ul class="simple">
-<li><p>Preparation: Prepare the job and export an INP file ready for Abaqus.</p></li>
-<li><p>Execution: Run the Abaqus job using the prepared INP file.</p></li>
-<li><p>Extraction: Extract results from INP/ODB file after the job is complete.</p></li>
-</ul>
+<p>Preparation → pre-extraction → simulation → post-extraction.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModularWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>context</strong> (<cite>AbaqusCalculation</cite>) – A AbaqusCalculation instance</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dict including results/errors</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>dict</cite></p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#ModularWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.ModularWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.MonolithicWorkflowStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">MonolithicWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">MonolithicWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
-<p>MonolithicWorkflowStrategy suites for simple tasks where all operations can be handled in a single script.</p>
-<p>Operations include:
-- Create part
-- Create materials
-- Create section
-- Create assembly
-- Create step
-- Create load
-- Create mesh
-- Run Abaqus job
-- Extract results</p>
-<p>Refer to the <a class="reference external" href="https://hailin.wang/abqpy/zh_CN/2025/examples/Abaqus/cantilever.html#sphx-glr-examples-abaqus-cantilever-py">Cantilever Example</a> for more details.</p>
-<dl class="simple">
-<dt>Execution Environment:</dt><dd><ul class="simple">
-<li><p>Run with <cite>abaqus cae noGUI=</cite> or <cite>python</cite> (if <cite>abaqpy</cite> is installed)</p></li>
-</ul>
-</dd>
-<dt>Command-Line Interface:</dt><dd><ul class="simple">
-<li><p>Must use <cite>argparse</cite> to parse arguments</p></li>
-<li><p>Must accept a <cite>–job_name</cite> argument passed by the framework, and use it as the name of the Abaqus Job (<cite>mdb.Job(name=…)</cite>)</p></li>
-<li><p>May accept any custom arguments (e.g. <cite>–length</cite>, <cite>–height</cite>, etc.)</p></li>
-</ul>
-</dd>
-<dt>Standard Output (stdout):</dt><dd><ul class="simple">
-<li><p><strong>Must</strong> be the <strong>only</strong> way to return results to the framework</p></li>
-<li><p>On successful execution, print a <strong>single valid JSON string</strong></p></li>
-<li><p>It is recommended to include a <cite>“status”: “COMPLETED”</cite> key in the JSON</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">abaqus</span>
-
-<span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
-<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="c1"># --- Add your own arguments ---</span>
-<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--my_param&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
-
-<span class="k">try</span><span class="p">:</span>
-        <span class="c1"># 1. Abaqus modeling...</span>
-        <span class="c1"># 2. Create and run job with args.job_name</span>
-        <span class="n">mdb</span><span class="o">.</span><span class="n">Job</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
-        <span class="n">mdb</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span><span class="o">.</span><span class="n">submit</span><span class="p">()</span>
-        <span class="n">mdb</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span><span class="o">.</span><span class="n">waitForCompletion</span><span class="p">()</span>
-        <span class="c1"># 3. Open ODB and post-process...</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">,</span> <span class="s1">&#39;my_result&#39;</span><span class="p">:</span> <span class="mf">123.45</span><span class="p">}</span>
-        <span class="c1"># 4. Print JSON result</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">))</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Single-script workflow. Execution environment depends on abqpy presence (B5/B6 fix).</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>context</strong> (<cite>AbaqusCalculation</cite>) – A AbaqusCalculation instance</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Dict including results/errors</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>dict</cite></p>
-</dd>
-</dl>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#MonolithicWorkflowStrategy.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.MonolithicWorkflowStrategy.execute" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.OdbExtractionStrategy">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">OdbExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">OdbExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#abaqus_batch_pack.strategies.ExtractionStrategy" title="abaqus_batch_pack.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
-<p>Extract results from ODB files using user-defined scripts.</p>
-<dl class="simple">
-<dt>Execution Environment:</dt><dd><ul class="simple">
-<li><p><cite>abaqus python</cite></p></li>
-<li><p><cite>python</cite> (if <cite>abaqpy</cite> is installed)</p></li>
-</ul>
-</dd>
-<dt>Command-line Interface:</dt><dd><ul class="simple">
-<li><p>Use <cite>argparse</cite> to parse arguments</p></li>
-<li><dl class="simple">
-<dt>Required:</dt><dd><ul>
-<li><p><cite>–odb_path</cite>: Path to the ODB file</p></li>
-<li><p><cite>–tasks_json</cite>: Path to a JSON file containing tasks to extract</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-<dt>Standard Output:</dt><dd><ul class="simple">
-<li><p>Use <cite>sys.__stdout__.write(json.dumps(result))</cite> to redirect output</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">odbAccess</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-        <span class="c1"># ... add your custom args like --node_label ...</span>
-        <span class="n">args</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">()</span>
-        <span class="n">extract_with_your_script</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">tasks_json</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_with_your_script</span><span class="p">(</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">tasks_json</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-                <span class="c1"># Retrieve tasks</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tasks_json_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                        <span class="n">task_list</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-                <span class="n">odb</span> <span class="o">=</span> <span class="n">odbAccess</span><span class="o">.</span><span class="n">openOdb</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">odb_path</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">task_list</span><span class="p">:</span>
-                        <span class="n">result_name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
-                        <span class="k">try</span><span class="p">:</span>
-                                <span class="n">results</span><span class="p">[</span><span class="n">result_name</span><span class="p">]</span> <span class="o">=</span> <span class="mf">123.45</span>
-                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                                <span class="n">results</span><span class="p">[</span><span class="n">result_name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-                                <span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Sub-task &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-                <span class="n">odb</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">__stderr__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fatal error in xxxx.py: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Extract results from ODB via hook scripts. Uses odbAccess environment.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.OdbExtractionStrategy.extract">
-<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
-<dd><p>Execute the extraction logic and return a dictionary of results.</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">extract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#OdbExtractionStrategy.extract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.OdbExtractionStrategy.extract" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -619,12 +353,11 @@ This script should generate an INP file in the <cite>context.output_dir</cite>.<
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.PreparationStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.strategies.</span></span><span class="sig-name descname"><span class="pre">PreparationStrategy</span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#PreparationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.PreparationStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
-<p>PreparationStrategy prepares the job with <strong>generating an INP file</strong>.</p>
+<p>Generate an INP file in ctx.output_dir.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.strategies.PreparationStrategy.prepare">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="abaqus_batch_pack.abaqus_automation.AbaqusCalculation"><span class="pre">AbaqusCalculation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#PreparationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.PreparationStrategy.prepare" title="Link to this definition">¶</a></dt>
-<dd><p>Generate one INP file in <cite>context.output_dir</cite></p>
-</dd></dl>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.JobContext" title="abaqus_batch_pack.context.JobContext"><span class="pre">JobContext</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.html#abaqus_batch_pack.AbaqusRunner" title="abaqus_batch_pack.runner.AbaqusRunner"><span class="pre">AbaqusRunner</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Logger</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/strategies.html#PreparationStrategy.prepare"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.strategies.PreparationStrategy.prepare" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -683,8 +416,6 @@ This script should generate an INP file in the <cite>context.output_dir</cite>.<
 </ul>
 </li>
 <li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy</span></code></a><ul>
-<li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy.base_inp_path"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy.base_inp_path</span></code></a></li>
-<li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy.data_params"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy.data_params</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.strategies.InpModifyStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy.prepare()</span></code></a></li>
 </ul>
 </li>
@@ -693,8 +424,6 @@ This script should generate an INP file in the <cite>context.output_dir</cite>.<
 </ul>
 </li>
 <li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy</span></code></a><ul>
-<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.model_script_path"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy.model_script_path</span></code></a></li>
-<li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.script_params"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy.script_params</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.strategies.ModelGenerationStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy.prepare()</span></code></a></li>
 </ul>
 </li>
@@ -729,7 +458,7 @@ This script should generate an INP file in the <cite>context.output_dir</cite>.<
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=7b883671"></script>
+</div><script src="../_static/documentation_options.js?v=e4caa2eb"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

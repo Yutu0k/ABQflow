@@ -1,17 +1,69 @@
 abaqus\_batch\_pack package
 ===========================
 
-.. automodule:: abaqus_batch_pack
+Submodules
+----------
+
+abaqus\_batch\_pack.abaqus\_automation module
+---------------------------------------------
+
+.. automodule:: abaqus_batch_pack.abaqus_automation
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+abaqus\_batch\_pack.context module
+----------------------------------
 
-.. toctree::
-   :maxdepth: 4
+.. automodule:: abaqus_batch_pack.context
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   abaqus_batch_pack.abaqus_automation
-   abaqus_batch_pack.status
-   abaqus_batch_pack.strategies
+abaqus\_batch\_pack.registry module
+-----------------------------------
+
+.. automodule:: abaqus_batch_pack.registry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+abaqus\_batch\_pack.runner module
+---------------------------------
+
+.. automodule:: abaqus_batch_pack.runner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+abaqus\_batch\_pack.spec module
+-------------------------------
+
+.. automodule:: abaqus_batch_pack.spec
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+abaqus\_batch\_pack.status module
+---------------------------------
+
+.. automodule:: abaqus_batch_pack.status
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+abaqus\_batch\_pack.strategies module
+-------------------------------------
+
+.. automodule:: abaqus_batch_pack.strategies
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: abaqus_batch_pack
+   :members:
+   :undoc-members:
+   :show-inheritance:

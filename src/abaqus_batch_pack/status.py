@@ -1,18 +1,14 @@
-# A status manager for all Abaqus jobs
-
+"""Job status manager — fixed B1/B2/B3/B4."""
 
 from enum import Enum
-from typing import Dict, Any
+
 
 class JobStatus(Enum):
-	"""
-	JobStatus defines the status of a job in the Abaqus batch pack workflow.
-	"""
 	CREATED = "CREATED"
 	COMPLETED = "COMPLETED"
 
 	PREPARING = "PREPARING"
-	PREPARATION_FAILED = "PREPARING_FAILED"
+	PREPARATION_FAILED = "PREPARATION_FAILED"      # B2: was "PREPARING_FAILED"
 	PREPARATION_SUCCESS = "PREPARATION_SUCCESS"
 
 	SIMULATING = "SIMULATING"
@@ -31,39 +27,57 @@ class JobStatus(Enum):
 	UNKNOWN = "UNKNOWN"
 
 
+# Terminal failure states — once reached, no further state changes allowed (B4)
+_TERMINAL_FAILURES = frozenset({
+	JobStatus.PREPARATION_FAILED,
+	JobStatus.SIMULATION_FAILED,
+	JobStatus.EXTRACTION_FAILED,
+	JobStatus.MONOLITHIC_SCRIPT_FAILED,
+	JobStatus.JSON_DECODE_ERROR,
+	JobStatus.SCRIPT_ERROR,
+	JobStatus.UNKNOWN_ERROR,
+})
+
+
 class JobStatusManager:
 	def __init__(self):
 		self._current_status: JobStatus = JobStatus.CREATED
 		self._is_successful: bool = True
-		self._error_message: str = None
+		self._error_message: str | None = None
+
+	@property
+	def error_message(self) -> str | None:           # B1: read-only accessor on correct field
+		return self._error_message
+
+	def _fail(self, status: JobStatus, msg: str):    # B4: first failure is terminal
+		if self._current_status in _TERMINAL_FAILURES:
+			return
+		self._is_successful = False
+		self._current_status = status
+		self._error_message = msg
 
 	def record_preparation(self, success: bool, error: str = None):
-		if not success:
-			self._is_successful = False
-			self._current_status = JobStatus.PREPARATION_FAILED
-			self.error_message = error or "Preparation step failed."
-		else:
+		if self._current_status in _TERMINAL_FAILURES:
+			return                                 # B4: terminal state protection
+		if success:
 			self._current_status = JobStatus.PREPARATION_SUCCESS
+		else:
+			self._fail(JobStatus.PREPARATION_FAILED, error or "Preparation step failed.")
 
 	def record_simulation(self, success: bool, error: str = None):
-		if not success:
-			self._is_successful = False
-			self._current_status = JobStatus.SIMULATION_FAILED
-			self.error_message = error or "Simulation step failed."
-		else:
+		if self._current_status in _TERMINAL_FAILURES:
+			return                                 # B4: terminal state protection
+		if success:
 			self._current_status = JobStatus.SIMULATION_SUCCESS
+		else:
+			self._fail(JobStatus.SIMULATION_FAILED, error or "Simulation step failed.")
 
 	def record_extraction(self, results: dict):
-		# 只要有一个结果是None，就认为提取步骤有问题。
 		if any(v is None for v in results.values()):
-			if self._is_successful: 
-				self._current_status = JobStatus.EXTRACTION_FAILED
-				self.error_message = "One or more extraction tasks failed."
-	
+			self._fail(JobStatus.EXTRACTION_FAILED,           # B3: extraction failure IS failure
+					"One or more extraction tasks failed.")
+
 	def get_final_status(self) -> JobStatus:
-		if self._is_successful:		# Preparation / Simulation没问题
-			if self._current_status == JobStatus.EXTRACTION_FAILED:
-				return JobStatus.EXTRACTION_FAILED
-			return JobStatus.COMPLETED
-		else:
+		if self._current_status in _TERMINAL_FAILURES:
 			return self._current_status
+		return JobStatus.COMPLETED

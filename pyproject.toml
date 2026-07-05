@@ -8,7 +8,7 @@ dependencies = [
 ]
 name = "abaqus_batch_pack"
 requires-python = ">=3.9"
-version = "0.2.0"
+version = "0.3.0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/abaqus_batch_pack"]
@@ -25,6 +25,9 @@ platforms = ["win-64", "linux-64", "osx-64"]
 abaqus_batch_pack = { path = ".", editable = true }
 
 [tool.pixi.tasks]
+docs-generate = "sphinx-apidoc -o docs/source src/abaqus_batch_pack"
+docs-build = "sphinx-build docs docs/_build/html"
+docs-serve = "python -m http.server -d docs/_build/html 8080"
 
 
 [tool.pixi.dependencies]

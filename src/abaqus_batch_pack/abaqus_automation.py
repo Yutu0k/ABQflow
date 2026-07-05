@@ -1,571 +1,363 @@
-import os
+"""Abaqus batch processing — refactored architecture.
+
+Thin AbaqusCalculation wrapper, ProcessPoolExecutor + JobOutcome for async (fix Q2),
+plan/prepare split (fix B12), resource planning, JobSpec pipeline.
+"""
+
+from __future__ import annotations
+import copy
 import logging
-import json
-import uuid
-import functools
-import sys
-import shutil
+import math
+import os
 import re
+import shutil
+import warnings
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import dataclass
 
-import subprocess
-from multiprocessing import Pool
-
-from pprint import pprint
 import numpy as np
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
-from .strategies import JobWorkflowStrategy
-from .strategies import (ModularWorkflowStrategy, MonolithicWorkflowStrategy, 
-						InpModifyStrategy, ModelGenerationStrategy,
-						OdbExtractionStrategy, ModelPropertiesExtractionStrategy)
-from .utils.helpers import check_abqpy_installed
+from .context import JobContext
+from .registry import build_workflow
+from .runner import AbaqusRunner
+from .spec import JobSpec
 from .status import JobStatus
 
 
-
-# TODO: 
-# [ ] 全部用str在batch_data里面传递不合理，至少要把Strategy独立出来
-# [ ] 异步的处理计算方式
+# ======================== AbaqusCalculation (thin wrapper) ========================
 
 class AbaqusCalculation:
 	"""
-	上下文类，持有并调用一个总的工作流策略来完成任务。
-	
+	Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.
+
+	No side effects in __init__ (fix B12). Logger is lazy.
+
 	Methods
 	-------
-		- execute(): 执行整个工作流, 返回结果字典
-		- run_simulation(cpus): 运行Abaqus仿真
+	execute() -> dict
+		使用workflow_strategy跑一个任务(`workflow_strategy.execute()`), return results dict (status + outputs).
 
-		- _robust_json_extractor(text_output): 从文本输出中提取JSON数据
-		- _run_single_hook(script_path, tasks, common_args): 运行单个提取钩子脚本
-	
-	Properties
-	----------
 
-	
+
 	"""
+
 	def __init__(
 		self,
-		job_name         : str,
-		output_dir       : str,
-		workflow_strategy: JobWorkflowStrategy,
-		cpus_per_job     : int,
-		abaqus_exe       : str = 'abaqus'
+		job_name: str,
+		output_dir: str,
+		workflow_strategy,
+		cpus_per_job: int,
+		abaqus_exe: str = 'abaqus',
+		timeout: float | None = None,
 	):
 		self.job_name = job_name
 		self.output_dir = output_dir
 		self.workflow_strategy = workflow_strategy
 		self.cpus_per_job = cpus_per_job
 		self.abaqus_exe = abaqus_exe
-		
-		self.inp_path = os.path.join(self.output_dir, f"{self.job_name}.inp")
-		self.odb_path = os.path.join(self.output_dir, f"{self.job_name}.odb")
-		self.log_path = os.path.join(self.output_dir, f"{self.job_name}.log")
-		os.makedirs(self.output_dir, exist_ok=True)
-		self.logger = None
+		self.timeout = timeout
+		self.logger: logging.Logger | None = None
 
-	def execute(self):
+		# Build internals
+		self.ctx = JobContext(
+			job_name=job_name,
+			output_dir=output_dir,
+			cpus=cpus_per_job,
+			abaqus_exe=abaqus_exe,
+		)
+		os.makedirs(output_dir, exist_ok=True)
+
+	def execute(self) -> dict:
 		if self.logger is None:
 			self.logger = self._setup_logging()
-		
 		self.logger.info(f"======== [AbaqusCalculation] Start Workflow: {self.job_name} ========")
-		results = self.workflow_strategy.execute(self)
+		runner = AbaqusRunner(self.ctx, self.logger, timeout=self.timeout)
+		results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
 		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished: {self.job_name} ========")
 		return results
 
 	def _setup_logging(self) -> logging.Logger:
 		logger = logging.getLogger(f"AbaqusCalculation_{self.job_name}")
-		
 		if logger.hasHandlers():
 			logger.handlers.clear()
-
 		logger.setLevel(logging.INFO)
-
-		# 日志格式
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-		# 输出文件
-		file_handler = logging.FileHandler(self.log_path, encoding='utf-8')
+		file_handler = logging.FileHandler(self.ctx.log_path, encoding='utf-8')
 		file_handler.setLevel(logging.DEBUG)
 		file_handler.setFormatter(formatter)
 		logger.addHandler(file_handler)
-
 		return logger
 
-	def run_simulation(self, cpus: int) -> bool:
-		"""
-		Use 'abaqus job=..., input=inp_file, cpus=num_cpu' to run simulations.
 
-		Parameters
-		----------
-		cpus: `int`
-			Number of CPUs to use for the simulation.
+# ======================== JobOutcome (fix Q2-1, Q2-4) ========================
 
-		"""
-		self.logger.info(f"======== [AbaqusCalculation] Executor [CLI]: run 'abaqus job={self.job_name}' ========")
-		command = [self.abaqus_exe, 'job=' + self.job_name, 'input=' + self.inp_path, 'cpus=' + str(cpus), 'interactive']
-		try:
-			subprocess.run(command, cwd=self.output_dir, check=True, capture_output=True, text=True)
-			self.logger.info(f"======== [AbaqusCalculation] Job '{self.job_name}' successfully executed. ========")
-			return True
-		except subprocess.CalledProcessError as e:
-			self.logger.error(f"======== [AbaqusCalculation] Job '{self.job_name}' failed. STDERR:\n{e.stderr} ========")
-			return False
+@dataclass
+class JobOutcome:
+	"""Unified result envelope. Status is always a string (JSON-serializable)."""
+	job_name: str
+	status: str          # JobStatus.value string, e.g. "COMPLETED"
+	results: dict | None = None
+	error: str | None = None
 
-	def _robust_json_extractor(self, text_output: str) -> dict:
-		json_start_index = text_output.find('{')
-		if json_start_index == -1:
-			raise ValueError("Unable to find '{'.")
 
-		json_candidate_string = text_output[json_start_index:]
-		
-		try:
-			return json.loads(json_candidate_string)
-		except json.JSONDecodeError as e:
-			# 如果失败（通常是因为尾部有无关数据），利用异常信息来切割出有效部分
-			try:
-				valid_json_part = json_candidate_string[:e.pos]
-				return json.loads(valid_json_part)
-			except json.JSONDecodeError:
-				# 如果这样仍然失败，说明JSON本身格式有问题
-				raise ValueError(f"无法解析截取出的JSON部分: '{valid_json_part[:100]}...'")
+# ======================== Resource planning (fix Q2-2) ========================
 
-	def _run_single_hook(self, script_path: str, tasks: list, common_args: dict) -> dict:
-		"""
-		Run a **single** extraction hook script with **multiple** tasks.
+def solver_tokens(n_cpus: int) -> int:
+	"""Abaqus license token formula: T(n) = ceil(5 * n^0.422)."""
+	return math.ceil(5 * n_cpus ** 0.422)
 
-		Parameters
-		----------
-		script_path: `str`
-			Path to the extraction script.
-		tasks: `list`
-			List of task dictionaries to be passed to the script.
-		common_args: `dict`
-			Common arguments to be passed to the script (e.g., --odb_path, --inp_path).
 
-		Returns
-		-------
-		dict
-			A dictionary mapping each task's 'result_name' to its extracted value.
-		"""
-		if not tasks:
-			return {}
-		
-		# 缺点：需要创建一个临时json文件来传递任务列表
-		temp_json_path = os.path.join(self.output_dir, f"tasks_{uuid.uuid4().hex}.json")
-		
-		try:
-			with open(temp_json_path, 'w', encoding='utf-8') as f:
-				json.dump(tasks, f, indent=4)
+def plan_parallelism(requested: int, cpus_per_job: int,
+					license_tokens: int | None = None,
+					reserve_cores: int = 1) -> int:
+	"""Compute actual parallelism from CPU and license constraints."""
+	total = os.cpu_count() or 1
+	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
+	p = min(requested, p_cpu)
+	if license_tokens is not None:
+		p = min(p, max(1, license_tokens // solver_tokens(cpus_per_job)))
+	if p < requested:
+		logging.getLogger('BatchAbaqusProcessor').warning(
+			f"Parallelism reduced from {requested} to {p} "
+			f"(CPU limit {p_cpu}, tokens per job {solver_tokens(cpus_per_job)})")
+	return p
 
-			# 移除对于abqpy的依赖
-			has_abqpy = check_abqpy_installed()
-			if has_abqpy:
-				command = ['python', script_path]
-			else:
-				if common_args.get('--inp_path'):
-					command = [self.abaqus_exe, 'cae noGUI=', script_path]
-				else:
-					command = [self.abaqus_exe, 'python', script_path]
 
-			for key, value in common_args.items():
-				command.extend([key, value])
-			
-			command.extend(['--tasks_json', temp_json_path])
-			
-			process = subprocess.run(command, check=True, capture_output=True, text=True)
-			
-			out = self._robust_json_extractor(process.stdout)
+# ======================== Worker (fix B18, fix Q2-1) ========================
 
-			return out
+def _worker(calc: AbaqusCalculation) -> JobOutcome:
+	"""Top-level function for ProcessPoolExecutor. Exception → JobOutcome, never propagates."""
+	try:
+		results = calc.execute()
+		raw = results.pop('status', JobStatus.UNKNOWN)
+		status = raw.value if isinstance(raw, JobStatus) else str(raw)
+		return JobOutcome(calc.job_name, status, results)
+	except Exception as e:
+		return JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
+						error=f"{type(e).__name__}: {e}")
 
-		except Exception as e:
-			self.logger.error(f"Run extraction '{script_path}' failed: {e}")
-			stderr_output = getattr(e, 'stderr', 'N/A')
-			stdout_output = getattr(e, 'stdout', 'N/A')
-			self.logger.error(f"Captured stderr:\n{stderr_output}")
-			self.logger.error(f"Captured stdout:\n{stdout_output}")
-			return {task['result_name']: None for task in tasks}
-		finally:
-			if os.path.exists(temp_json_path):
-				os.remove(temp_json_path)		
 
-	# Obselete
-	def _run_extraction_hook_engine(self, hooks: list, common_args: dict) -> dict:
-		"""
-		obselete method, kept for backward compatibility.
-		通用的钩子执行引擎，可以运行任何提取脚本。
-		
-		Args:
-			hooks (`list`): Hooks configuration
-			common_args (`dict`): Common args passed to each hook (--odb_path or --inp_path)
-		"""
-		results = {}
-		for hook in hooks:
-			hook = hook.copy()
-			result_name = hook.pop('result_name')
-			script_path = hook.pop('script_path')
-			
-			# 移除对于abqpy的依赖
-			has_abqpy = check_abqpy_installed()
-			if has_abqpy:
-				command = ['python', script_path]
-			else:
-				if common_args.get('--inp_path'):
-					command = [self.abaqus_exe, 'cae noGUI=', script_path]
-				else:
-					command = [self.abaqus_exe, 'python', script_path]
-			
-
-			# 添加通用参数
-			for key, value in common_args.items():
-				command.extend([key, value])
-			# 添加钩子特定参数
-			for key, value in hook.items():
-				command.extend([f'--{key}', str(value)])
-			
-			try:
-				process = subprocess.run(command, check=True, capture_output=True, text=True)
-				output_str = process.stdout.strip()
-				output_lines = output_str.splitlines()
-				if not output_lines:
-					self.logger.error("The script produced no output on stdout.")
-
-				# Find the numeric result line from the end of the output
-				numeric_result_line = None
-				for line in reversed(output_lines):
-					try:
-						float(line.strip())
-						numeric_result_line = line.strip()
-						break
-					except ValueError:
-						continue
-
-				if numeric_result_line is None:
-					self.logger.error("Could not find a valid numeric value in the script's output.")
-
-				# 5. Convert the found numeric line to a float.
-				results[result_name] = float(numeric_result_line)
-				self.logger.info(f"Extract '{result_name}' successfully with value: {numeric_result_line}")
-
-			except Exception as e:
-				self.logger.error(f"Extract '{result_name}' (script: {script_path}) failed: {e}")
-				self.logger.error(f"Captured full stdout:\n---\n{process.stdout}\n---")
-				self.logger.error(f"Captured full stderr:\n---\n{process.stderr}\n---")
-				results[result_name] = None
-		return results
-	
+# ======================== BatchAbaqusProcessor ========================
 
 class BatchAbaqusProcessor:
-	"""
-	Run multiple Abaqus calculations in parallel based on a batch configuration.
-
-
-	Method
-	------
-		- run_batch(num_parallel_jobs): Run the batch of calculations in parallel.
+	"""Orchestrate batch Abaqus jobs. plan/prepare/run_batch split (fix B12).
+	
+	Methods
+	-------
+	plan() -> dict[str, str]
+		Plan job execution: {job_name: 'run'|'skip'|'overwrite'|new_name}. No directories touched.
+	prepare(decisions: dict[str, str] | None = None)
+		Apply plan decisions (rmtree, rename) and build AbaqusCalculation list.
+	run_batch(num_parallel_jobs: int, license_tokens: int | None = None) -> list[JobOutcome]
+		Execute all calculations. One failure does not affect others (fix Q2-1).
 	
 	"""
+
 	def __init__(
 		self,
-		batch_data:         list[dict],
-		base_output_dir:    str,
-		cpus_per_job:       int,
-		abaqus_exe:         str = 'abaqus',
-		duplicate_mode:     str = 'interactive',
+		batch_data: list[dict] | list[JobSpec],
+		base_output_dir: str,
+		cpus_per_job: int,
+		abaqus_exe: str = 'abaqus',
+		duplicate_mode: str = 'fail',                # B12: 'fail' default, not 'interactive'
+		prompt_fn = input,
+		timeout: float | None = None,
 	):
 		"""
 		Parameters
 		----------
-		batch_data: `list[dict]`
-			List of job configurations. Each dict should contain:
-				- 'job_name': str, name of the job
-				- 'workflow': str, either 'modular' or 'monolithic'
-				- 'type': str, type of preparation ('inp_based' or 'model_generation')
-				- 'base_inp_path': str, path to base .inp file (for inp_based)
-				- 'model_script_path': str, path to model generation script (for model_generation)
-				- 'params': dict, parameters for preparation
-				- 'pre_extraction': list[dict], pre-extraction hooks
-				- 'post_extraction': list[dict], post-extraction hooks
-		base_output_dir: `str`
-			Base directory where all job output directories will be created.
-		cpus_per_job: `int`
-			Number of CPUs to allocate for each job.
-		abaqus_exe: `str`, default = 'abaqus'
+		batch_data: list[dict] | list[JobSpec]
+			JobSpec dicts or JobSpec objects. Each spec is a single Abaqus job.
+		base_output_dir: str
+			Directory where all job subdirectories will be created.
+		cpus_per_job: int
+			Number of CPUs to request for each Abaqus job.
+		abaqus_exe: str, default = 'abaqus'
 			Path to the Abaqus executable.
-		duplicate_mode: `str`, default = 'interactive'
+		duplicate_mode: str, default = 'fail'
 			How to handle existing job directories. Options:
-				- 'fail': abort the batch if any job directory exists.
-				- 'skip': skip jobs with existing directories.
-				- 'overwrite': overwrite existing job directories.
-				- 'interactive': prompt the user for each conflict.
-		
+			- 'fail': raise an error if any job directory exists.
+			- 'skip': skip existing jobs.
+			- 'overwrite': delete existing job directories and run.
+			- 'interactive': prompt the user for each conflict.
+		prompt_fn: callable, default = input
+			Function to call for user input in interactive mode. Should accept a prompt string and return a string.
+		timeout: float | None, default = None
+			Timeout in seconds for each subprocess call. None means no timeout.
 		"""
-		self.batch_data = batch_data
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
 		self.abaqus_exe = abaqus_exe
-
 		self.duplicate_mode = duplicate_mode.lower()
-		self._overwrite_all = None  # None: 未决定, True: 全部覆盖, False: 全部跳过
+		self._prompt = prompt_fn
+		self.timeout = timeout
+
+		# Normalize: accept both dicts and JobSpecs
+		if batch_data and isinstance(batch_data[0], JobSpec):
+			self.specs: list[JobSpec] = batch_data
+		else:
+			self.specs = [JobSpec.from_dict(d) for d in batch_data]
+
+		# Validate: no duplicate names (fix B14)
+		names = [s.job_name for s in self.specs]
+		dup = {n for n in names if names.count(n) > 1}
+		if dup:
+			raise ValueError(f"Duplicate job_name in batch: {sorted(dup)}")
 
 		self._log_path = os.path.join(self.base_output_dir, 'batch_processor.log')
-
 		self.logger = self._setup_logging()
-
-		self.calculations = self._initialize_calculations()
+		self.calculations: list[AbaqusCalculation] | None = None
 
 	def _setup_logging(self) -> logging.Logger:
 		logger = logging.getLogger('BatchAbaqusProcessor')
-		
 		if logger.hasHandlers():
 			logger.handlers.clear()
-
 		logger.setLevel(logging.INFO)
-
-		# 日志格式
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
 		file_handler = logging.FileHandler(self._log_path, mode='a', encoding='utf-8')
-
 		file_handler.setFormatter(formatter)
 		logger.addHandler(file_handler)
-
 		logger.info("======== Batch Processor Start ========")
 		logger.info(f"Duplicate mode: {self.duplicate_mode}")
-
 		return logger
 
 
-	def _get_name_pattern(self, job_name: str) -> tuple[str, bool]:
+
+	# ---- plan: pure computation, no side effects ----
+	def plan(self) -> dict[str, str]:
 		"""
-		Retrieve a pattern for the job name.
+		针对batch_data中的每个JobSpec, 检查base_output_dir下是否存在同名目录
 
-		Examples:
-			>>> _get_name_pattern('job_123')
-			('job_*', True)
-			>>> _get_name_pattern('job')
-			('job', False)
-			>>> _get_name_pattern('job_123_v2')
-			('job_*', True)
-			>>> _get_name_pattern('job_v2')
-			('job_*', True)
-			>>> _get_name_pattern('job_v2_123')
-			('job_v2_*', True)
+		Return {job_name: 'run'|'skip'|'overwrite'|new_name}. No directories touched.
 		"""
-		match = re.match(r'^(.*?)_?(\d+)$', job_name)
-		if match:
-			return f"{match.group(1)}_*", True
-		return job_name, False
+		decisions: dict[str, str] = {}
+		conflicts = [s for s in self.specs
+					if os.path.isdir(os.path.join(self.base_output_dir, s.job_name))]
 
-	def _find_available_job_name(self, original_name: str, base_dir: str) -> str:
-		version = 2
-		while True:
-			new_name = f"{original_name}_v{version}"
-			new_path = os.path.join(base_dir, new_name)
-			if not os.path.isdir(new_path):
-				return new_name
-			version += 1
-		
+		if not conflicts:
+			return {s.job_name: 'run' for s in self.specs}
 
-	def _initialize_calculations(self):
-		# ------------- 1. 检查输出冲突 ------------------------
-		conflicts = [cfg for cfg in self.batch_data if os.path.isdir(os.path.join(self.base_output_dir, cfg['job_name']))]
-		decisions = {} # 存储对每个冲突任务的决策: {'job_name': 'skip' | 'overwrite' | 'new_name'}
-		pattern_decisions = {} # 存储对特定命名模式的决策 {'pattern_name': 'skip' | 'overwrite' | 'rename'}
+		conflict_names = [s.job_name for s in conflicts]
+		self.logger.warning(f"Existing job dirs: {conflict_names}")
 
-		if conflicts:
-			conflict_names = [c['job_name'] for c in conflicts]
-			self.logger.warning(f"Job output directory exists - Num:{len(conflicts)}, Names: {', '.join(conflict_names)}")
+		if self.duplicate_mode == 'fail':
+			raise FileExistsError(
+				f"Mode[fail] — existing jobs: {', '.join(conflict_names)}")
+		if self.duplicate_mode == 'skip':
+			for s in conflicts:
+				decisions[s.job_name] = 'skip'
+		elif self.duplicate_mode == 'overwrite':
+			for s in conflicts:
+				decisions[s.job_name] = 'overwrite'
+		elif self.duplicate_mode == 'interactive':
+			decisions.update(self._interactive_resolve(conflicts))
+		else:
+			raise ValueError(f"Unknown duplicate_mode: {self.duplicate_mode}")
 
-			if self.duplicate_mode == 'fail':
-				raise FileExistsError(f"Mode[Fail] - Batch processing aborted since jobs exist: {', '.join(conflict_names)}")
-			if self.duplicate_mode == 'skip':
-				self.logger.info(f"Mode[Skip] - Skipping existing jobs: {', '.join(conflict_names)}")
-				for name in conflict_names: 
-					decisions[name] = 'skip'
-			if self.duplicate_mode == 'overwrite':
-				self.logger.info(f"Mode[Overwrite] - Overwriting existing jobs: {', '.join(conflict_names)}")
-				for name in conflict_names:
+		# Non-conflicting jobs → run
+		for s in self.specs:
+			if s.job_name not in decisions:
+				decisions[s.job_name] = 'run'
+		return decisions
+
+	def _interactive_resolve(self, conflicts: list[JobSpec]) -> dict[str, str]:
+		decisions: dict[str, str] = {}
+		overwrite_all = skip_all = False
+		for spec in conflicts:
+			name = spec.job_name
+			if overwrite_all:
+				decisions[name] = 'overwrite'
+				continue
+			if skip_all:
+				decisions[name] = 'skip'
+				continue
+
+			while True:
+				resp = self._prompt(
+					f"\n Job '{name}' exists:\n"
+					f"  [o]verwrite  [s]kip  [r]ename  [O]verwrite All  [S]kip All  [A]bort\n"
+					f"  >>> ").strip()
+				if resp == 'o':
 					decisions[name] = 'overwrite'
-			if self.duplicate_mode == 'interactive':
-				overwrite_all, skip_all = False, False
-				for job_config in conflicts:
-					job_name = job_config['job_name']
-					if overwrite_all:
-						decisions[job_name] = 'overwrite'
-						continue
-					if skip_all:
-						decisions[job_name] = 'skip'
-						continue
+					break
+				elif resp == 's':
+					decisions[name] = 'skip'
+					break
+				elif resp == 'r':
+					decisions[name] = self._find_available_name(name)
+					break
+				elif resp == 'O':
+					overwrite_all = True
+					decisions[name] = 'overwrite'
+					break
+				elif resp == 'S':
+					skip_all = True
+					decisions[name] = 'skip'
+					break
+				elif resp.lower() == 'a':
+					raise RuntimeError("User aborted batch processing.")
+		return decisions
 
-					# TODO: _get_name_pattern()意义在于？
-					pattern, has_pattern = self._get_name_pattern(job_name)
-					if has_pattern and pattern in pattern_decisions:
-						decision = pattern_decisions[pattern]
-						if decision == 'skip' or decision == 'overwrite':
-							decisions[job_name] = decision
-						else: # decision is 'rename'
-							decisions[job_name] = self._find_available_job_name(job_name, self.base_output_dir)
-						continue
+	def _find_available_name(self, original: str) -> str:
+		v = 2
+		while True:
+			n = f"{original}_v{v}"
+			if not os.path.isdir(os.path.join(self.base_output_dir, n)):
+				return n
+			v += 1
 
-					while True:
-						prompt = (f"\n Job '{job_name}' already exists. Choose one option from below:\n"
-									f"  [o]verwrite:       overwrite this job\n"
-									f"  [s]kip:            skip this job\n"
-									f"  [r]ename:          rename and run (e.g., '{job_name}_v2')\n"
-									f"  [O]verwrite All:   overwrite all the following jobs\n"
-									f"  [S]kip All:        skip all the following jobs\n"
-									f"  [P]attern:         apply the decisions to similar jobs with '{job_name}'\n"
-									f"  [A]bort:           abort the batch processing\n"
-									f"  >>> ")
-						response = input(prompt).strip()
-						if response == 'o':
-							decisions[job_name] = 'overwrite'
-							break
-						elif response == 's':
-							decisions[job_name] = 'skip'
-							break
-						elif response == 'r':
-							new_name = self._find_available_job_name(job_name, self.base_output_dir)
-							decisions[job_name] = new_name
-							break
-						elif response == 'O':
-							overwrite_all = True
-							decisions[job_name] = 'overwrite'
-							break
-						elif response == 'S':
-							skip_all = True
-							decisions[job_name] = 'skip'
-							break
-						elif response == 'P':
-							while True:
-								sub_prompt = (f"  -> Apply decisions to similar jobs with '{pattern}':\n"
-					  							f"  [o]verwrite all \n"
-												f"  [s]kip all? \n"
-												f"  [r]ename all (e.g., '{pattern.replace('*', '')}_v2')\n"
-												f"  >>> ")
-								sub_res = input(sub_prompt).lower().strip()
-								if sub_res in ['o', 'overwrite']:
-									pattern_decisions[pattern] = 'overwrite'
-									decisions[job_name] = 'overwrite'
-									break
-								elif sub_res in ['s', 'skip']:
-									pattern_decisions[pattern] = 'skip'
-									decisions[job_name] = 'skip'
-									break
-								elif sub_res in ['r', 'rename']:
-									pattern_decisions[pattern] = 'rename'
-									decisions[job_name] = self._find_available_job_name(job_name, self.base_output_dir)
-									break									
-								else: 
-									print("  Invalid input, please try again.")
-							break
-						elif response == 'a':
-							raise ValueError("User aborted the batch processing.")
-						else: 
-							print("Invalid input, please try again.")
 
-		# ------------- 2. 初始化计算实例 ------------------------
+
+	# ---- prepare: apply decisions, build calculations ----
+	def prepare(self, decisions: dict[str, str] | None = None):
+		"""Apply plan decisions (rmtree, rename) and build AbaqusCalculation list."""
+		if decisions is None:
+			decisions = self.plan()
+
 		calcs = []
-
-		for job_config in self.batch_data:
-			original_job_name = job_config['job_name']
-
-			decision = decisions.get(original_job_name)
+		for spec in self.specs:
+			decision = decisions.get(spec.job_name, 'run')
 
 			if decision == 'skip':
-				self.logger.info(f"  - Skipping job: {original_job_name}")
-				continue		
+				self.logger.info(f"  - Skipping: {spec.job_name}")
+				continue
 			elif decision == 'overwrite':
-				self.logger.info(f"  - Overwriting job: {original_job_name} (removing old directory)")
-				shutil.rmtree(os.path.join(self.base_output_dir, original_job_name))			
-			elif decision is not None: # 'new_name'
-				self.logger.info(f"  - Renaming job: {original_job_name} -> {decision}")
-				job_config['job_name'] = decision
+				dirpath = os.path.join(self.base_output_dir, spec.job_name)
+				self.logger.info(f"  - Overwriting: {spec.job_name}")
+				shutil.rmtree(dirpath, ignore_errors=True)
+			elif decision not in ('run', None):
+				# decision is a new name
+				self.logger.info(f"  - Renaming: {spec.job_name} -> {decision}")
+				spec = copy.deepcopy(spec)
+				spec.job_name = decision
 
-
-			workflow_type = job_config.get('workflow', 'modular')
-
-			workflow_strategy: JobWorkflowStrategy
-			if workflow_type == 'modular':
-				prep_type = job_config.get('type', 'inp_based')
-
-				# Preparation strategies
-				if prep_type == 'inp_based':
-					prep_strategy = InpModifyStrategy(job_config['base_inp_path'], job_config['params'])
-				elif prep_type == 'model_generation':
-					prep_strategy = ModelGenerationStrategy(job_config['model_script_path'], job_config['params'])
-				else:
-					raise ValueError(f"Unsupported preparation type: {prep_type}")
-				
-				# Pre & Post extraction strategies
-				pre_extraction_hooks = job_config.get('pre_extraction', [])
-				post_extraction_hooks = job_config.get('post_extraction', [])
-
-				pre_ext_strategies = [ModelPropertiesExtractionStrategy(pre_extraction_hooks)] if pre_extraction_hooks else []
-				post_ext_strategies = [OdbExtractionStrategy(post_extraction_hooks)] if post_extraction_hooks else []
-				
-				# Workflow strategies
-				workflow_strategy = ModularWorkflowStrategy(prep_strategy, pre_ext_strategies, post_ext_strategies)
-			elif workflow_type == 'monolithic':
-				workflow_strategy = MonolithicWorkflowStrategy(job_config['script_path'], job_config['params'])
-			else:
-				raise ValueError(f"Unsupported workflow: {workflow_type}")
-
+			workflow = build_workflow(spec)
 			calc = AbaqusCalculation(
-				job_name=job_config['job_name'],
-				output_dir=os.path.join(self.base_output_dir, job_config['job_name']),
-				workflow_strategy=workflow_strategy,
+				job_name=spec.job_name,
+				output_dir=os.path.join(self.base_output_dir, spec.job_name),
+				workflow_strategy=workflow,
 				cpus_per_job=self.cpus_per_job,
-				abaqus_exe=self.abaqus_exe
+				abaqus_exe=self.abaqus_exe,
+				timeout=self.timeout,
 			)
 			calcs.append(calc)
 
-		self.logger.info("======== Batch Processor Finished ========")
-		return calcs
+		self.calculations = calcs
+		self.logger.info(f"Prepared {len(calcs)} jobs.")
 
-	def run_batch(self, num_parallel_jobs: int, output_type: str = 'list'):
-		"""
-		Run all calculations in parallel using multiprocessing.
-		
-		Parameters
-		----------
-		num_parallel_jobs: `int`
-			Number of parallel jobs to run.
-		output_type: `str`
-			Type of output, either 'list' or 'dict'.
+	# ---- run_batch: ProcessPoolExecutor + fault-tolerant collection ----
+	def run_batch(
+		self,
+		num_parallel_jobs: int,
+		license_tokens: int | None = None
+	) -> list[JobOutcome]:
+		"""Execute all calculations. One failure does not affect others (fix Q2-1)."""
+		if self.calculations is None:
+			self.prepare(self.plan())
 
-		Returns
-		-------
-			list[`dict`] or dict[`str`, `dict`]: results of all calculations.
-
-		Example
-		-------
-		>>> processor.run_batch(num_parallel_jobs=4, output_type='list')
-		[
-			{
-				'total_mass': 0.000320662622552476,
-				'max_stress_mises': 4525.26025390625,
-				'max_displacement': 4.189039707183838,
-				'status': 'COMPLETED',
-				'job_name': 'test_inp_based_job'
-			},
-			...
-		]
-
-		>>> processor.run_batch(num_parallel_jobs=4, output_type='dict')
-		{
-			'test_inp_based_job': {
-				'total_mass': 0.000320662622552476,
-				'max_stress_mises': 4525.26025390625,
-				'max_displacement': 4.189039707183838,
-				'status': 'COMPLETED'}
-			...
-		}
-
-		"""
-		total_tasks = len(self.calculations)
+		p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
+		outcomes: list[JobOutcome] = []
 
 		progress_columns = [
 			SpinnerColumn(),
@@ -575,116 +367,110 @@ class BatchAbaqusProcessor:
 			TextColumn("({task.completed} of {task.total})"),
 			TimeElapsedColumn(),
 		]
-		
-		with Progress(*progress_columns) as progress:
-			main_task = progress.add_task("[bold blue]Running calculations...", total=total_tasks)
 
-			success_callback = functools.partial(_log_success_callback, progress, main_task)
-			error_callback = functools.partial(_log_error_callback, progress, main_task)
+		with Progress(*progress_columns) as progress, \
+			ProcessPoolExecutor(max_workers=p) as pool:
+			task = progress.add_task("[bold blue]Running...", total=len(self.calculations))
+			futures = {pool.submit(_worker, c): c.job_name for c in self.calculations}
 
-			pool = Pool(processes=num_parallel_jobs)
-			async_results = []
-			
-			for calc in self.calculations:
-				res = pool.apply_async(
-					_run_workflow_worker_async, 
-					args=(calc,), 
-					callback=success_callback, 
-					error_callback=error_callback
-				)
-				async_results.append(res)
-				
-			pool.close()
-			pool.join()
-		
-		if output_type == 'dict':
-			final_results = {}
-			for res in async_results:
-				job_name, job_result = res.get()
-				if job_result and isinstance(job_result, dict):
-					final_results[job_name] = job_result
-		elif output_type == 'list':
-			final_results = []
-			for res in async_results:	# res: `multiprocessing.pool.AsyncResult`, use .get() to retrieve the result	
-				job_name, job_result = res.get()
-				if job_result and isinstance(job_result, dict):
-					job_result['job_name'] = job_name
-					final_results.append(job_result)
-		else:
-			raise ValueError(f"Unsupported output type: {output_type}. Use 'list' or 'dict'.")
+			for fut in as_completed(futures):
+				try:
+					oc = fut.result()
+				except Exception as e:
+					oc = JobOutcome(futures[fut], JobStatus.UNKNOWN_ERROR.value,
+									error=str(e))
+				outcomes.append(oc)
+				icon = "✅" if oc.status == "COMPLETED" else "❌"
+				progress.update(task, advance=1,
+								description=f"{icon} {oc.job_name} ({oc.status})")
 
-		
-		return final_results
+		return outcomes
 
-# -------------------------------------------------------------
-# Helper functions for multiprocessing
-def _run_workflow_worker_async(calc_instance: AbaqusCalculation):
-	results = calc_instance.execute()
-	return (calc_instance.job_name, results)
 
-# Async callbacks
-def _log_success_callback(progress, task_id, result_tuple):
-	job_name, results = result_tuple
-	status = results.get('status', JobStatus.UNKNOWN)
-	progress.update(task_id, advance=1, description=f"{job_name} Finished (Status: {status})")
+# ======================== Result conversion ========================
 
-def _log_error_callback(progress, task_id, exception):
-	# TODO: 不知道什么情况会error
-	progress.update(task_id, advance=1, description=f"❌ 失败: 一个任务遇到错误 ({type(exception).__name__})")
+def outcomes_to_list(outcomes: list[JobOutcome]) -> list[dict]:
+	"""Convert outcomes to old list-of-dicts format."""
+	out = []
+	for oc in outcomes:
+		d = {**(oc.results or {}), 'status': oc.status, 'job_name': oc.job_name}
+		if oc.error:
+			d['error'] = oc.error
+		out.append(d)
+	return out
 
-# -------------------------------------------------------------
-# Utils for batch job generation and result extraction
-def generate_from_array(samples_array, param_names, base_config) -> list[dict]:
-	"""
-	Generate batch job configurations from a numerical array (numpy or torch).
+
+def outcomes_to_dict(outcomes: list[JobOutcome]) -> dict[str, dict]:
+	"""Convert outcomes to {job_name: {...}} format. Raises on duplicate names (fix B14/B15)."""
+	out = {}
+	for oc in outcomes:
+		if oc.job_name in out:
+			raise ValueError(f"Duplicate job_name in dict output: {oc.job_name}")
+		d = {**(oc.results or {}), 'status': oc.status}
+		if oc.error:
+			d['error'] = oc.error
+		out[oc.job_name] = d
+	return out
+
+
+# ======================== Array generation / degeneration ========================
+
+def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
+	"""Generate JobSpecs from a parameter array. Deep-copies base_spec (fix Q3 shallow copy).
 
 	Args:
-		samples_array (`np.ndarray` or `torch.Tensor`): size (n_samples, n_dim)
-		param_names (`list[str]`): A list of strings of length n_dim specifying the parameter names corresponding to each column of the array.
-		base_config (`dict`): The base configuration shared by all tasks.
+		samples_array: shape (N, D) — numpy array or torch tensor.
+		param_names: list of D strings.
+		base_spec: JobSpec or dict (compat). Each row overrides preparation/monolithic params.
 
 	Returns:
-		`list[dict]`: list of generated batch_jobs_data.
+		list[JobSpec]: N specs with zero-padded names (e.g. job_0001).
 	"""
-
 	if hasattr(samples_array, 'numpy'):
 		samples_array = samples_array.numpy()
 
-	n_samples, n_dim = samples_array.shape
-	if n_dim != len(param_names):
-		raise ValueError(f"Dim of samples_array ({n_dim}) is not consistent with param_names ({len(param_names)})")
+	n, d = samples_array.shape
+	if d != len(param_names):
+		raise ValueError(f"Dimension mismatch: array has {d} cols, param_names has {len(param_names)}")
 
-	batch_jobs_data = []
-	for i in range(n_samples):
-		sample_values = samples_array[i, :]
-		job_params = dict(zip(param_names, sample_values))
-		job_config = base_config.copy()
-		job_name = job_config.pop('job_name', 'job_array_run_')
-		job_config['params'] = job_params
-		job_config['job_name'] = f"{job_name}_{i+1:04d}" # e.g., job_array_run_0001
-		batch_jobs_data.append(job_config)
-		
-	return batch_jobs_data
+	# Accept both JobSpec and dict
+	if not isinstance(base_spec, JobSpec):
+		base_spec = JobSpec.from_dict(base_spec)
 
-def degenerate_from_array(results, output_names, default_value=np.nan) -> np.ndarray:
-	"""
-	Depack results from a batch job into a 2D numpy array.
+	specs = []
+	for i in range(n):
+		s = copy.deepcopy(base_spec)                                         # fix shallow copy
+		s.job_name = f"{base_spec.job_name}_{i+1:04d}"
+		params = {k: float(v) for k, v in zip(param_names, samples_array[i, :].tolist())}
+		if s.workflow == 'monolithic':
+			s.monolithic_params = params
+		else:
+			if s.preparation is not None:
+				s.preparation.params = params
+		specs.append(s)
+	return specs
 
-	Args:
-		results (`list[dict]`): List of results dictionaries from the batch job.
-		output_names (`list[str]`): List of output names to extract from each result.
-		default_value (optional, default=np.nan): Value to use if an output is missing in a result.
-		
-	Returns:
-		`np.ndarray`: A 2D numpy array where each row corresponds to a job and each column corresponds to an output name.
-	"""
-	if results and 'job_name' in results[0]:
-		# 按 job_name 排序以确保一致的顺序
-		results = sorted(results, key=lambda x: x.get('job_name', ''))
-	
-	output_array = []
-	for job_result in results:
-		output_row = [job_result.get(name, default_value) for name in output_names]
-		output_array.append(output_row)	
-	
-	return np.array(output_array)
+
+def _natural_key(name: str):
+	"""Natural sort: job_2 < job_10."""
+	return [int(t) if t.isdigit() else t for t in re.split(r'(\d+)', name)]
+
+
+def degenerate_from_array(outcomes: list[JobOutcome], output_names: list[str],
+						default_value=np.nan, require_completed: bool = True) -> np.ndarray:
+	"""Extract a 2D array from outcomes. Natural sort, status-aware (fix B16)."""
+	# Sort by natural key on job_name
+	sorted_outcomes = sorted(outcomes, key=lambda o: _natural_key(o.job_name))
+
+	rows = []
+	bad = []
+	for oc in sorted_outcomes:
+		if require_completed and oc.status != "COMPLETED":
+			bad.append(oc.job_name)
+		r = oc.results or {}
+		rows.append([r.get(n, default_value) for n in output_names])
+
+	if bad:
+		warnings.warn(f"{len(bad)} jobs not COMPLETED, rows contain default values: {bad}")
+
+	return np.asarray(rows, dtype=float)
