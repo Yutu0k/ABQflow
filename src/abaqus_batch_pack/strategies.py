@@ -9,15 +9,11 @@ if TYPE_CHECKING:
 
 from .status import JobStatus, JobStatusManager
 
-# ==================================
-# 准备策略 (Preparation Strategies)
-# ==================================
-
+# ----------------------- 前处理 -------------------------
 class PreparationStrategy(ABC):
 	"""
 	PreparationStrategy prepares the job with **generating an INP file**.
 	"""
-
 	@abstractmethod
 	def prepare(self, context: AbaqusCalculation) -> bool:
 		"""Generate one INP file in `context.output_dir`"""
@@ -96,10 +92,9 @@ class ModelGenerationStrategy(PreparationStrategy):
 			context.logger.error(f"Sub Strategy [ModelGeneration] fail. STDERR:\n{e.stderr}")
 			return False
 
-# ==================================
-# 提取策略 (Extraction Strategies)
-# ==================================
 
+
+# ----------------------- 后处理 -------------------------
 class ExtractionStrategy(ABC):
 	"""ExtractionStrategy defines how to extract results from the simulation."""
 	@abstractmethod

@@ -21,12 +21,37 @@ from .strategies import (ModularWorkflowStrategy, MonolithicWorkflowStrategy,
 from .utils.helpers import check_abqpy_installed
 from .status import JobStatus
 
-class BatchAbortedError(Exception):
-	pass
+
+
+# TODO: 
+# [ ] 全部用str在batch_data里面传递不合理，至少要把Strategy独立出来
+# [ ] 异步的处理计算方式
 
 class AbaqusCalculation:
-	"""上下文类，持有并调用一个总的工作流策略来完成任务。"""
-	def __init__(self, job_name, output_dir, workflow_strategy: JobWorkflowStrategy, cpus_per_job: int, abaqus_exe='abaqus'):
+	"""
+	上下文类，持有并调用一个总的工作流策略来完成任务。
+	
+	Methods
+	-------
+		- execute(): 执行整个工作流, 返回结果字典
+		- run_simulation(cpus): 运行Abaqus仿真
+
+		- _robust_json_extractor(text_output): 从文本输出中提取JSON数据
+		- _run_single_hook(script_path, tasks, common_args): 运行单个提取钩子脚本
+	
+	Properties
+	----------
+
+	
+	"""
+	def __init__(
+		self,
+		job_name         : str,
+		output_dir       : str,
+		workflow_strategy: JobWorkflowStrategy,
+		cpus_per_job     : int,
+		abaqus_exe       : str = 'abaqus'
+	):
 		self.job_name = job_name
 		self.output_dir = output_dir
 		self.workflow_strategy = workflow_strategy
@@ -37,43 +62,135 @@ class AbaqusCalculation:
 		self.odb_path = os.path.join(self.output_dir, f"{self.job_name}.odb")
 		self.log_path = os.path.join(self.output_dir, f"{self.job_name}.log")
 		os.makedirs(self.output_dir, exist_ok=True)
-		# self.logger = self._setup_logging()
-		self.logger = None  # 延迟初始化日志记录器
+		self.logger = None
 
 	def execute(self):
 		if self.logger is None:
 			self.logger = self._setup_logging()
 		
-		self.logger.info(f"======== Start Workflow: {self.job_name} ========")
+		self.logger.info(f"======== [AbaqusCalculation] Start Workflow: {self.job_name} ========")
 		results = self.workflow_strategy.execute(self)
-		self.logger.info(f"======== Workflow Finished: {self.job_name} ========")
+		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished: {self.job_name} ========")
 		return results
 
 	def _setup_logging(self) -> logging.Logger:
-		logger = logging.getLogger(self.job_name)
-		logger.setLevel(logging.INFO)
+		logger = logging.getLogger(f"AbaqusCalculation_{self.job_name}")
+		
 		if logger.hasHandlers():
 			logger.handlers.clear()
-		handler = logging.FileHandler(self.log_path)
+
+		logger.setLevel(logging.INFO)
+
+		# 日志格式
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-		handler.setFormatter(formatter)
-		logger.addHandler(handler)
+
+		# 输出文件
+		file_handler = logging.FileHandler(self.log_path, encoding='utf-8')
+		file_handler.setLevel(logging.DEBUG)
+		file_handler.setFormatter(formatter)
+		logger.addHandler(file_handler)
+
 		return logger
 
 	def run_simulation(self, cpus: int) -> bool:
 		"""
-		Use 'abaqus job=..., input=inp_file, cpus=num_cpu' to run simulation.
+		Use 'abaqus job=..., input=inp_file, cpus=num_cpu' to run simulations.
+
+		Parameters
+		----------
+		cpus: `int`
+			Number of CPUs to use for the simulation.
+
 		"""
-		self.logger.info(f"Executor [CLI]: run 'abaqus job={self.job_name}'")
+		self.logger.info(f"======== [AbaqusCalculation] Executor [CLI]: run 'abaqus job={self.job_name}' ========")
 		command = [self.abaqus_exe, 'job=' + self.job_name, 'input=' + self.inp_path, 'cpus=' + str(cpus), 'interactive']
 		try:
 			subprocess.run(command, cwd=self.output_dir, check=True, capture_output=True, text=True)
-			self.logger.info(f"Job '{self.job_name}' successfully executed.")
+			self.logger.info(f"======== [AbaqusCalculation] Job '{self.job_name}' successfully executed. ========")
 			return True
 		except subprocess.CalledProcessError as e:
-			self.logger.error(f"Job '{self.job_name}' failed. STDERR:\n{e.stderr}")
+			self.logger.error(f"======== [AbaqusCalculation] Job '{self.job_name}' failed. STDERR:\n{e.stderr} ========")
 			return False
-	
+
+	def _robust_json_extractor(self, text_output: str) -> dict:
+		json_start_index = text_output.find('{')
+		if json_start_index == -1:
+			raise ValueError("Unable to find '{'.")
+
+		json_candidate_string = text_output[json_start_index:]
+		
+		try:
+			return json.loads(json_candidate_string)
+		except json.JSONDecodeError as e:
+			# 如果失败（通常是因为尾部有无关数据），利用异常信息来切割出有效部分
+			try:
+				valid_json_part = json_candidate_string[:e.pos]
+				return json.loads(valid_json_part)
+			except json.JSONDecodeError:
+				# 如果这样仍然失败，说明JSON本身格式有问题
+				raise ValueError(f"无法解析截取出的JSON部分: '{valid_json_part[:100]}...'")
+
+	def _run_single_hook(self, script_path: str, tasks: list, common_args: dict) -> dict:
+		"""
+		Run a **single** extraction hook script with **multiple** tasks.
+
+		Parameters
+		----------
+		script_path: `str`
+			Path to the extraction script.
+		tasks: `list`
+			List of task dictionaries to be passed to the script.
+		common_args: `dict`
+			Common arguments to be passed to the script (e.g., --odb_path, --inp_path).
+
+		Returns
+		-------
+		dict
+			A dictionary mapping each task's 'result_name' to its extracted value.
+		"""
+		if not tasks:
+			return {}
+		
+		# 缺点：需要创建一个临时json文件来传递任务列表
+		temp_json_path = os.path.join(self.output_dir, f"tasks_{uuid.uuid4().hex}.json")
+		
+		try:
+			with open(temp_json_path, 'w', encoding='utf-8') as f:
+				json.dump(tasks, f, indent=4)
+
+			# 移除对于abqpy的依赖
+			has_abqpy = check_abqpy_installed()
+			if has_abqpy:
+				command = ['python', script_path]
+			else:
+				if common_args.get('--inp_path'):
+					command = [self.abaqus_exe, 'cae noGUI=', script_path]
+				else:
+					command = [self.abaqus_exe, 'python', script_path]
+
+			for key, value in common_args.items():
+				command.extend([key, value])
+			
+			command.extend(['--tasks_json', temp_json_path])
+			
+			process = subprocess.run(command, check=True, capture_output=True, text=True)
+			
+			out = self._robust_json_extractor(process.stdout)
+
+			return out
+
+		except Exception as e:
+			self.logger.error(f"Run extraction '{script_path}' failed: {e}")
+			stderr_output = getattr(e, 'stderr', 'N/A')
+			stdout_output = getattr(e, 'stdout', 'N/A')
+			self.logger.error(f"Captured stderr:\n{stderr_output}")
+			self.logger.error(f"Captured stdout:\n{stdout_output}")
+			return {task['result_name']: None for task in tasks}
+		finally:
+			if os.path.exists(temp_json_path):
+				os.remove(temp_json_path)		
+
+	# Obselete
 	def _run_extraction_hook_engine(self, hooks: list, common_args: dict) -> dict:
 		"""
 		obselete method, kept for backward compatibility.
@@ -138,84 +255,52 @@ class AbaqusCalculation:
 				results[result_name] = None
 		return results
 	
-	def _robust_json_extractor(self, text_output: str) -> dict:
-		json_start_index = text_output.find('{')
-		if json_start_index == -1:
-			raise ValueError("Unable to find '{'.")
-
-		json_candidate_string = text_output[json_start_index:]
-		
-		try:
-			return json.loads(json_candidate_string)
-		except json.JSONDecodeError as e:
-			# 如果失败（通常是因为尾部有无关数据），利用异常信息来切割出有效部分
-			try:
-				valid_json_part = json_candidate_string[:e.pos]
-				return json.loads(valid_json_part)
-			except json.JSONDecodeError:
-				# 如果这样仍然失败，说明JSON本身格式有问题
-				raise ValueError(f"无法解析截取出的JSON部分: '{valid_json_part[:100]}...'")
-
-	def _run_single_hook(self, script_path: str, tasks: list, common_args: dict) -> dict:
-		"""
-		Run a **single** extraction hook script with **multiple** tasks.
-		"""
-		if not tasks:
-			return {}
-		
-		# 缺点：需要创建一个临时json文件来传递任务列表
-		temp_json_path = os.path.join(self.output_dir, f"tasks_{uuid.uuid4().hex}.json")
-		
-		try:
-			with open(temp_json_path, 'w', encoding='utf-8') as f:
-				json.dump(tasks, f, indent=4)
-
-			# 移除对于abqpy的依赖
-			has_abqpy = check_abqpy_installed()
-			if has_abqpy:
-				command = ['python', script_path]
-			else:
-				if common_args.get('--inp_path'):
-					command = [self.abaqus_exe, 'cae noGUI=', script_path]
-				else:
-					command = [self.abaqus_exe, 'python', script_path]
-
-			for key, value in common_args.items():
-				command.extend([key, value])
-			
-			command.extend(['--tasks_json', temp_json_path])
-			
-			process = subprocess.run(command, check=True, capture_output=True, text=True)
-			
-			out = self._robust_json_extractor(process.stdout)
-
-			return out
-
-		except Exception as e:
-			self.logger.error(f"Run extraction '{script_path}' failed: {e}")
-			stderr_output = getattr(e, 'stderr', 'N/A')
-			stdout_output = getattr(e, 'stdout', 'N/A')
-			self.logger.error(f"Captured stderr:\n{stderr_output}")
-			self.logger.error(f"Captured stdout:\n{stdout_output}")
-			return {task['result_name']: None for task in tasks}
-		finally:
-			if os.path.exists(temp_json_path):
-				os.remove(temp_json_path)		
-
-
 
 class BatchAbaqusProcessor:
 	"""
-	Run multiple Abaqus calculations in parallel based on a batch configuration.	
+	Run multiple Abaqus calculations in parallel based on a batch configuration.
+
+
+	Method
+	------
+		- run_batch(num_parallel_jobs): Run the batch of calculations in parallel.
+	
 	"""
 	def __init__(
 		self,
-		batch_data: list[dict],
-		base_output_dir: str,
-		cpus_per_job: int,
-		abaqus_exe: str='abaqus',
-		duplicate_mode: str='interactive',
+		batch_data:         list[dict],
+		base_output_dir:    str,
+		cpus_per_job:       int,
+		abaqus_exe:         str = 'abaqus',
+		duplicate_mode:     str = 'interactive',
 	):
+		"""
+		Parameters
+		----------
+		batch_data: `list[dict]`
+			List of job configurations. Each dict should contain:
+				- 'job_name': str, name of the job
+				- 'workflow': str, either 'modular' or 'monolithic'
+				- 'type': str, type of preparation ('inp_based' or 'model_generation')
+				- 'base_inp_path': str, path to base .inp file (for inp_based)
+				- 'model_script_path': str, path to model generation script (for model_generation)
+				- 'params': dict, parameters for preparation
+				- 'pre_extraction': list[dict], pre-extraction hooks
+				- 'post_extraction': list[dict], post-extraction hooks
+		base_output_dir: `str`
+			Base directory where all job output directories will be created.
+		cpus_per_job: `int`
+			Number of CPUs to allocate for each job.
+		abaqus_exe: `str`, default = 'abaqus'
+			Path to the Abaqus executable.
+		duplicate_mode: `str`, default = 'interactive'
+			How to handle existing job directories. Options:
+				- 'fail': abort the batch if any job directory exists.
+				- 'skip': skip jobs with existing directories.
+				- 'overwrite': overwrite existing job directories.
+				- 'interactive': prompt the user for each conflict.
+		
+		"""
 		self.batch_data = batch_data
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
@@ -224,6 +309,7 @@ class BatchAbaqusProcessor:
 		self.duplicate_mode = duplicate_mode.lower()
 		self._overwrite_all = None  # None: 未决定, True: 全部覆盖, False: 全部跳过
 
+		self._log_path = os.path.join(self.base_output_dir, 'batch_processor.log')
 
 		self.logger = self._setup_logging()
 
@@ -231,20 +317,26 @@ class BatchAbaqusProcessor:
 
 	def _setup_logging(self) -> logging.Logger:
 		logger = logging.getLogger('BatchAbaqusProcessor')
-		logger.setLevel(logging.INFO)
+		
 		if logger.hasHandlers():
 			logger.handlers.clear()
-		log_file_path = os.path.join(self.base_output_dir, 'batch_processor.log')
-		handler = logging.FileHandler(log_file_path, mode='a')
+
+		logger.setLevel(logging.INFO)
+
+		# 日志格式
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-		handler.setFormatter(formatter)
-		logger.addHandler(handler)
+
+		file_handler = logging.FileHandler(self._log_path, mode='a', encoding='utf-8')
+
+		file_handler.setFormatter(formatter)
+		logger.addHandler(file_handler)
 
 		logger.info("======== Batch Processor Start ========")
 		logger.info(f"Duplicate mode: {self.duplicate_mode}")
 
 		return logger
-	
+
+
 	def _get_name_pattern(self, job_name: str) -> tuple[str, bool]:
 		"""
 		Retrieve a pattern for the job name.
@@ -277,7 +369,7 @@ class BatchAbaqusProcessor:
 		
 
 	def _initialize_calculations(self):
-		# 1. 检查输出冲突
+		# ------------- 1. 检查输出冲突 ------------------------
 		conflicts = [cfg for cfg in self.batch_data if os.path.isdir(os.path.join(self.base_output_dir, cfg['job_name']))]
 		decisions = {} # 存储对每个冲突任务的决策: {'job_name': 'skip' | 'overwrite' | 'new_name'}
 		pattern_decisions = {} # 存储对特定命名模式的决策 {'pattern_name': 'skip' | 'overwrite' | 'rename'}
@@ -307,6 +399,7 @@ class BatchAbaqusProcessor:
 						decisions[job_name] = 'skip'
 						continue
 
+					# TODO: _get_name_pattern()意义在于？
 					pattern, has_pattern = self._get_name_pattern(job_name)
 					if has_pattern and pattern in pattern_decisions:
 						decision = pattern_decisions[pattern]
@@ -369,11 +462,11 @@ class BatchAbaqusProcessor:
 									print("  Invalid input, please try again.")
 							break
 						elif response == 'a':
-							raise BatchAbortedError("User aborted the batch processing.")
+							raise ValueError("User aborted the batch processing.")
 						else: 
 							print("Invalid input, please try again.")
 
-		# 2. 初始化计算实例
+		# ------------- 2. 初始化计算实例 ------------------------
 		calcs = []
 
 		for job_config in self.batch_data:
@@ -383,12 +476,10 @@ class BatchAbaqusProcessor:
 
 			if decision == 'skip':
 				self.logger.info(f"  - Skipping job: {original_job_name}")
-				continue
-			
-			if decision == 'overwrite':
+				continue		
+			elif decision == 'overwrite':
 				self.logger.info(f"  - Overwriting job: {original_job_name} (removing old directory)")
-				shutil.rmtree(os.path.join(self.base_output_dir, original_job_name))		
-			
+				shutil.rmtree(os.path.join(self.base_output_dir, original_job_name))			
 			elif decision is not None: # 'new_name'
 				self.logger.info(f"  - Renaming job: {original_job_name} -> {decision}")
 				job_config['job_name'] = decision
@@ -417,7 +508,6 @@ class BatchAbaqusProcessor:
 				
 				# Workflow strategies
 				workflow_strategy = ModularWorkflowStrategy(prep_strategy, pre_ext_strategies, post_ext_strategies)
-
 			elif workflow_type == 'monolithic':
 				workflow_strategy = MonolithicWorkflowStrategy(job_config['script_path'], job_config['params'])
 			else:
@@ -439,34 +529,40 @@ class BatchAbaqusProcessor:
 		"""
 		Run all calculations in parallel using multiprocessing.
 		
-		Args:
-			num_parallel_jobs (`int`): Number of parallel jobs to run.
-			output_type (`str`): Type of output, either 'list' or 'dict'.
-		Returns:
+		Parameters
+		----------
+		num_parallel_jobs: `int`
+			Number of parallel jobs to run.
+		output_type: `str`
+			Type of output, either 'list' or 'dict'.
+
+		Returns
+		-------
 			list[`dict`] or dict[`str`, `dict`]: results of all calculations.
 
-		Example:
-			>>> processor.run_batch(num_parallel_jobs=4, output_type='list')
-			[
-				{
-					'total_mass': 0.000320662622552476,
-					'max_stress_mises': 4525.26025390625,
-					'max_displacement': 4.189039707183838,
-					'status': 'COMPLETED',
-					'job_name': 'test_inp_based_job'
-				},
-				...
-			]
-
-			>>> processor.run_batch(num_parallel_jobs=4, output_type='dict')
+		Example
+		-------
+		>>> processor.run_batch(num_parallel_jobs=4, output_type='list')
+		[
 			{
-				'test_inp_based_job': {
-					'total_mass': 0.000320662622552476,
-					'max_stress_mises': 4525.26025390625,
-					'max_displacement': 4.189039707183838,
-					'status': 'COMPLETED'}
-				...
-			}
+				'total_mass': 0.000320662622552476,
+				'max_stress_mises': 4525.26025390625,
+				'max_displacement': 4.189039707183838,
+				'status': 'COMPLETED',
+				'job_name': 'test_inp_based_job'
+			},
+			...
+		]
+
+		>>> processor.run_batch(num_parallel_jobs=4, output_type='dict')
+		{
+			'test_inp_based_job': {
+				'total_mass': 0.000320662622552476,
+				'max_stress_mises': 4525.26025390625,
+				'max_displacement': 4.189039707183838,
+				'status': 'COMPLETED'}
+			...
+		}
 
 		"""
 		total_tasks = len(self.calculations)
