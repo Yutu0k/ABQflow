@@ -254,17 +254,13 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobStatusManager</span>
 
-<span class="c1"># ==================================</span>
-<span class="c1"># 准备策略 (Preparation Strategies)</span>
-<span class="c1"># ==================================</span>
-
+<span class="c1"># ----------------------- 前处理 -------------------------</span>
 <div class="viewcode-block" id="PreparationStrategy">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	PreparationStrategy prepares the job with **generating an INP file**.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
-
 <div class="viewcode-block" id="PreparationStrategy.prepare">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
@@ -359,10 +355,9 @@
 </div>
 
 
-<span class="c1"># ==================================</span>
-<span class="c1"># 提取策略 (Extraction Strategies)</span>
-<span class="c1"># ==================================</span>
 
+
+<span class="c1"># ----------------------- 后处理 -------------------------</span>
 <div class="viewcode-block" id="ExtractionStrategy">
 <a class="viewcode-back" href="../../source/abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>

@@ -266,17 +266,39 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_abqpy_installed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
 
-<div class="viewcode-block" id="BatchAbortedError">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbortedError">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BatchAbortedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-	<span class="k">pass</span></div>
 
+
+<span class="c1"># TODO: </span>
+<span class="c1"># [ ] 全部用str在batch_data里面传递不合理，至少要把Strategy独立出来</span>
+<span class="c1"># [ ] 异步的处理计算方式</span>
 
 <div class="viewcode-block" id="AbaqusCalculation">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.AbaqusCalculation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusCalculation</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;上下文类，持有并调用一个总的工作流策略来完成任务。&quot;&quot;&quot;</span>
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">workflow_strategy</span><span class="p">:</span> <span class="n">JobWorkflowStrategy</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">abaqus_exe</span><span class="o">=</span><span class="s1">&#39;abaqus&#39;</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	上下文类，持有并调用一个总的工作流策略来完成任务。</span>
+<span class="sd">	</span>
+<span class="sd">	Methods</span>
+<span class="sd">	-------</span>
+<span class="sd">		- execute(): 执行整个工作流, 返回结果字典</span>
+<span class="sd">		- run_simulation(cpus): 运行Abaqus仿真</span>
+
+<span class="sd">		- _robust_json_extractor(text_output): 从文本输出中提取JSON数据</span>
+<span class="sd">		- _run_single_hook(script_path, tasks, common_args): 运行单个提取钩子脚本</span>
+<span class="sd">	</span>
+<span class="sd">	Properties</span>
+<span class="sd">	----------</span>
+
+<span class="sd">	</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+		<span class="bp">self</span><span class="p">,</span>
+		<span class="n">job_name</span>         <span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+		<span class="n">output_dir</span>       <span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+		<span class="n">workflow_strategy</span><span class="p">:</span> <span class="n">JobWorkflowStrategy</span><span class="p">,</span>
+		<span class="n">cpus_per_job</span>     <span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+		<span class="n">abaqus_exe</span>       <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;abaqus&#39;</span>
+	<span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">job_name</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span> <span class="o">=</span> <span class="n">output_dir</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span> <span class="o">=</span> <span class="n">workflow_strategy</span>
@@ -287,49 +309,141 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">odb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.odb&quot;</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log&quot;</span><span class="p">)</span>
 		<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-		<span class="c1"># self.logger = self._setup_logging()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># 延迟初始化日志记录器</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.execute">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.AbaqusCalculation.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
 		
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== Start Workflow: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Start Workflow: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
 		<span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== Workflow Finished: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Workflow Finished: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">results</span></div>
 
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_setup_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
-		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AbaqusCalculation_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		
 		<span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">():</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-		<span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">)</span>
+
+		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+		<span class="c1"># 日志格式</span>
 		<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-		<span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+
+		<span class="c1"># 输出文件</span>
+		<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+		<span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+		<span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+
 		<span class="k">return</span> <span class="n">logger</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.run_simulation">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.AbaqusCalculation.run_simulation">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		Use &#39;abaqus job=..., input=inp_file, cpus=num_cpu&#39; to run simulation.</span>
+<span class="sd">		Use &#39;abaqus job=..., input=inp_file, cpus=num_cpu&#39; to run simulations.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		cpus: `int`</span>
+<span class="sd">			Number of CPUs to use for the simulation.</span>
+
 <span class="sd">		&quot;&quot;&quot;</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Executor [CLI]: run &#39;abaqus job=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Executor [CLI]: run &#39;abaqus job=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; ========&quot;</span><span class="p">)</span>
 		<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;job=&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;input=&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;cpus=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cpus</span><span class="p">),</span> <span class="s1">&#39;interactive&#39;</span><span class="p">]</span>
 		<span class="k">try</span><span class="p">:</span>
 			<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; successfully executed.&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Job &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; successfully executed. ========&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">True</span>
 		<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Job &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span></div>
 
-	
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_robust_json_extractor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+		<span class="n">json_start_index</span> <span class="o">=</span> <span class="n">text_output</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{&#39;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">json_start_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unable to find &#39;{&#39;.&quot;</span><span class="p">)</span>
+
+		<span class="n">json_candidate_string</span> <span class="o">=</span> <span class="n">text_output</span><span class="p">[</span><span class="n">json_start_index</span><span class="p">:]</span>
+		
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_candidate_string</span><span class="p">)</span>
+		<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+			<span class="c1"># 如果失败（通常是因为尾部有无关数据），利用异常信息来切割出有效部分</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">valid_json_part</span> <span class="o">=</span> <span class="n">json_candidate_string</span><span class="p">[:</span><span class="n">e</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span>
+				<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">valid_json_part</span><span class="p">)</span>
+			<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+				<span class="c1"># 如果这样仍然失败，说明JSON本身格式有问题</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;无法解析截取出的JSON部分: &#39;</span><span class="si">{</span><span class="n">valid_json_part</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">...&#39;&quot;</span><span class="p">)</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_run_single_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">common_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Run a **single** extraction hook script with **multiple** tasks.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		script_path: `str`</span>
+<span class="sd">			Path to the extraction script.</span>
+<span class="sd">		tasks: `list`</span>
+<span class="sd">			List of task dictionaries to be passed to the script.</span>
+<span class="sd">		common_args: `dict`</span>
+<span class="sd">			Common arguments to be passed to the script (e.g., --odb_path, --inp_path).</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		dict</span>
+<span class="sd">			A dictionary mapping each task&#39;s &#39;result_name&#39; to its extracted value.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+			<span class="k">return</span> <span class="p">{}</span>
+		
+		<span class="c1"># 缺点：需要创建一个临时json文件来传递任务列表</span>
+		<span class="n">temp_json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;tasks_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
+		
+		<span class="k">try</span><span class="p">:</span>
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+				<span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+			<span class="c1"># 移除对于abqpy的依赖</span>
+			<span class="n">has_abqpy</span> <span class="o">=</span> <span class="n">check_abqpy_installed</span><span class="p">()</span>
+			<span class="k">if</span> <span class="n">has_abqpy</span><span class="p">:</span>
+				<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">if</span> <span class="n">common_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">):</span>
+					<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;cae noGUI=&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
+
+			<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">common_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+				<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
+			
+			<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="n">temp_json_path</span><span class="p">])</span>
+			
+			<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+			
+			<span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_robust_json_extractor</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+
+			<span class="k">return</span> <span class="n">out</span>
+
+		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run extraction &#39;</span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">stderr_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
+			<span class="n">stdout_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured stderr:</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured stdout:</span><span class="se">\n</span><span class="si">{</span><span class="n">stdout_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="p">{</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">}</span>
+		<span class="k">finally</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">):</span>
+				<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">)</span>		
+
+	<span class="c1"># Obselete</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">_run_extraction_hook_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">common_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		obselete method, kept for backward compatibility.</span>
@@ -392,89 +506,57 @@
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured full stdout:</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="si">{</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="si">}</span><span class="se">\n</span><span class="s2">---&quot;</span><span class="p">)</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured full stderr:</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="si">{</span><span class="n">process</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="se">\n</span><span class="s2">---&quot;</span><span class="p">)</span>
 				<span class="n">results</span><span class="p">[</span><span class="n">result_name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="k">return</span> <span class="n">results</span>
+		<span class="k">return</span> <span class="n">results</span></div>
+
 	
-	<span class="k">def</span><span class="w"> </span><span class="nf">_robust_json_extractor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">json_start_index</span> <span class="o">=</span> <span class="n">text_output</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{&#39;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="n">json_start_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unable to find &#39;{&#39;.&quot;</span><span class="p">)</span>
-
-		<span class="n">json_candidate_string</span> <span class="o">=</span> <span class="n">text_output</span><span class="p">[</span><span class="n">json_start_index</span><span class="p">:]</span>
-		
-		<span class="k">try</span><span class="p">:</span>
-			<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_candidate_string</span><span class="p">)</span>
-		<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="c1"># 如果失败（通常是因为尾部有无关数据），利用异常信息来切割出有效部分</span>
-			<span class="k">try</span><span class="p">:</span>
-				<span class="n">valid_json_part</span> <span class="o">=</span> <span class="n">json_candidate_string</span><span class="p">[:</span><span class="n">e</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span>
-				<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">valid_json_part</span><span class="p">)</span>
-			<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
-				<span class="c1"># 如果这样仍然失败，说明JSON本身格式有问题</span>
-				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;无法解析截取出的JSON部分: &#39;</span><span class="si">{</span><span class="n">valid_json_part</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">...&#39;&quot;</span><span class="p">)</span>
-
-	<span class="k">def</span><span class="w"> </span><span class="nf">_run_single_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">common_args</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		Run a **single** extraction hook script with **multiple** tasks.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
-			<span class="k">return</span> <span class="p">{}</span>
-		
-		<span class="c1"># 缺点：需要创建一个临时json文件来传递任务列表</span>
-		<span class="n">temp_json_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;tasks_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
-		
-		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-				<span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-
-			<span class="c1"># 移除对于abqpy的依赖</span>
-			<span class="n">has_abqpy</span> <span class="o">=</span> <span class="n">check_abqpy_installed</span><span class="p">()</span>
-			<span class="k">if</span> <span class="n">has_abqpy</span><span class="p">:</span>
-				<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
-			<span class="k">else</span><span class="p">:</span>
-				<span class="k">if</span> <span class="n">common_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">):</span>
-					<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;cae noGUI=&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
-				<span class="k">else</span><span class="p">:</span>
-					<span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">script_path</span><span class="p">]</span>
-
-			<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">common_args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-				<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">])</span>
-			
-			<span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="n">temp_json_path</span><span class="p">])</span>
-			
-			<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			
-			<span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_robust_json_extractor</span><span class="p">(</span><span class="n">process</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-
-			<span class="k">return</span> <span class="n">out</span>
-
-		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Run extraction &#39;</span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="n">stderr_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
-			<span class="n">stdout_output</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;stdout&#39;</span><span class="p">,</span> <span class="s1">&#39;N/A&#39;</span><span class="p">)</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured stderr:</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Captured stdout:</span><span class="se">\n</span><span class="si">{</span><span class="n">stdout_output</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="p">{</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">}</span>
-		<span class="k">finally</span><span class="p">:</span>
-			<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">):</span>
-				<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">temp_json_path</span><span class="p">)</span>		</div>
-
-
-
 
 <div class="viewcode-block" id="BatchAbaqusProcessor">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.BatchAbaqusProcessor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbaqusProcessor</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">	Run multiple Abaqus calculations in parallel based on a batch configuration.	</span>
+<span class="sd">	Run multiple Abaqus calculations in parallel based on a batch configuration.</span>
+
+
+<span class="sd">	Method</span>
+<span class="sd">	------</span>
+<span class="sd">		- run_batch(num_parallel_jobs): Run the batch of calculations in parallel.</span>
+<span class="sd">	</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
-		<span class="n">batch_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
-		<span class="n">base_output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-		<span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-		<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s1">&#39;abaqus&#39;</span><span class="p">,</span>
-		<span class="n">duplicate_mode</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s1">&#39;interactive&#39;</span><span class="p">,</span>
+		<span class="n">batch_data</span><span class="p">:</span>         <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+		<span class="n">base_output_dir</span><span class="p">:</span>    <span class="nb">str</span><span class="p">,</span>
+		<span class="n">cpus_per_job</span><span class="p">:</span>       <span class="nb">int</span><span class="p">,</span>
+		<span class="n">abaqus_exe</span><span class="p">:</span>         <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;abaqus&#39;</span><span class="p">,</span>
+		<span class="n">duplicate_mode</span><span class="p">:</span>     <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;interactive&#39;</span><span class="p">,</span>
 	<span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		batch_data: `list[dict]`</span>
+<span class="sd">			List of job configurations. Each dict should contain:</span>
+<span class="sd">				- &#39;job_name&#39;: str, name of the job</span>
+<span class="sd">				- &#39;workflow&#39;: str, either &#39;modular&#39; or &#39;monolithic&#39;</span>
+<span class="sd">				- &#39;type&#39;: str, type of preparation (&#39;inp_based&#39; or &#39;model_generation&#39;)</span>
+<span class="sd">				- &#39;base_inp_path&#39;: str, path to base .inp file (for inp_based)</span>
+<span class="sd">				- &#39;model_script_path&#39;: str, path to model generation script (for model_generation)</span>
+<span class="sd">				- &#39;params&#39;: dict, parameters for preparation</span>
+<span class="sd">				- &#39;pre_extraction&#39;: list[dict], pre-extraction hooks</span>
+<span class="sd">				- &#39;post_extraction&#39;: list[dict], post-extraction hooks</span>
+<span class="sd">		base_output_dir: `str`</span>
+<span class="sd">			Base directory where all job output directories will be created.</span>
+<span class="sd">		cpus_per_job: `int`</span>
+<span class="sd">			Number of CPUs to allocate for each job.</span>
+<span class="sd">		abaqus_exe: `str`, default = &#39;abaqus&#39;</span>
+<span class="sd">			Path to the Abaqus executable.</span>
+<span class="sd">		duplicate_mode: `str`, default = &#39;interactive&#39;</span>
+<span class="sd">			How to handle existing job directories. Options:</span>
+<span class="sd">				- &#39;fail&#39;: abort the batch if any job directory exists.</span>
+<span class="sd">				- &#39;skip&#39;: skip jobs with existing directories.</span>
+<span class="sd">				- &#39;overwrite&#39;: overwrite existing job directories.</span>
+<span class="sd">				- &#39;interactive&#39;: prompt the user for each conflict.</span>
+<span class="sd">		</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">batch_data</span> <span class="o">=</span> <span class="n">batch_data</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span> <span class="o">=</span> <span class="n">base_output_dir</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="o">=</span> <span class="n">cpus_per_job</span>
@@ -483,6 +565,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">=</span> <span class="n">duplicate_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_overwrite_all</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># None: 未决定, True: 全部覆盖, False: 全部跳过</span>
 
+		<span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="s1">&#39;batch_processor.log&#39;</span><span class="p">)</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
 
@@ -490,20 +573,26 @@
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_setup_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
 		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+		
 		<span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">():</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-		<span class="n">log_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="s1">&#39;batch_processor.log&#39;</span><span class="p">)</span>
-		<span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">log_file_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+
+		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+		<span class="c1"># 日志格式</span>
 		<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-		<span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+
+		<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+
+		<span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
 
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;======== Batch Processor Start ========&quot;</span><span class="p">)</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 		<span class="k">return</span> <span class="n">logger</span>
-	
+
+
 	<span class="k">def</span><span class="w"> </span><span class="nf">_get_name_pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Retrieve a pattern for the job name.</span>
@@ -536,7 +625,7 @@
 		
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_initialize_calculations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="c1"># 1. 检查输出冲突</span>
+		<span class="c1"># ------------- 1. 检查输出冲突 ------------------------</span>
 		<span class="n">conflicts</span> <span class="o">=</span> <span class="p">[</span><span class="n">cfg</span> <span class="k">for</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_data</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="s1">&#39;job_name&#39;</span><span class="p">]))]</span>
 		<span class="n">decisions</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># 存储对每个冲突任务的决策: {&#39;job_name&#39;: &#39;skip&#39; | &#39;overwrite&#39; | &#39;new_name&#39;}</span>
 		<span class="n">pattern_decisions</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1"># 存储对特定命名模式的决策 {&#39;pattern_name&#39;: &#39;skip&#39; | &#39;overwrite&#39; | &#39;rename&#39;}</span>
@@ -566,6 +655,7 @@
 						<span class="n">decisions</span><span class="p">[</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;skip&#39;</span>
 						<span class="k">continue</span>
 
+					<span class="c1"># TODO: _get_name_pattern()意义在于？</span>
 					<span class="n">pattern</span><span class="p">,</span> <span class="n">has_pattern</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_name_pattern</span><span class="p">(</span><span class="n">job_name</span><span class="p">)</span>
 					<span class="k">if</span> <span class="n">has_pattern</span> <span class="ow">and</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">pattern_decisions</span><span class="p">:</span>
 						<span class="n">decision</span> <span class="o">=</span> <span class="n">pattern_decisions</span><span class="p">[</span><span class="n">pattern</span><span class="p">]</span>
@@ -628,11 +718,11 @@
 									<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Invalid input, please try again.&quot;</span><span class="p">)</span>
 							<span class="k">break</span>
 						<span class="k">elif</span> <span class="n">response</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
-							<span class="k">raise</span> <span class="n">BatchAbortedError</span><span class="p">(</span><span class="s2">&quot;User aborted the batch processing.&quot;</span><span class="p">)</span>
+							<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;User aborted the batch processing.&quot;</span><span class="p">)</span>
 						<span class="k">else</span><span class="p">:</span> 
 							<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid input, please try again.&quot;</span><span class="p">)</span>
 
-		<span class="c1"># 2. 初始化计算实例</span>
+		<span class="c1"># ------------- 2. 初始化计算实例 ------------------------</span>
 		<span class="n">calcs</span> <span class="o">=</span> <span class="p">[]</span>
 
 		<span class="k">for</span> <span class="n">job_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_data</span><span class="p">:</span>
@@ -642,12 +732,10 @@
 
 			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Skipping job: </span><span class="si">{</span><span class="n">original_job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-				<span class="k">continue</span>
-			
-			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">:</span>
+				<span class="k">continue</span>		
+			<span class="k">elif</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">:</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Overwriting job: </span><span class="si">{</span><span class="n">original_job_name</span><span class="si">}</span><span class="s2"> (removing old directory)&quot;</span><span class="p">)</span>
-				<span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">original_job_name</span><span class="p">))</span>		
-			
+				<span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">original_job_name</span><span class="p">))</span>			
 			<span class="k">elif</span> <span class="n">decision</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># &#39;new_name&#39;</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Renaming job: </span><span class="si">{</span><span class="n">original_job_name</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">decision</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 				<span class="n">job_config</span><span class="p">[</span><span class="s1">&#39;job_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">decision</span>
@@ -676,7 +764,6 @@
 				
 				<span class="c1"># Workflow strategies</span>
 				<span class="n">workflow_strategy</span> <span class="o">=</span> <span class="n">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">prep_strategy</span><span class="p">,</span> <span class="n">pre_ext_strategies</span><span class="p">,</span> <span class="n">post_ext_strategies</span><span class="p">)</span>
-
 			<span class="k">elif</span> <span class="n">workflow_type</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span><span class="p">:</span>
 				<span class="n">workflow_strategy</span> <span class="o">=</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">job_config</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">],</span> <span class="n">job_config</span><span class="p">[</span><span class="s1">&#39;params&#39;</span><span class="p">])</span>
 			<span class="k">else</span><span class="p">:</span>
@@ -695,39 +782,45 @@
 		<span class="k">return</span> <span class="n">calcs</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_batch">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.BatchAbaqusProcessor.run_batch">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">output_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;list&#39;</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Run all calculations in parallel using multiprocessing.</span>
 <span class="sd">		</span>
-<span class="sd">		Args:</span>
-<span class="sd">			num_parallel_jobs (`int`): Number of parallel jobs to run.</span>
-<span class="sd">			output_type (`str`): Type of output, either &#39;list&#39; or &#39;dict&#39;.</span>
-<span class="sd">		Returns:</span>
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		num_parallel_jobs: `int`</span>
+<span class="sd">			Number of parallel jobs to run.</span>
+<span class="sd">		output_type: `str`</span>
+<span class="sd">			Type of output, either &#39;list&#39; or &#39;dict&#39;.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
 <span class="sd">			list[`dict`] or dict[`str`, `dict`]: results of all calculations.</span>
 
-<span class="sd">		Example:</span>
-<span class="sd">			&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;list&#39;)</span>
-<span class="sd">			[</span>
-<span class="sd">				{</span>
-<span class="sd">					&#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="sd">					&#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="sd">					&#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="sd">					&#39;status&#39;: &#39;COMPLETED&#39;,</span>
-<span class="sd">					&#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
-<span class="sd">				},</span>
-<span class="sd">				...</span>
-<span class="sd">			]</span>
-
-<span class="sd">			&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;dict&#39;)</span>
+<span class="sd">		Example</span>
+<span class="sd">		-------</span>
+<span class="sd">		&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;list&#39;)</span>
+<span class="sd">		[</span>
 <span class="sd">			{</span>
-<span class="sd">				&#39;test_inp_based_job&#39;: {</span>
-<span class="sd">					&#39;total_mass&#39;: 0.000320662622552476,</span>
-<span class="sd">					&#39;max_stress_mises&#39;: 4525.26025390625,</span>
-<span class="sd">					&#39;max_displacement&#39;: 4.189039707183838,</span>
-<span class="sd">					&#39;status&#39;: &#39;COMPLETED&#39;}</span>
-<span class="sd">				...</span>
-<span class="sd">			}</span>
+<span class="sd">				&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">				&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">				&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">				&#39;status&#39;: &#39;COMPLETED&#39;,</span>
+<span class="sd">				&#39;job_name&#39;: &#39;test_inp_based_job&#39;</span>
+<span class="sd">			},</span>
+<span class="sd">			...</span>
+<span class="sd">		]</span>
+
+<span class="sd">		&gt;&gt;&gt; processor.run_batch(num_parallel_jobs=4, output_type=&#39;dict&#39;)</span>
+<span class="sd">		{</span>
+<span class="sd">			&#39;test_inp_based_job&#39;: {</span>
+<span class="sd">				&#39;total_mass&#39;: 0.000320662622552476,</span>
+<span class="sd">				&#39;max_stress_mises&#39;: 4525.26025390625,</span>
+<span class="sd">				&#39;max_displacement&#39;: 4.189039707183838,</span>
+<span class="sd">				&#39;status&#39;: &#39;COMPLETED&#39;}</span>
+<span class="sd">			...</span>
+<span class="sd">		}</span>
 
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">total_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">)</span>
@@ -802,7 +895,7 @@
 <span class="c1"># -------------------------------------------------------------</span>
 <span class="c1"># Utils for batch job generation and result extraction</span>
 <div class="viewcode-block" id="generate_from_array">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.generate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.generate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_array</span><span class="p">(</span><span class="n">samples_array</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">base_config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Generate batch job configurations from a numerical array (numpy or torch).</span>
@@ -837,7 +930,7 @@
 
 
 <div class="viewcode-block" id="degenerate_from_array">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.abaqus_automation.degenerate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abaqus_batch_pack.abaqus_automation.html#abaqus_batch_pack.degenerate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">output_names</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Depack results from a batch job into a 2D numpy array.</span>

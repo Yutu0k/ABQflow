@@ -253,9 +253,31 @@
 <span id="abaqus-batch-pack-abaqus-automation-module"></span><h1>abaqus_batch_pack.abaqus_automation module<a class="headerlink" href="#module-abaqus_batch_pack.abaqus_automation" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">AbaqusCalculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><span class="pre">JobWorkflowStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'abaqus'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">AbaqusCalculation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workflow_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="abaqus_batch_pack.strategies.html#abaqus_batch_pack.strategies.JobWorkflowStrategy" title="abaqus_batch_pack.strategies.JobWorkflowStrategy"><span class="pre">JobWorkflowStrategy</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abaqus'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>上下文类，持有并调用一个总的工作流策略来完成任务。</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">execute():</span> <span class="pre">执行整个工作流,</span> <span class="pre">返回结果字典</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">run_simulation(cpus):</span> <span class="pre">运行Abaqus仿真</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">_robust_json_extractor(text_output):</span> <span class="pre">从文本输出中提取JSON数据</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">-</span> <span class="pre">_run_single_hook(script_path,</span> <span class="pre">tasks,</span> <span class="pre">common_args):</span> <span class="pre">运行单个提取钩子脚本</span></span></dt>
+<dd></dd></dl>
+
+<section id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Link to this heading">¶</a></h2>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">
 <span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute" title="Link to this definition">¶</a></dt>
@@ -264,9 +286,15 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation">
 <span class="sig-name descname"><span class="pre">run_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpus</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#AbaqusCalculation.run_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.run_simulation" title="Link to this definition">¶</a></dt>
-<dd><p>Use ‘abaqus job=…, input=inp_file, cpus=num_cpu’ to run simulation.</p>
+<dd><p>Use ‘abaqus job=…, input=inp_file, cpus=num_cpu’ to run simulations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpus</strong> (<cite>int</cite>) – Number of CPUs to use for the simulation.</p>
+</dd>
+</dl>
 </dd></dl>
 
+</section>
 </dd></dl>
 
 <dl class="py class">
@@ -274,6 +302,13 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbaqusProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">abaqus_exe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'abaqus'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duplicate_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'interactive'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Run multiple Abaqus calculations in parallel based on a batch configuration.</p>
+<section id="method">
+<h2>Method<a class="headerlink" href="#method" title="Link to this heading">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>run_batch(num_parallel_jobs): Run the batch of calculations in parallel.</p></li>
+</ul>
+</div></blockquote>
 <dl class="py method">
 <dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">
 <span class="sig-name descname"><span class="pre">run_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_parallel_jobs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'list'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbaqusProcessor.run_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch" title="Link to this definition">¶</a></dt>
@@ -286,10 +321,10 @@
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>results of all calculations.</p>
+<dd class="field-even"><p><strong>list[`dict`] or dict[`str`, `dict`]</strong></p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list[<cite>dict</cite>] or dict[<cite>str</cite>, <cite>dict</cite>]</p>
+<dd class="field-odd"><p>results of all calculations.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -319,12 +354,7 @@
 </div>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="abaqus_batch_pack.abaqus_automation.BatchAbortedError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">abaqus_batch_pack.abaqus_automation.</span></span><span class="sig-name descname"><span class="pre">BatchAbortedError</span></span><a class="reference internal" href="../_modules/abaqus_batch_pack/abaqus_automation.html#BatchAbortedError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#abaqus_batch_pack.abaqus_automation.BatchAbortedError" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -436,7 +466,6 @@
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.BatchAbortedError"><code class="docutils literal notranslate"><span class="pre">BatchAbortedError</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>
 <li><a class="reference internal" href="#abaqus_batch_pack.abaqus_automation.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
 </ul>
