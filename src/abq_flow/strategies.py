@@ -1,6 +1,8 @@
-"""Job workflow strategies — refactored to depend on (JobContext, AbaqusRunner, Logger) only.
+"""Job workflow strategies — the ABC hierarchy and all concrete implementations.
 
-Fixes: B5/B6 (execution environment), B7 (JSON via sentinel), B8 (placeholder validation), B9 (error message).
+Strategies are stateless (configuration only in ``__init__``) and depend on
+three injected arguments at call time: :class:`~abaqus_batch_pack.context.JobContext`,
+:class:`~abaqus_batch_pack.runner.AbaqusRunner`, and ``logging.Logger``.
 """
 
 from __future__ import annotations
@@ -22,15 +24,52 @@ _PLACEHOLDER_RE = re.compile(r"\{\{(\w+)\}\}")
 
 # ======================== Preparation Strategies ========================
 class PreparationStrategy(ABC):
-	"""Generate an INP file in ctx.output_dir."""
+	"""Interface for preparation: produce an INP file at ``ctx.inp_path``.
+
+	Subclasses
+	----------
+	InpModifyStrategy
+		Template-based INP generation (``{{placeholder}}`` substitution).
+	ModelGenerationStrategy
+		Run an external script that produces the INP (requires CAE kernel).
+	"""
 
 	@abstractmethod
 	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
-				logger: logging.Logger) -> bool: ...
+				logger: logging.Logger) -> bool:
+		"""Produce the INP file.
+
+		Args
+		----
+		ctx : JobContext
+			Job context providing ``inp_path`` and ``output_dir``.
+		runner : AbaqusRunner
+			Subprocess runner (may not be used by every strategy).
+		logger : logging.Logger
+			Logger for progress and error messages.
+
+		Returns
+		-------
+		bool
+			``True`` if the INP was produced, ``False`` otherwise.
+		"""
+		...
 
 
 class InpModifyStrategy(PreparationStrategy):
-	"""Replace {{placeholders}} in a base INP file. Validates coverage (B8)."""
+	"""Replace ``{{placeholder}}`` tokens in a base INP template file.
+
+	Performs coverage validation: if the INP references a placeholder that
+	is missing from *data_params*, preparation fails.  If *data_params*
+	contains keys that are not used in the INP, a warning is emitted.
+
+	Attributes
+	----------
+	base_inp_path : str
+		Path to the template INP file containing ``{{key}}`` placeholders.
+	data_params : dict
+		Mapping of placeholder names to substitution values.
+	"""
 
 	def __init__(self, base_inp_path: str, data_params: dict):
 		self.base_inp_path = base_inp_path
@@ -65,7 +104,19 @@ class InpModifyStrategy(PreparationStrategy):
 
 
 class ModelGenerationStrategy(PreparationStrategy):
-	"""Run a model-generation script to produce an INP file."""
+	"""Run a model-generation script (requires CAE kernel / ``mdb`` access).
+
+	The script is launched via ``abaqus cae noGUI=<script>`` and is expected
+	to produce an INP file at ``ctx.inp_path``.  Common arguments
+	(``--job_name``, user params) are forwarded as CLI flags.
+
+	Attributes
+	----------
+	model_script_path : str
+		Path to the model-generation script.
+	script_params : dict
+		Key-value pairs forwarded as ``--key value`` arguments.
+	"""
 
 	def __init__(self, model_script_path: str, script_params: dict):
 		self.model_script_path = model_script_path
@@ -91,15 +142,50 @@ class ModelGenerationStrategy(PreparationStrategy):
 
 # ======================== Extraction Strategies ========================
 class ExtractionStrategy(ABC):
-	"""Extract results from simulation outputs."""
+	"""Interface for extraction: read results from model or ODB files.
+
+	Subclasses
+	----------
+	OdbExtractionStrategy
+		Post-simulation extraction from ODB (requires ``odbAccess``).
+	ModelPropertiesExtractionStrategy
+		Pre-simulation extraction from INP (requires ``mdb`` / CAE kernel).
+	"""
 
 	@abstractmethod
 	def extract(self, ctx: JobContext, runner: AbaqusRunner,
-				logger: logging.Logger) -> dict: ...
+				logger: logging.Logger) -> dict:
+		"""Extract results.
+
+		Args
+		----
+		ctx : JobContext
+			Job context providing file paths.
+		runner : AbaqusRunner
+			Subprocess runner for launching hook scripts.
+		logger : logging.Logger
+			Logger for progress and error messages.
+
+		Returns
+		-------
+		dict
+			``{result_name: value, ...}``.  Failed tasks map to ``None``.
+		"""
+		...
 
 
 class OdbExtractionStrategy(ExtractionStrategy):
-	"""Extract results from ODB via hook scripts. Uses odbAccess environment."""
+	"""Extract results from the ODB file via hook scripts.
+
+	Runs in the ``odbAccess`` environment (``abaqus python``), NOT the CAE
+	kernel.  Each hook script receives ``--odb_path`` as a common argument
+	and a JSON task list via ``--tasks_json``.
+
+	Attributes
+	----------
+	hooks : list[dict]
+		List of hook descriptors, each with ``script_path`` and ``tasks``.
+	"""
 
 	def __init__(self, hooks: list[dict]):
 		self.hooks = hooks
@@ -131,7 +217,17 @@ class OdbExtractionStrategy(ExtractionStrategy):
 
 
 class ModelPropertiesExtractionStrategy(ExtractionStrategy):
-	"""Extract results from INP via hook scripts. Uses CAE kernel (mdb)."""
+	"""Extract material/property data from the INP *before* simulation.
+
+	Runs in the CAE kernel environment (``abaqus cae noGUI``) because it
+	needs ``mdb`` access.  Each hook script receives ``--inp_path`` as a
+	common argument and a JSON task list via ``--tasks_json``.
+
+	Attributes
+	----------
+	hooks : list[dict]
+		List of hook descriptors, each with ``script_path`` and ``tasks``.
+	"""
 
 	def __init__(self, hooks: list[dict]):
 		self.hooks = hooks
@@ -165,15 +261,55 @@ class ModelPropertiesExtractionStrategy(ExtractionStrategy):
 # ======================== Workflow Strategies ========================
 
 class JobWorkflowStrategy(ABC):
-	"""Top-level workflow: preparation → extraction → simulation → extraction."""
+	"""Interface for a complete job workflow.
+
+	Subclasses
+	----------
+	MonolithicWorkflowStrategy
+		Single-script workflow that handles everything itself.
+	ModularWorkflowStrategy
+		4-phase pipeline: preparation, pre-extraction, simulation,
+		post-extraction.
+	"""
 
 	@abstractmethod
 	def execute(self, ctx: JobContext, runner: AbaqusRunner,
-				logger: logging.Logger) -> dict: ...
+				logger: logging.Logger) -> dict:
+		"""Run the full workflow and return a result dict.
+
+		Args
+		----
+		ctx : JobContext
+			Job context.
+		runner : AbaqusRunner
+			Subprocess runner for all subprocess calls.
+		logger : logging.Logger
+			Logger for progress and error messages.
+
+		Returns
+		-------
+		dict
+			Must contain at least a ``'status'`` key (a :class:`JobStatus`
+			or its string value).  May include extracted results.
+		"""
+		...
 
 
 class MonolithicWorkflowStrategy(JobWorkflowStrategy):
-	"""Single-script workflow. Execution environment depends on abqpy presence (B5/B6 fix)."""
+	"""Single-script workflow: one script does everything.
+
+	The script is launched via the CAE kernel (``abaqus cae noGUI``) and
+	must print its JSON results wrapped in the sentinel markers
+	``===ABQ_RESULT_BEGIN===`` / ``===ABQ_RESULT_END===``.  The result dict
+	is expected to contain at least a ``'status'`` key.
+
+	Attributes
+	----------
+	script_path : str
+		Path to the monolithic script.
+	params : dict
+		Key-value parameters forwarded as ``--key value`` CLI arguments.
+	"""
 
 	def __init__(self, script_path: str, params: dict):
 		self.script_path = script_path
@@ -207,7 +343,21 @@ class MonolithicWorkflowStrategy(JobWorkflowStrategy):
 
 
 class ModularWorkflowStrategy(JobWorkflowStrategy):
-	"""Preparation → pre-extraction → simulation → post-extraction."""
+	"""4-phase pipeline: preparation, pre-extraction, simulation, post-extraction.
+
+	Uses a :class:`JobStatusManager` internally to track the job through
+	each phase.  If any phase fails the pipeline stops and returns the
+	terminal status immediately.
+
+	Attributes
+	----------
+	preparation_strategy : PreparationStrategy
+		Strategy that produces the INP file.
+	pre_extraction_strategies : list[ExtractionStrategy]
+		Strategies run before the solver (e.g. property extraction from INP).
+	post_extraction_strategies : list[ExtractionStrategy]
+		Strategies run after the solver (e.g. result extraction from ODB).
+	"""
 
 	def __init__(
 		self,
@@ -221,6 +371,12 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 
 	def execute(self, ctx: JobContext, runner: AbaqusRunner,
 				logger: logging.Logger) -> dict:
+		"""Run the 4-phase modular workflow.
+
+		Returns a dict with at least a ``'status'`` key plus any results
+		from pre- and post-extraction hooks.  Failing early means later
+		phases are skipped.
+		"""
 		logger.info("Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...")
 		status_manager = JobStatusManager()
 		all_results: dict = {}

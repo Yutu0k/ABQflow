@@ -2643,7 +2643,7 @@ packages:
   size: 388453
   timestamp: 1764777142545
 - pypi: ./
-  name: abaqus-batch-pack
+  name: abq-flow
   requires_dist:
   - numpy
   - abqpy

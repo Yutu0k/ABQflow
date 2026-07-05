@@ -6,12 +6,13 @@ dependencies = [
 	"rich",
 	"toml",
 ]
-name = "abaqus_batch_pack"
+name = "abq-flow"
+description = "A modular batch-processing framework for Abaqus FEA — typed job specs, strategy pattern workflow, fault-tolerant parallel execution, and resource-aware scheduling."
 requires-python = ">=3.9"
 version = "0.3.0"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/abaqus_batch_pack"]
+packages = ["src/abq_flow"]
 
 [build-system]
 build-backend = "hatchling.build"
@@ -22,10 +23,10 @@ channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64"]
 
 [tool.pixi.pypi-dependencies]
-abaqus_batch_pack = { path = ".", editable = true }
+abq_flow = { path = ".", editable = true }
 
 [tool.pixi.tasks]
-docs-generate = "sphinx-apidoc -o docs/source src/abaqus_batch_pack"
+docs-generate = "sphinx-apidoc -o docs/source src/abq_flow"
 docs-build = "sphinx-build docs docs/_build/html"
 docs-serve = "python -m http.server -d docs/_build/html 8080"
 

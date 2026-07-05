@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="abaqus_batch_pack" href="source/modules.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Getting Started" href="source/getting_started.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>abaqus_batch_pack 0.3.0 documentation</title>
+        <title>abq-flow 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">abaqus_batch_pack 0.3.0 documentation</div></a>
+      <a href="#"><div class="brand">abq-flow 0.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
   
   
-  <span class="sidebar-brand-text">abaqus_batch_pack 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">abq-flow 0.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -198,10 +198,11 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="source/abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="source/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/architecture.html">Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="source/modules.html">abq_flow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abq_flow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="source/abq_flow.html">abq_flow package</a></li>
 </ul>
 </li>
 </ul>
@@ -224,12 +225,16 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/index.md.txt" title="View this page">
+  <a class="muted-link" href="https://github.com/Yutu0k/abq-flow/blob/main/docs/index.rst?plain=true" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
-</div>
-<div class="theme-toggle-container theme-toggle-content">
+</div><div class="edit-this-page">
+  <a class="muted-link" href="https://github.com/Yutu0k/abq-flow/edit/main/docs/index.rst" title="Edit this page">
+    <svg><use href="#svg-pencil"></use></svg>
+    <span class="visually-hidden">Edit this page</span>
+  </a>
+</div><div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
               <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
@@ -244,19 +249,26 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="welcome-to-abaqus-batch-pack-documentation">
-<h1>Welcome to abaqus_batch_pack Documentation<a class="headerlink" href="#welcome-to-abaqus-batch-pack-documentation" title="Link to this heading">¶</a></h1>
-<p>This is the main documentation page.</p>
-<section id="api-reference">
-<h2>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h2>
+          <section id="abq-flow">
+<h1>abq-flow<a class="headerlink" href="#abq-flow" title="Link to this heading">¶</a></h1>
+<p><strong>Modular batch-processing framework for Abaqus FEA</strong> – typed job specs,
+strategy-pattern workflows, fault-tolerant parallel execution, resource-aware scheduling.</p>
+<div class="line-block">
+<div class="line"><img alt="Version 0.3.0" src="https://img.shields.io/badge/version-0.3.0-blue.svg" /> | <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9+-blue.svg" /> | <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green.svg" /></div>
+</div>
+<hr class="docutils" />
+<p>abq-flow turns repetitive Abaqus FEA workflows into readable, batch-oriented Python
+code. Define parameter sweeps, multi-step extraction pipelines, and monolithic scripts
+as typed <code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code> objects; the framework handles resource
+planning, parallel execution, and fault tolerance.</p>
+<section id="quick-links">
+<h2>Quick Links<a class="headerlink" href="#quick-links" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="source/getting_started.html"><span class="doc">Getting Started</span></a> – install, first job, batch sweep</p></li>
+<li><p><a class="reference internal" href="source/architecture.html"><span class="doc">Architecture</span></a> – design overview, strategy pattern, resource planning</p></li>
+<li><p><a class="reference internal" href="source/modules.html"><span class="doc">API Reference</span></a> – full module reference (auto-generated)</p></li>
+</ul>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="source/modules.html">abaqus_batch_pack</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="source/abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
-</ul>
-</li>
-</ul>
 </div>
 </section>
 </section>
@@ -266,12 +278,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="source/modules.html">
+          <a class="next-page" href="source/getting_started.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">abaqus_batch_pack</div>
+                <div class="title">Getting Started</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -280,7 +292,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2025, yutu0k
+                Copyright &#169; 2025–2026, yutu0k
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -288,7 +300,14 @@
             
           </div>
           <div class="right-details">
-            
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/Yutu0k/abq-flow" aria-label="GitHub">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+            </a>
+              
+            </div>
           </div>
         </div>
         
@@ -306,8 +325,8 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Welcome to abaqus_batch_pack Documentation</a><ul>
-<li><a class="reference internal" href="#api-reference">API Reference</a></li>
+<li><a class="reference internal" href="#">abq-flow</a><ul>
+<li><a class="reference internal" href="#quick-links">Quick Links</a></li>
 </ul>
 </li>
 </ul>
@@ -323,5 +342,6 @@
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>
 </html>

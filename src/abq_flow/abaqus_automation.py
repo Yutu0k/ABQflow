@@ -1,7 +1,13 @@
-"""Abaqus batch processing — refactored architecture.
+"""Abaqus batch processing — orchestrator, resource planner, and public helpers.
 
-Thin AbaqusCalculation wrapper, ProcessPoolExecutor + JobOutcome for async (fix Q2),
-plan/prepare split (fix B12), resource planning, JobSpec pipeline.
+Key classes
+-----------
+AbaqusCalculation
+	Thin assembly of JobContext + strategy; no side effects in ``__init__``.
+BatchAbaqusProcessor
+	Three-phase lifecycle: ``plan`` / ``prepare`` / ``run_batch``.
+JobOutcome
+	Unified result envelope for a single job.
 """
 
 from __future__ import annotations
@@ -28,19 +34,75 @@ from .status import JobStatus
 # ======================== AbaqusCalculation (thin wrapper) ========================
 
 class AbaqusCalculation:
+	"""Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.
+
+	No side effects in ``__init__`` (only creates the output directory and
+	builds the immutable JobContext).  The logger is created lazily on the
+	first call to :meth:`execute`.
+
+	Attributes
+	----------
+	job_name : str
+		Unique job identifier.
+	output_dir : str
+		Working directory for this job.
+	workflow_strategy : JobWorkflowStrategy
+		The assembled workflow to execute.
+	cpus_per_job : int
+		Number of CPUs requested for the solver.
+	abaqus_exe : str
+		Path to the Abaqus executable.
+	timeout : float or None
+		Per-subprocess timeout in seconds.
+	ctx : JobContext
+		Immutable context built from the constructor arguments.
 	"""
-	Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.
 
-	No side effects in __init__ (fix B12). Logger is lazy.
+	def __init__(
+		self,
+		job_name: str,
+		output_dir: str,
+		workflow_strategy,
+		cpus_per_job: int,
+		abaqus_exe: str = 'abaqus',
+		timeout: float | None = None,
+	):
 
-	Methods
-	-------
-	execute() -> dict
-		使用workflow_strategy跑一个任务(`workflow_strategy.execute()`), return results dict (status + outputs).
+		self.job_name = job_name
+		self.output_dir = output_dir
+		self.workflow_strategy = workflow_strategy
+		self.cpus_per_job = cpus_per_job
+		self.abaqus_exe = abaqus_exe
+		self.timeout = timeout
+		self.logger: logging.Logger | None = None
 
+		# Build internals
+		self.ctx = JobContext(
+			job_name=job_name,
+			output_dir=output_dir,
+			cpus=cpus_per_job,
+			abaqus_exe=abaqus_exe,
+		)
+		os.makedirs(output_dir, exist_ok=True)
 
+	def execute(self) -> dict:
+		"""Run the workflow and return the result dict.
 
-	"""
+		Creates the logger and the :class:`AbaqusRunner` on first call, then
+		delegates to ``self.workflow_strategy.execute()``.
+
+		Returns
+		-------
+		dict
+			Must contain at least ``'status'``.  May include extracted values.
+		"""
+		if self.logger is None:
+			self.logger = self._setup_logging()
+		self.logger.info(f"======== [AbaqusCalculation] Start Workflow: {self.job_name} ========")
+		runner = AbaqusRunner(self.ctx, self.logger, timeout=self.timeout)
+		results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
+		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished: {self.job_name} ========")
+		return results
 
 	def __init__(
 		self,
@@ -94,9 +156,25 @@ class AbaqusCalculation:
 
 @dataclass
 class JobOutcome:
-	"""Unified result envelope. Status is always a string (JSON-serializable)."""
+	"""Unified result envelope returned from every job, pass or fail.
+
+	Status is normalised to a plain string (``JobStatus.value``) so it
+	serialises cleanly across process boundaries.
+
+	Attributes
+	----------
+	job_name : str
+		Name of the job.
+	status : str
+		String status, e.g. ``"COMPLETED"`` or ``"SIMULATION_FAILED"``.
+	results : dict or None
+		Extracted result values, or ``None`` if the job did not reach
+		extraction.
+	error : str or None
+		Error message if the job failed, ``None`` otherwise.
+	"""
 	job_name: str
-	status: str          # JobStatus.value string, e.g. "COMPLETED"
+	status: str
 	results: dict | None = None
 	error: str | None = None
 
@@ -104,14 +182,51 @@ class JobOutcome:
 # ======================== Resource planning (fix Q2-2) ========================
 
 def solver_tokens(n_cpus: int) -> int:
-	"""Abaqus license token formula: T(n) = ceil(5 * n^0.422)."""
+	"""Estimate Abaqus license tokens needed for *n_cpus* cores.
+
+	Formula: ``token(n) = ceil(5 * n^0.422)``, an empirical approximation
+	of Abaqus licensing behaviour.
+
+	Args
+	----
+	n_cpus : int
+		Number of CPU cores per job.
+
+	Returns
+	-------
+	int
+		Estimated token count.
+	"""
 	return math.ceil(5 * n_cpus ** 0.422)
 
 
 def plan_parallelism(requested: int, cpus_per_job: int,
 					license_tokens: int | None = None,
 					reserve_cores: int = 1) -> int:
-	"""Compute actual parallelism from CPU and license constraints."""
+	"""Compute the actual number of concurrent jobs given hardware and license limits.
+
+	Constraints applied in order:
+
+	1. CPU cores available (``os.cpu_count() - reserve_cores``).
+	2. License tokens (if provided).
+	3. User-requested maximum.
+
+	Args
+	----
+	requested : int
+		Desired number of parallel jobs.
+	cpus_per_job : int
+		CPUs each job will request.
+	license_tokens : int or None
+		Total license tokens available.  ``None`` means unconstrained.
+	reserve_cores : int
+		Cores to reserve for the OS and other processes (default 1).
+
+	Returns
+	-------
+	int
+		Feasible parallelism level (at least 1).
+	"""
 	total = os.cpu_count() or 1
 	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
 	p = min(requested, p_cpu)
@@ -127,7 +242,21 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 # ======================== Worker (fix B18, fix Q2-1) ========================
 
 def _worker(calc: AbaqusCalculation) -> JobOutcome:
-	"""Top-level function for ProcessPoolExecutor. Exception → JobOutcome, never propagates."""
+	"""Top-level entry point for :class:`~concurrent.futures.ProcessPoolExecutor`.
+
+	All exceptions are caught and wrapped in a :class:`JobOutcome` — they
+	never propagate to the pool, so one failed job cannot crash the batch.
+
+	Args
+	----
+	calc : AbaqusCalculation
+		Fully configured calculation to run.
+
+	Returns
+	-------
+	JobOutcome
+		Result envelope (status is always a plain string).
+	"""
 	try:
 		results = calc.execute()
 		raw = results.pop('status', JobStatus.UNKNOWN)
@@ -141,17 +270,23 @@ def _worker(calc: AbaqusCalculation) -> JobOutcome:
 # ======================== BatchAbaqusProcessor ========================
 
 class BatchAbaqusProcessor:
-	"""Orchestrate batch Abaqus jobs. plan/prepare/run_batch split (fix B12).
-	
-	Methods
-	-------
-	plan() -> dict[str, str]
-		Plan job execution: {job_name: 'run'|'skip'|'overwrite'|new_name}. No directories touched.
-	prepare(decisions: dict[str, str] | None = None)
-		Apply plan decisions (rmtree, rename) and build AbaqusCalculation list.
-	run_batch(num_parallel_jobs: int, license_tokens: int | None = None) -> list[JobOutcome]
-		Execute all calculations. One failure does not affect others (fix Q2-1).
-	
+	"""Orchestrate a batch of Abaqus jobs through a three-phase lifecycle.
+
+	1. :meth:`plan` — inspect for directory conflicts, compute decisions.
+	   Pure computation; no side effects.
+	2. :meth:`prepare` — apply decisions (delete, rename, skip) and build
+	   the :class:`AbaqusCalculation` list.
+	3. :meth:`run_batch` — execute via :class:`~concurrent.futures.ProcessPoolExecutor`;
+	   one failure never affects sibling jobs.
+
+	Attributes
+	----------
+	specs : list[JobSpec]
+		Normalised list of job specifications.
+	calculations : list[AbaqusCalculation] or None
+		Built calculations (populated by :meth:`prepare`).
+	logger : logging.Logger
+		Logger writing to ``batch_processor.log`` in the output directory.
 	"""
 
 	def __init__(
@@ -165,26 +300,28 @@ class BatchAbaqusProcessor:
 		timeout: float | None = None,
 	):
 		"""
-		Parameters
-		----------
-		batch_data: list[dict] | list[JobSpec]
-			JobSpec dicts or JobSpec objects. Each spec is a single Abaqus job.
-		base_output_dir: str
+		Args
+		----
+		batch_data : list[dict] or list[JobSpec]
+			Job configs as dicts or :class:`JobSpec` objects.  Dicts are
+			converted via :meth:`JobSpec.from_dict`.
+		base_output_dir : str
 			Directory where all job subdirectories will be created.
-		cpus_per_job: int
+		cpus_per_job : int
 			Number of CPUs to request for each Abaqus job.
-		abaqus_exe: str, default = 'abaqus'
-			Path to the Abaqus executable.
-		duplicate_mode: str, default = 'fail'
-			How to handle existing job directories. Options:
-			- 'fail': raise an error if any job directory exists.
-			- 'skip': skip existing jobs.
-			- 'overwrite': delete existing job directories and run.
-			- 'interactive': prompt the user for each conflict.
-		prompt_fn: callable, default = input
-			Function to call for user input in interactive mode. Should accept a prompt string and return a string.
-		timeout: float | None, default = None
-			Timeout in seconds for each subprocess call. None means no timeout.
+		abaqus_exe : str
+			Path to the Abaqus executable (default ``'abaqus'``).
+		duplicate_mode : str
+			How to handle existing job directories (default ``'fail'``):
+
+			* ``'fail'`` — raise :class:`FileExistsError` on any conflict.
+			* ``'skip'`` — skip jobs whose directory already exists.
+			* ``'overwrite'`` — delete the existing directory and re-run.
+			* ``'interactive'`` — prompt the user for each conflict.
+		prompt_fn : callable
+			Function for interactive prompts (default :func:`input`).
+		timeout : float or None
+			Per-subprocess timeout in seconds; ``None`` means no limit.
 		"""
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
@@ -226,10 +363,21 @@ class BatchAbaqusProcessor:
 
 	# ---- plan: pure computation, no side effects ----
 	def plan(self) -> dict[str, str]:
-		"""
-		针对batch_data中的每个JobSpec, 检查base_output_dir下是否存在同名目录
+		"""Inspect output directory for existing job subdirectories.
 
-		Return {job_name: 'run'|'skip'|'overwrite'|new_name}. No directories touched.
+		Pure read-only check — no directories are created, deleted, or
+		renamed.  The decision for each job is one of: ``'run'``,
+		``'skip'``, ``'overwrite'``, or a new name string (rename).
+
+		Returns
+		-------
+		dict[str, str]
+			``{job_name: decision}`` mapping.
+
+		Raises
+		------
+		FileExistsError
+			If ``duplicate_mode='fail'`` and any job directory already exists.
 		"""
 		decisions: dict[str, str] = {}
 		conflicts = [s for s in self.specs
@@ -311,7 +459,18 @@ class BatchAbaqusProcessor:
 
 	# ---- prepare: apply decisions, build calculations ----
 	def prepare(self, decisions: dict[str, str] | None = None):
-		"""Apply plan decisions (rmtree, rename) and build AbaqusCalculation list."""
+		"""Apply plan decisions and build the :class:`AbaqusCalculation` list.
+
+		Side effects: directories may be deleted (``'overwrite'``) or
+		specs may be renamed (``'rename'``).  Results are stored in
+		``self.calculations``.
+
+		Args
+		----
+		decisions : dict[str, str] or None
+			Decision map from :meth:`plan`.  If ``None``, :meth:`plan` is
+			called first.
+		"""
 		if decisions is None:
 			decisions = self.plan()
 
@@ -352,7 +511,24 @@ class BatchAbaqusProcessor:
 		num_parallel_jobs: int,
 		license_tokens: int | None = None
 	) -> list[JobOutcome]:
-		"""Execute all calculations. One failure does not affect others (fix Q2-1)."""
+		"""Execute all prepared calculations via :class:`~concurrent.futures.ProcessPoolExecutor`.
+
+		If :meth:`prepare` has not been called yet it is invoked with a
+		fresh call to :meth:`plan`.
+
+		Args
+		----
+		num_parallel_jobs : int
+			Desired maximum concurrent jobs.
+		license_tokens : int or None
+			Total license tokens available; ``None`` means no license limit.
+
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per executed job.  Failed jobs are included with
+			their error state — they do not halt the batch.
+		"""
 		if self.calculations is None:
 			self.prepare(self.plan())
 
@@ -390,7 +566,21 @@ class BatchAbaqusProcessor:
 # ======================== Result conversion ========================
 
 def outcomes_to_list(outcomes: list[JobOutcome]) -> list[dict]:
-	"""Convert outcomes to old list-of-dicts format."""
+	"""Convert a list of :class:`JobOutcome` objects to a list of plain dicts.
+
+	Convenience for callers that prefer the legacy list-of-dicts shape.
+
+	Args
+	----
+	outcomes : list[JobOutcome]
+		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
+
+	Returns
+	-------
+	list[dict]
+		Each dict contains ``'job_name'``, ``'status'``, flattened results,
+		and optionally ``'error'``.
+	"""
 	out = []
 	for oc in outcomes:
 		d = {**(oc.results or {}), 'status': oc.status, 'job_name': oc.job_name}
@@ -401,7 +591,24 @@ def outcomes_to_list(outcomes: list[JobOutcome]) -> list[dict]:
 
 
 def outcomes_to_dict(outcomes: list[JobOutcome]) -> dict[str, dict]:
-	"""Convert outcomes to {job_name: {...}} format. Raises on duplicate names (fix B14/B15)."""
+	"""Convert a list of :class:`JobOutcome` objects to a ``{job_name: {...}}`` dict.
+
+	Args
+	----
+	outcomes : list[JobOutcome]
+		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
+
+	Returns
+	-------
+	dict[str, dict]
+		Each value dict contains ``'status'``, flattened results, and
+		optionally ``'error'``.
+
+	Raises
+	------
+	ValueError
+		If two outcomes share the same ``job_name``.
+	"""
 	out = {}
 	for oc in outcomes:
 		if oc.job_name in out:
@@ -416,15 +623,30 @@ def outcomes_to_dict(outcomes: list[JobOutcome]) -> dict[str, dict]:
 # ======================== Array generation / degeneration ========================
 
 def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
-	"""Generate JobSpecs from a parameter array. Deep-copies base_spec (fix Q3 shallow copy).
+	"""Create N :class:`JobSpec` objects from an (N, D) parameter array.
 
-	Args:
-		samples_array: shape (N, D) — numpy array or torch tensor.
-		param_names: list of D strings.
-		base_spec: JobSpec or dict (compat). Each row overrides preparation/monolithic params.
+	Each row of *samples_array* becomes a new spec via :func:`copy.deepcopy`
+	of *base_spec*, so every spec owns independent mutable state.
 
-	Returns:
-		list[JobSpec]: N specs with zero-padded names (e.g. job_0001).
+	Args
+	----
+	samples_array : ndarray or Tensor
+		Shape ``(N, D)`` parameter matrix.  Torch tensors are converted to
+		NumPy internally.
+	param_names : list[str]
+		Length-D list of parameter names.
+	base_spec : JobSpec or dict
+		Template spec.  Dicts are upgraded via :meth:`JobSpec.from_dict`.
+
+	Returns
+	-------
+	list[JobSpec]
+		N specs with zero-padded names (e.g. ``job_0001``, ``job_0002``).
+
+	Raises
+	------
+	ValueError
+		If the array column count does not match ``len(param_names)``.
 	"""
 	if hasattr(samples_array, 'numpy'):
 		samples_array = samples_array.numpy()
@@ -452,13 +674,38 @@ def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
 
 
 def _natural_key(name: str):
-	"""Natural sort: job_2 < job_10."""
+	"""Split *name* into (text, int, text, ...) tuples for natural sort order.
+
+	Ensures ``job_2`` sorts before ``job_10``.
+	"""
 	return [int(t) if t.isdigit() else t for t in re.split(r'(\d+)', name)]
 
 
 def degenerate_from_array(outcomes: list[JobOutcome], output_names: list[str],
 						default_value=np.nan, require_completed: bool = True) -> np.ndarray:
-	"""Extract a 2D array from outcomes. Natural sort, status-aware (fix B16)."""
+	"""Extract a 2D NumPy array of output values from a list of outcomes.
+
+	Outcomes are sorted by natural key on ``job_name`` so rows appear in
+	the order the jobs were generated.  Jobs that are not ``COMPLETED`` are
+	filled with *default_value* and trigger a warning.
+
+	Args
+	----
+	outcomes : list[JobOutcome]
+		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
+	output_names : list[str]
+		Keys to extract from each outcome's ``results`` dict.
+	default_value : float
+		Value to use for missing or non-completed results (default ``NaN``).
+	require_completed : bool
+		If ``True`` (default), warn when non-``COMPLETED`` jobs are
+		encountered.
+
+	Returns
+	-------
+	np.ndarray
+		Shape ``(len(outcomes), len(output_names))`` float array.
+	"""
 	# Sort by natural key on job_name
 	sorted_outcomes = sorted(outcomes, key=lambda o: _natural_key(o.job_name))
 
