@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>abaqus_batch_pack.abaqus_automation - abq-flow 0.3.0 documentation</title>
+        <title>abq_flow.abaqus_automation - abq-flow 0.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -200,8 +200,8 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../source/architecture.html">Architecture</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abaqus_batch_pack</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abaqus_batch_pack</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../source/abaqus_batch_pack.html">abaqus_batch_pack package</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../source/modules.html">abq_flow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of abq_flow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../source/abq_flow.html">abq_flow package</a></li>
 </ul>
 </li>
 </ul>
@@ -238,7 +238,7 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for abaqus_batch_pack.abaqus_automation</h1><div class="highlight"><pre>
+          <h1>Source code for abq_flow.abaqus_automation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Abaqus batch processing — orchestrator, resource planner, and public helpers.</span>
 
 <span class="sd">Key classes</span>
@@ -275,7 +275,7 @@
 <span class="c1"># ======================== AbaqusCalculation (thin wrapper) ========================</span>
 
 <div class="viewcode-block" id="AbaqusCalculation">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.AbaqusCalculation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusCalculation</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.</span>
 
@@ -374,7 +374,7 @@
 		<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.execute">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.AbaqusCalculation.execute">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.AbaqusCalculation.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
@@ -402,7 +402,7 @@
 <span class="c1"># ======================== JobOutcome (fix Q2-1, Q2-4) ========================</span>
 
 <div class="viewcode-block" id="JobOutcome">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.JobOutcome">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.JobOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Unified result envelope returned from every job, pass or fail.</span>
@@ -432,7 +432,7 @@
 <span class="c1"># ======================== Resource planning (fix Q2-2) ========================</span>
 
 <div class="viewcode-block" id="solver_tokens">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.solver_tokens">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.solver_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solver_tokens</span><span class="p">(</span><span class="n">n_cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
 
@@ -454,7 +454,7 @@
 
 
 <div class="viewcode-block" id="plan_parallelism">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.plan_parallelism">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.plan_parallelism">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 					<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 					<span class="n">reserve_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -526,7 +526,7 @@
 <span class="c1"># ======================== BatchAbaqusProcessor ========================</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.BatchAbaqusProcessor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbaqusProcessor</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Orchestrate a batch of Abaqus jobs through a three-phase lifecycle.</span>
 
@@ -548,7 +548,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.__init__">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.__init__">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.BatchAbaqusProcessor.__init__">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">batch_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">],</span>
@@ -624,7 +624,7 @@
 
 	<span class="c1"># ---- plan: pure computation, no side effects ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.plan">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.plan">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.BatchAbaqusProcessor.plan">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Inspect output directory for existing job subdirectories.</span>
 
@@ -723,7 +723,7 @@
 
 	<span class="c1"># ---- prepare: apply decisions, build calculations ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.prepare">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.prepare">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.BatchAbaqusProcessor.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decisions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Apply plan decisions and build the :class:`AbaqusCalculation` list.</span>
 
@@ -774,7 +774,7 @@
 
 	<span class="c1"># ---- run_batch: ProcessPoolExecutor + fault-tolerant collection ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_batch">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.BatchAbaqusProcessor.run_batch">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -837,7 +837,7 @@
 <span class="c1"># ======================== Result conversion ========================</span>
 
 <div class="viewcode-block" id="outcomes_to_list">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.outcomes_to_list">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.outcomes_to_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_list</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Convert a list of :class:`JobOutcome` objects to a list of plain dicts.</span>
 
@@ -865,7 +865,7 @@
 
 
 <div class="viewcode-block" id="outcomes_to_dict">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.outcomes_to_dict">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.outcomes_to_dict">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_dict</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Convert a list of :class:`JobOutcome` objects to a ``{job_name: {...}}`` dict.</span>
 
@@ -900,7 +900,7 @@
 <span class="c1"># ======================== Array generation / degeneration ========================</span>
 
 <div class="viewcode-block" id="generate_from_array">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.generate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.generate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_array</span><span class="p">(</span><span class="n">samples_array</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">base_spec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Create N :class:`JobSpec` objects from an (N, D) parameter array.</span>
 
@@ -962,7 +962,7 @@
 
 
 <div class="viewcode-block" id="degenerate_from_array">
-<a class="viewcode-back" href="../../source/abaqus_batch_pack.html#abaqus_batch_pack.abaqus_automation.degenerate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../source/abq_flow.html#abq_flow.abaqus_automation.degenerate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">],</span> <span class="n">output_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 						<span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">require_completed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract a 2D NumPy array of output values from a list of outcomes.</span>

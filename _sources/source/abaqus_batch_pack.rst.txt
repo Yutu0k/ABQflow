@@ -64,6 +64,4 @@ Module contents
 ---------------
 
 .. automodule:: abaqus_batch_pack
-   :members:
-   :undoc-members:
    :show-inheritance:
