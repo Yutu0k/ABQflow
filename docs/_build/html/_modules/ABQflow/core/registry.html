@@ -1,15 +1,14 @@
 <!doctype html>
-<html class="no-js" lang="zh-cn" data-content_root="./">
-  <head>
-<meta charset="utf-8"/>
+<html class="no-js" lang="zh-cn" data-content_root="../../../">
+  <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="#" />
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-<meta name="robots" content="noindex" />
-<title>Search - ABQflow 0.3.0 documentation</title><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+        <title>ABQflow.core.registry - ABQflow 0.3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     
     
 
@@ -166,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,26 +186,22 @@
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
       
-      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
   <span class="sidebar-brand-text">ABQflow 0.3.0 documentation</span>
   
-</a><form class="sidebar-search-container" method="get" action="#" role="search">
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
-<li class="toctree-l1"><a class="reference internal" href="source/getting_started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="source/architecture.html">Architecture</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="source/ABQflow.core.html">ABQflow.core package</a></li>
-<li class="toctree-l3"><a class="reference internal" href="source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
 </ul>
 </li>
 </ul>
@@ -243,18 +238,101 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          
-<noscript>
-<div class="admonition error">
-  <p class="admonition-title">Error</p>
-  <p>
-    Please activate JavaScript to enable the search functionality.
-  </p>
-</div>
-</noscript>
+          <h1>Source code for ABQflow.core.registry</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Strategy registry — open/closed mapping from preparation kind to factory.</span>
 
-<div id="search-results"></div>
+<span class="sd">Replaces hardcoded ``if/else`` dispatch.  Users can add custom preparation</span>
+<span class="sd">strategies at runtime via :func:`register_preparation` without modifying</span>
+<span class="sd">framework code.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+	<span class="n">JobWorkflowStrategy</span><span class="p">,</span> <span class="n">ModularWorkflowStrategy</span><span class="p">,</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">,</span>
+	<span class="n">InpModifyStrategy</span><span class="p">,</span> <span class="n">ModelGenerationStrategy</span><span class="p">,</span>
+	<span class="n">OdbExtractionStrategy</span><span class="p">,</span> <span class="n">ModelPropertiesExtractionStrategy</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># ---- Preparation strategy factories ----</span>
+<span class="n">PREPARATION_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+	<span class="c1"># Each factory receives a PreparationSpec and returns a PreparationStrategy.</span>
+	<span class="c1"># Add new entries via register_preparation() to keep the framework closed</span>
+	<span class="c1"># for modification but open for extension.</span>
+	<span class="s1">&#39;inp_based&#39;</span><span class="p">:</span>        <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">InpModifyStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
+	<span class="s1">&#39;model_generation&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ModelGenerationStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="register_preparation">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.register_preparation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_preparation</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">factory</span><span class="p">:</span> <span class="nb">callable</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Register a custom preparation strategy for use in modular workflows.</span>
+
+<span class="sd">	After registration, users can set ``PreparationSpec.kind`` to *kind* and</span>
+<span class="sd">	:func:`build_workflow` will dispatch to *factory* automatically — no</span>
+<span class="sd">	framework source changes required.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	kind : str</span>
+<span class="sd">		Unique key for the preparation strategy (referenced in</span>
+<span class="sd">		:class:`PreparationSpec.kind &lt;abaqus_batch_pack.spec.PreparationSpec&gt;`).</span>
+<span class="sd">	factory : callable</span>
+<span class="sd">		Callable that receives a :class:`~abaqus_batch_pack.spec.PreparationSpec`</span>
+<span class="sd">		and returns a :class:`~abaqus_batch_pack.strategies.PreparationStrategy`.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">PREPARATION_REGISTRY</span><span class="p">[</span><span class="n">kind</span><span class="p">]</span> <span class="o">=</span> <span class="n">factory</span></div>
+
+
+
+<div class="viewcode-block" id="build_workflow">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.build_workflow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_workflow</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">JobSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobWorkflowStrategy</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Assemble a concrete :class:`~abaqus_batch_pack.strategies.JobWorkflowStrategy` from a spec.</span>
+
+<span class="sd">	* Monolithic specs produce a :class:`~abaqus_batch_pack.strategies.MonolithicWorkflowStrategy`.</span>
+<span class="sd">	* Modular specs look up the preparation kind in :data:`PREPARATION_REGISTRY`,</span>
+<span class="sd">	  wrap pre/post-extraction hooks, and return a</span>
+<span class="sd">	  :class:`~abaqus_batch_pack.strategies.ModularWorkflowStrategy`.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	spec : JobSpec</span>
+<span class="sd">		Validated job configuration.</span>
+
+<span class="sd">	Returns</span>
+<span class="sd">	-------</span>
+<span class="sd">	JobWorkflowStrategy</span>
+<span class="sd">		Ready-to-execute strategy chain.</span>
+
+<span class="sd">	Raises</span>
+<span class="sd">	------</span>
+<span class="sd">	ValueError</span>
+<span class="sd">		If ``spec.preparation.kind`` is not registered.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">,</span>
+										<span class="n">spec</span><span class="o">.</span><span class="n">monolithic_params</span><span class="p">)</span>
+
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">prep</span> <span class="o">=</span> <span class="n">PREPARATION_REGISTRY</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span><span class="p">](</span><span class="n">spec</span><span class="o">.</span><span class="n">preparation</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Unknown preparation kind: &#39;</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;Available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">PREPARATION_REGISTRY</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+		<span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+	<span class="n">pre</span> <span class="o">=</span> <span class="p">[</span><span class="n">ModelPropertiesExtractionStrategy</span><span class="p">(</span>
+		<span class="p">[{</span><span class="s1">&#39;script_path&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span><span class="p">]</span>
+	<span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span> <span class="k">else</span> <span class="p">[]</span>
+
+	<span class="n">post</span> <span class="o">=</span> <span class="p">[</span><span class="n">OdbExtractionStrategy</span><span class="p">(</span>
+		<span class="p">[{</span><span class="s1">&#39;script_path&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span><span class="p">]</span>
+	<span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span> <span class="k">else</span> <span class="p">[]</span>
+
+	<span class="k">return</span> <span class="n">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">prep</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span></div>
+
+</pre></div>
         </article>
       </div>
       <footer>
@@ -293,12 +371,9 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=e4caa2eb"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
-    
-<script src="_static/searchtools.js"></script>
-<script src="_static/language_data.js"></script>
-<script src="searchindex.js"></script></body>
+</div><script src="../../../_static/documentation_options.js?v=e4caa2eb"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
+    </body>
 </html>

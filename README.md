@@ -2,28 +2,25 @@
 
 # ABQ-FLOW
 
-**Modular batch-processing framework for [Abaqus FEA](https://www.3ds.com/products/simulia/abaqus).**
+**Modular batch-processing framework for [Abaqus FEA](https://www.3ds.com/products/simulia/abaqus) based on [python](https://www.python.org/).**
 Typed job specs, strategy-pattern workflows, fault-tolerant parallel execution, resource-aware scheduling — no more hand-crafted launch scripts.
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  ![Version](https://img.shields.io/badge/version-v0.3.0-green.svg?style=flat-square) ![python](https://img.shields.io/badge/python-3.9+-blue.svg)
 
-English | [简体中文](doc/README.zh-CN.md) 
+English | [简体中文](../README.zh-CN.md) 
 
 </div>
 
 ## Features
 
-- **Strategy-pattern workflows** — compose preparation, extraction, and simulation steps into reusable pipelines
-- **Typed configuration** — `JobSpec` dataclasses validate before execution, no silent `KeyError` at runtime
-- **Fault-tolerant parallel execution** — `ProcessPoolExecutor` + `JobOutcome` envelope; one failed job won't kill the batch
-- **Resource-aware scheduling** — CPU-core and Abaqus-license-token constraints with automatic parallelism reduction
-- **Sentinel-based JSON protocol** — reliable stdout parsing even with Abaqus banner noise
-- **Extensible** — register custom preparation strategies without modifying framework code
-- **CI-friendly** — zero-interaction defaults; `duplicate_mode='fail'` by default
+- **⚒️ Strategy-pattern workflows**: compose preparation, extraction, and simulation steps into reusable pipelines
+- **📗 Typed configuration**: `JobSpec` dataclasses validate before execution, no silent `KeyError` at runtime
+- **🔒 Fault-tolerant parallel execution**: `ProcessPoolExecutor` + `JobOutcome` envelope; one failed job won't kill the batch
+- **💻 Extensible**: register custom preparation strategies without modifying framework code
 
 ## Architecture
 
-```
+<!-- ```
 ┌──────────────────────────────────────────────────┐
 │ User Layer                                        │
 │   JobSpec (dataclass, validate + deep-copy)       │
@@ -44,7 +41,9 @@ English | [简体中文](doc/README.zh-CN.md)
 │   AbaqusRunner — run_solver / run_hook             │
 │   Strategy     — depends only on (ctx, runner, log)│
 └──────────────────────────────────────────────────┘
-```
+``` -->
+
+![](docs/image/architecture.png)
 
 
 ## Installation
@@ -60,56 +59,100 @@ pixi add --pypi "ABQflow @ git+https://github.com/Yutu0k/ABQflow.git"
 ### Single parameterized job
 
 ```python
-from abaqus_batch_pack import BatchAbaqusProcessor
+from ABQflow import BatchAbaqusProcessor, JobSpec, PreparationSpec, HookSpec
 
-jobs = [{
-    'job_name': 'cantilever_01',
-    'type': 'inp_based',
-    'base_inp_path': './cantilever.inp',
-    'params': {'E': 210000, 'F': 1000},
-    'post_extraction': [{
-        'script_path': './get_deflection.py',
-        'tasks': [{'result_name': 'max_u'}]
-    }]
-}]
+spec = JobSpec(
+    job_name = "planar_stress",
+    workflow = "modular",
+    preparation = PreparationSpec(
+        kind = "inp_based",
+        source_path = "./examples/SingleParameterizedJob/cae_file/planar_stress_template.inp",
+        params = {
+            "youngs_modulus": 210000,
+            "load_magnitude": 2000,
+        }
+    ),
+    post_extraction = [
+        HookSpec(
+            script_path = "./examples/SingleParameterizedJob/cae_file/get_max_stress_mises.py",
+            tasks = [
+                {"result_name": "max_stress_mises",},
+                {"result_name": "max_displacement",},
+            ]
+        )
+    ]
+)
 
-proc = BatchAbaqusProcessor(jobs, './output', cpus_per_job=4)
-outcomes = proc.run_batch(num_parallel_jobs=1)
+processor = BatchAbaqusProcessor(
+    batch_data = [spec],
+    base_output_dir = ("./examples/SingleParameterizedJob/output"),
+    cpus_per_job = 4,
+    duplicate_mode = "overwrite",
+)
+outcomes = processor.run_batch(num_parallel_jobs=1)
 
 for oc in outcomes:
     print(f"{oc.job_name}: {oc.status} → {oc.results}")
 ```
 
-### Parameter sweep
+### Batch parameterized job
 
 ```python
 import numpy as np
-from abaqus_batch_pack import generate_from_array, BatchAbaqusProcessor, degenerate_from_array
+from ABQflow import BatchAbaqusProcessor, JobSpec, PreparationSpec, HookSpec
+from ABQflow import generate_from_array, degenerate_from_array
 
-base = {
-    'job_name': 'sweep',
-    'type': 'inp_based',
-    'base_inp_path': './template.inp',
-    'post_extraction': [{
-        'script_path': './extract.py',
-        'tasks': [{'result_name': 'stress'}, {'result_name': 'mass'}]
-    }]
-}
+param_names = ['youngs_modulus', 'load_magnitude']
+param_values = np.array([
+	[200000, 2000],
+	[210000, 3000],
+	[220000, 4000],
+	[230000, 5000]
+])
 
-samples = np.array([[200e3, 0.3], [210e3, 0.3], [200e3, 0.33]])
-specs = generate_from_array(samples, ['E', 'nu'], base)
+base_job_spec = JobSpec(
+    job_name = "planar_stress_batch",
+    workflow = "modular",
+    preparation = PreparationSpec(
+        kind = "inp_based",
+        source_path = "./examples/BatchParameterizedJob/cae_file/planar_stress_template.inp",
+    ),
+    pre_extraction = [
+        HookSpec(
+            script_path = "./examples/BatchParameterizedJob/cae_file/get_total_mass.py",
+            tasks = [
+                {"result_name": "total_mass",},
+            ]
+        )
+    ],
+    post_extraction = [
+        HookSpec(
+            script_path = "./examples/BatchParameterizedJob/cae_file/get_max_stress_mises.py",
+            tasks = [
+                {"result_name": "max_stress_mises",},
+                {"result_name": "max_displacement",},
+            ]
+        )
+    ]
+)
+
+spec_list = generate_from_array(
+    samples_array = param_values,
+    param_names = param_names,
+    base_spec  = base_job_spec
+)
 
 proc = BatchAbaqusProcessor(specs, './output', cpus_per_job=4)
 outcomes = proc.run_batch(num_parallel_jobs=2)
 
 # Get a 2D numpy array of results
-arr = degenerate_from_array(outcomes, ['stress', 'mass'])
-print(arr)  # shape (3, 2)
+arr = degenerate_from_array(outcomes = outcomes, output_names = ["total_mass", "max_stress_mises", "max_displacement"])
+print(arr)  # shape (4, 3)
 ```
 
 ### Monolithic script
 
-```python
+<!-- ```python
 jobs = [{
     'job_name': 'full_model',
     'workflow': 'monolithic',
@@ -119,53 +162,59 @@ jobs = [{
 
 proc = BatchAbaqusProcessor(jobs, './output', cpus_per_job=4)
 outcomes = proc.run_batch(num_parallel_jobs=1)
-```
+``` -->
 
-Your script writes results via sentinel markers:
+TODO
 
-```python
-import sys, json
-# ... build model, run job, extract results ...
-results = {'status': 'COMPLETED', 'max_stress': 4525.3}
-sys.__stdout__.write(f"===ABQ_RESULT_BEGIN===\n{json.dumps(results)}\n===ABQ_RESULT_END===\n")
-```
-
-See the [full architecture docs]() for design rationale.
 
 ## Hook Scripts
 
-Extraction hook should follow the precedure below:
+Extraction hook should follow the retionales below:
 
+- Remember scripts are handed to `abaqus python interpreter`. Make sure no packages other than Python's built-in packages are imported.
+- The exported results should use `sys.__stderr__.write()` and include header `===ABQ_RESULT_BEGIN===` and footer `===ABQ_RESULT_END===`
+- Any fail can be manually tested with:
 
+    ```bash
+    python extraction_script.py --result_path path_to_result --tasks_json path_to_json_for_job
+    ```
 
-> Quick Example:
-> ```python
-> # my_extract.py
-> import argparse, sys, json
-> from odbAccess import openOdb
-> 
-> parser = argparse.ArgumentParser()
-> parser.add_argument('--odb_path', required=True)
-> parser.add_argument('--tasks_json', required=True)
-> args = parser.parse_args()
-> 
-> with open(args.tasks_json) as f:
->     tasks = json.load(f)
-> 
-> odb = openOdb(args.odb_path)
-> results = {}
-> for task in tasks:
->     name = task['result_name']
->     try:
->         results[name] = 123.45  # your extraction logic
->     except Exception:
->         results[name] = None
-> 
-> odb.close()
-> sys.__stdout__.write(json.dumps(results))
-> ```
+### Quick Example
+```python
+# my_extract.py
+import argparse, sys, json
+from odbAccess import openOdb
 
-Use `--inp_path` instead of `--odb_path` for pre-simulation extraction (model properties).
+def extract_from_odb(args):
+    try:
+        with open(tasks_json_path, 'r', encoding='utf-8') as f: 
+            task_list = json.load(f)
+
+        odb = openOdb(args.odb_path)
+        results = {}
+
+        for task in task_list:
+            name = task['result_name']
+            try:
+                results[name] = 123.45  # your extraction logic
+            except Exception:
+                results[name] = None
+        
+        odb.close()
+        sys.__stdout__.write(f"===ABQ_RESULT_BEGIN===\n{json.dumps(results)}\n===ABQ_RESULT_END===\n")
+    
+    except Exception as e:
+        sys.__stderr__.write(f"Fatal error in my_extract.py: {e}\n")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--odb_path', required=True)
+    parser.add_argument('--tasks_json', required=True)
+    args, unknown = parser.parse_known_args()
+    extract_from_odb(args)
+
+```
 
 
 ## License Token Planning

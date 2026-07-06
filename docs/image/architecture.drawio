@@ -1,0 +1,95 @@
+<mxfile host="65bd71144e">
+    <diagram id="RRPy5WWVEhHMLMImR048" name="第 1 页">
+        <mxGraphModel dx="717" dy="936" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="26" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="2" target="25">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="400" y="110" as="sourcePoint"/>
+                        <mxPoint x="400" y="170" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="480" y="110"/>
+                            <mxPoint x="480" y="170"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="27" value="&lt;div style=&quot;color: rgb(204, 202, 194); background-color: rgb(36, 41, 54); font-family: &amp;quot;Maple Mono&amp;quot;, &amp;quot;Maple Mono NF CN&amp;quot;, monospace, Consolas, &amp;quot;Courier New&amp;quot;, monospace; font-size: 14px; line-height: 19px; white-space: pre;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="26">
+                    <mxGeometry x="-0.0543" y="4" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="28" value="&lt;div style=&quot;background-color: rgb(36, 41, 54); font-family: &amp;quot;Maple Mono&amp;quot;, &amp;quot;Maple Mono NF CN&amp;quot;, monospace, Consolas, &amp;quot;Courier New&amp;quot;, monospace; line-height: 19px; white-space: pre;&quot;&gt;&lt;span&gt;&lt;font style=&quot;font-size: 10px; color: rgb(255, 205, 102);&quot;&gt;generate_from_array()&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="26">
+                    <mxGeometry x="-0.0686" y="-2" relative="1" as="geometry">
+                        <mxPoint x="32" y="5" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="JobSpec (dataclass, validate)" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="90" width="200" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="BatchSpec = list[JobSpec]" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="150" width="200" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;verticalAlign=bottom;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="40" width="400" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" style="edgeStyle=none;html=1;entryX=0.504;entryY=0.001;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="30" target="32">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" value="Register Strategy" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="45">
+                    <mxGeometry x="0.5847" y="-1" relative="1" as="geometry">
+                        <mxPoint x="50" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="49" value="JobContext (frozen data) + AbaqusRunner" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="45">
+                    <mxGeometry x="0.5847" y="-1" relative="1" as="geometry">
+                        <mxPoint x="110" y="188" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="31" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;User Layer&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="310" y="40" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" value="" style="edgeStyle=none;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="32" target="38">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="240" width="400" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Orchestration Layer&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="260" y="240" width="282" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;b style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;&lt;font style=&quot;font-size: 14px; line-height: 100%;&quot;&gt;BatchAbaqusProcessor&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;ul&gt;&lt;li&gt;plan(): conflict detection (no side fx)&lt;/li&gt;&lt;li&gt;prepare(): apply decisions, build calcs&amp;nbsp;&lt;/li&gt;&lt;li&gt;run_batch(): ProcessPoolExecutor + fault-tol&amp;nbsp;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="290" width="320" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="440" width="400" height="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Execution&lt;/h1&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="254" y="440" width="292" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;JobContext: &lt;/b&gt;path, name, resources&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="260" y="480" width="270" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;AbaqusRunner: &lt;/b&gt;run_solver / run_hook&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="260" y="530" width="270" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;Strategy: &lt;/b&gt;Preparation / Extraction&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;align=center;" vertex="1" parent="1">
+                    <mxGeometry x="260" y="580" width="270" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" style="edgeStyle=none;html=1;entryX=1.004;entryY=0.424;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="37" target="30">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="640" y="535"/>
+                            <mxPoint x="640" y="108"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="51" value="&lt;div style=&quot;background-color: rgb(36, 41, 54); font-family: &amp;quot;Maple Mono&amp;quot;, &amp;quot;Maple Mono NF CN&amp;quot;, monospace, Consolas, &amp;quot;Courier New&amp;quot;, monospace; line-height: 19px; white-space: pre;&quot;&gt;&lt;span&gt;&lt;font style=&quot;color: rgb(255, 205, 102); font-size: 10px;&quot;&gt;degenerate_from_array()&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="50">
+                    <mxGeometry x="0.1469" y="-3" relative="1" as="geometry">
+                        <mxPoint x="-43" y="-65" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

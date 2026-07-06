@@ -202,7 +202,11 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -258,9 +262,9 @@
 <p>The core insight of v0.3 is splitting the old <code class="docutils literal notranslate"><span class="pre">AbaqusCalculation</span></code> God-object into
 two narrow contracts:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">JobContext</span></code> — <strong>frozen</strong> data: paths, job name, CPU count.
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.JobContext" title="ABQflow.JobContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobContext</span></code></a> — <strong>frozen</strong> data: paths, job name, CPU count.
 Strategies see data, not implementation.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">AbaqusRunner</span></code> — a <strong>service</strong> with three public methods:
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.AbaqusRunner" title="ABQflow.AbaqusRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbaqusRunner</span></code></a> — a <strong>service</strong> with three public methods:
 <code class="docutils literal notranslate"><span class="pre">run_solver()</span></code>, <code class="docutils literal notranslate"><span class="pre">run_hook()</span></code>, and the internal <code class="docutils literal notranslate"><span class="pre">_base_command()</span></code>.</p></li>
 </ul>
 <p>Strategies depend only on <code class="docutils literal notranslate"><span class="pre">(ctx,</span> <span class="pre">runner,</span> <span class="pre">logger)</span></code> — not on <code class="docutils literal notranslate"><span class="pre">AbaqusCalculation</span></code>
@@ -294,29 +298,29 @@ runner), and gives each layer a clear responsibility.</p>
 <h2>Strategy Pattern<a class="headerlink" href="#strategy-pattern" title="Link to this heading">¶</a></h2>
 <p>Workflows are composed from three strategy types:</p>
 <dl class="simple">
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></dt><dd><p>Generates an INP file.  Built-in implementations:</p>
+<dt><a class="reference internal" href="ABQflow.html#ABQflow.PreparationStrategy" title="ABQflow.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></dt><dd><p>Generates an INP file.  Built-in implementations:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">InpModifyStrategy</span></code> — replace <code class="docutils literal notranslate"><span class="pre">{{placeholders}}</span></code>
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.InpModifyStrategy" title="ABQflow.InpModifyStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">InpModifyStrategy</span></code></a> — replace <code class="docutils literal notranslate"><span class="pre">{{placeholders}}</span></code>
 in a base INP file.  Validates coverage at prepare-time; missing parameters
 produce a clear error, not a silently broken input file.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelGenerationStrategy</span></code> — run a Python script
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.ModelGenerationStrategy" title="ABQflow.ModelGenerationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelGenerationStrategy</span></code></a> — run a Python script
 (with CAE kernel) that builds the model and exports an INP.</p></li>
-<li><p><em>Custom</em> — register via <code class="xref py py-func docutils literal notranslate"><span class="pre">register_preparation()</span></code>.</p></li>
+<li><p><em>Custom</em> — register via <a class="reference internal" href="ABQflow.html#ABQflow.register_preparation" title="ABQflow.register_preparation"><code class="xref py py-func docutils literal notranslate"><span class="pre">register_preparation()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></dt><dd><p>Extracts data from simulation outputs.  Built-in:</p>
+<dt><a class="reference internal" href="ABQflow.html#ABQflow.ExtractionStrategy" title="ABQflow.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></dt><dd><p>Extracts data from simulation outputs.  Built-in:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">OdbExtractionStrategy</span></code> — post-simulation ODB
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.OdbExtractionStrategy" title="ABQflow.OdbExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">OdbExtractionStrategy</span></code></a> — post-simulation ODB
 extraction (uses <code class="docutils literal notranslate"><span class="pre">odbAccess</span></code>, no CAE kernel needed).</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy</span></code> — pre-simulation
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.ModelPropertiesExtractionStrategy" title="ABQflow.ModelPropertiesExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy</span></code></a> — pre-simulation
 INP extraction (uses CAE kernel / <code class="docutils literal notranslate"><span class="pre">mdb</span></code>).</p></li>
 </ul>
 </dd>
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></dt><dd><p>Orchestrates the full pipeline:</p>
+<dt><a class="reference internal" href="ABQflow.html#ABQflow.JobWorkflowStrategy" title="ABQflow.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></dt><dd><p>Orchestrates the full pipeline:</p>
 <ul class="simple">
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ModularWorkflowStrategy</span></code> —
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.ModularWorkflowStrategy" title="ABQflow.ModularWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModularWorkflowStrategy</span></code></a> —
 preparation → pre-extraction → simulation → post-extraction.</p></li>
-<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy</span></code> —
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.MonolithicWorkflowStrategy" title="ABQflow.MonolithicWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy</span></code></a> —
 single script handles everything; results returned as JSON on stdout.</p></li>
 </ul>
 </dd>
@@ -324,7 +328,7 @@ single script handles everything; results returned as JSON on stdout.</p></li>
 </section>
 <section id="execution-environments">
 <h2>Execution Environments<a class="headerlink" href="#execution-environments" title="Link to this heading">¶</a></h2>
-<p><code class="xref py py-class docutils literal notranslate"><span class="pre">AbaqusRunner</span></code> selects the correct Python interpreter
+<p><a class="reference internal" href="ABQflow.html#ABQflow.AbaqusRunner" title="ABQflow.AbaqusRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbaqusRunner</span></code></a> selects the correct Python interpreter
 based on what the script needs:</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
@@ -371,7 +375,7 @@ P_{actual}  &amp;= \max(1, \min(P_{req}, P_{cpu}, P_{license}))\end{split}\]</di
 </div>
 <p>where <em>C</em> = physical cores, <em>R</em> = reserved cores (default 1), <em>c</em> = cores per
 job, <em>L</em> = available tokens.</p>
-<p>Use <code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code> to compute this directly.</p>
+<p>Use <a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> to compute this directly.</p>
 </section>
 <section id="fault-tolerance">
 <h2>Fault Tolerance<a class="headerlink" href="#fault-tolerance" title="Link to this heading">¶</a></h2>
@@ -379,7 +383,7 @@ job, <em>L</em> = available tokens.</p>
 guarantees:</p>
 <ul class="simple">
 <li><p><strong>Single-job isolation</strong>: an exception in one worker returns as an error
-<code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> — it does not kill the batch.</p></li>
+<a class="reference internal" href="ABQflow.html#ABQflow.JobOutcome" title="ABQflow.JobOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code></a> — it does not kill the batch.</p></li>
 <li><p><strong>Clean process lifecycle</strong>: the executor context-manager guarantees worker
 cleanup on completion or error.</p></li>
 <li><p><strong>Pickle-safe workers</strong>: the top-level <code class="docutils literal notranslate"><span class="pre">_worker</span></code> function (not a lambda or
@@ -405,7 +409,7 @@ script output, so the last <code class="docutils literal notranslate"><span clas
 </section>
 <section id="configuration-validation">
 <h2>Configuration Validation<a class="headerlink" href="#configuration-validation" title="Link to this heading">¶</a></h2>
-<p><code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code> validates at construction time:</p>
+<p><a class="reference internal" href="ABQflow.html#ABQflow.JobSpec" title="ABQflow.JobSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code></a> validates at construction time:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">workflow='modular'</span></code> requires a <code class="docutils literal notranslate"><span class="pre">preparation</span></code> field.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">workflow='monolithic'</span></code> requires a <code class="docutils literal notranslate"><span class="pre">monolithic_script</span></code> field.</p></li>
@@ -435,8 +439,8 @@ analysis).</p>
 <p><strong>Batch result format:</strong></p>
 <p>Old: <code class="docutils literal notranslate"><span class="pre">run_batch()</span></code> returned <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> or <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">dict]</span></code>.
 New: returns <code class="docutils literal notranslate"><span class="pre">list[JobOutcome]</span></code>.  Use
-<code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code> or
-<code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code> for the old format.</p>
+<a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_list" title="ABQflow.outcomes_to_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a> or
+<a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_dict" title="ABQflow.outcomes_to_dict"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a> for the old format.</p>
 <p><strong>Strategy signatures:</strong></p>
 <p>Custom strategies that subclasses <code class="docutils literal notranslate"><span class="pre">PreparationStrategy</span></code> / <code class="docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code> /
 <code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code> must change their method signatures from
