@@ -20,5 +20,11 @@ __pycache__/
 *.rec
 *.jnl
 *.deps
+*.odb
+*.log
 abaqus.rpy.[0-9]*
 abaqus.rpy
+
+# Generated test/example output
+test/output/
+examples/**/output/

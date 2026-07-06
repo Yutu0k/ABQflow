@@ -11,11 +11,15 @@ import subprocess
 import logging
 
 from .context import JobContext
-from .utils.helpers import check_abqpy_installed
+from ..helpers.constant import RESULT_BEGIN, RESULT_END
 
-# ---- Sentinel-based JSON extraction (fix B7/B13) ----
-RESULT_BEGIN = "===ABQ_RESULT_BEGIN==="
-RESULT_END = "===ABQ_RESULT_END==="
+def _check_abqpy_installed() -> bool:
+	"""Return ``True`` if the ``abqpy`` package is importable."""
+	try:
+		import abqpy  # noqa: F401
+		return True
+	except ImportError:
+		return False
 
 
 def extract_json(text: str) -> dict:
@@ -87,7 +91,7 @@ class AbaqusRunner:
 		self.ctx = ctx
 		self.logger = logger
 		self.timeout = timeout
-		self._has_abqpy = check_abqpy_installed()
+		self._has_abqpy = _check_abqpy_installed()
 
 	# ---- Execution environment selection (fix B5/B6/B11) ----
 	def _base_command(self, script: str, needs_cae_kernel: bool) -> list[str]:
@@ -168,6 +172,8 @@ class AbaqusRunner:
 		if not tasks:
 			return {}
 
+		script_path = os.path.abspath(script_path)
+
 		tmp = os.path.join(self.ctx.output_dir, f"tasks_{uuid.uuid4().hex}.json")
 		try:
 			with open(tmp, 'w', encoding='utf-8') as f:
@@ -184,7 +190,8 @@ class AbaqusRunner:
 			return extract_json(proc.stdout)
 		finally:
 			if os.path.exists(tmp):
-				os.remove(tmp)
+				# os.remove(tmp)
+				pass
 
 	def _run(self, cmd: list[str], cwd: str | None = None):
 		"""Execute *cmd* via ``subprocess.run``, capturing all output.
@@ -206,7 +213,14 @@ class AbaqusRunner:
 			Completed process on success, ``None`` on timeout or non-zero exit.
 		"""
 		try:
-			return subprocess.run(cmd, cwd=cwd or self.ctx.output_dir, check=True, capture_output=True, text=True, timeout=self.timeout)
+			return subprocess.run(
+				cmd,
+				cwd=cwd or self.ctx.output_dir,
+				check=True,
+				capture_output=True,
+				text=True,
+				timeout=self.timeout
+			)
 		except subprocess.TimeoutExpired:
 			self.logger.error(f"Timeout ({self.timeout}s): {' '.join(cmd)}")
 			return None

@@ -42,3 +42,8 @@ pytest-dependency = ">=0.5.1,<0.6"
 abqpy = ">=2025.9,<2026"
 myst-parser = ">=4.0.1,<5"
 toml = "*"
+
+jupyter = "*"
+ipykernel = "*"
+ipywidgets = ">=8.1.7,<9"
+pip = ">=26.0.1,<27"

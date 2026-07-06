@@ -1,54 +1,78 @@
-from .abaqus_automation import (
+"""
+Key modules
+-----------
+- AbaqusCalculation
+- BatchAbaqusProcessor
+- JobSpec
+- PreparationSpec
+- HookSpec
+
+Key Methods
+-----------
+- degenerate_from_array
+- generate_from_array
+- outcomes_to_dict
+- outcomes_to_list
+
+"""
+
+
+from .core.abaqus_automation import (
 	AbaqusCalculation,
 	BatchAbaqusProcessor,
 	JobOutcome,
-	generate_from_array,
-	degenerate_from_array,
-	outcomes_to_list,
-	outcomes_to_dict,
 	plan_parallelism,
 	solver_tokens,
 )
-from .context import JobContext
-from .runner import AbaqusRunner, extract_json, RESULT_BEGIN, RESULT_END
-from .spec import JobSpec, HookSpec, PreparationSpec
-from .registry import build_workflow, register_preparation, PREPARATION_REGISTRY
-from .status import JobStatus, JobStatusManager
-from .strategies import (
-	PreparationStrategy,
-	InpModifyStrategy,
-	ModelGenerationStrategy,
+from .core.context import JobContext
+from .core.registry import PREPARATION_REGISTRY, build_workflow, register_preparation
+from .core.runner import AbaqusRunner, extract_json
+from .core.spec import HookSpec, JobSpec, PreparationSpec
+from .core.status import JobStatus, JobStatusManager
+from .core.strategies import (
 	ExtractionStrategy,
-	OdbExtractionStrategy,
-	ModelPropertiesExtractionStrategy,
+	InpModifyStrategy,
 	JobWorkflowStrategy,
-	MonolithicWorkflowStrategy,
+	ModelGenerationStrategy,
+	ModelPropertiesExtractionStrategy,
 	ModularWorkflowStrategy,
+	MonolithicWorkflowStrategy,
+	OdbExtractionStrategy,
+	PreparationStrategy,
+)
+
+from .helpers.convert import (
+	degenerate_from_array,
+	generate_from_array,
+	outcomes_to_dict,
+	outcomes_to_list,
+)
+from .helpers.constant import (
+	RESULT_BEGIN,
+	RESULT_END,
 )
 
 __all__ = [
-	# Core
+	# Core — orchestration
 	"AbaqusCalculation",
 	"BatchAbaqusProcessor",
 	"JobOutcome",
-	# Context & Runner
+	# Core — context & runner
 	"JobContext",
 	"AbaqusRunner",
 	"extract_json",
-	"RESULT_BEGIN",
-	"RESULT_END",
-	# Spec
+	# Core — spec
 	"JobSpec",
 	"HookSpec",
 	"PreparationSpec",
-	# Registry
+	# Core — registry
 	"build_workflow",
 	"register_preparation",
 	"PREPARATION_REGISTRY",
-	# Status
+	# Core — status
 	"JobStatus",
 	"JobStatusManager",
-	# Strategies
+	# Core — strategies
 	"PreparationStrategy",
 	"InpModifyStrategy",
 	"ModelGenerationStrategy",
@@ -58,11 +82,16 @@ __all__ = [
 	"JobWorkflowStrategy",
 	"MonolithicWorkflowStrategy",
 	"ModularWorkflowStrategy",
-	# Utils
+	# Helpers
 	"generate_from_array",
 	"degenerate_from_array",
 	"outcomes_to_list",
 	"outcomes_to_dict",
+	"RESULT_BEGIN",
+	"RESULT_END",
+	# Core — resource planning
 	"plan_parallelism",
 	"solver_tokens",
 ]
+
+__version__ = "0.3.0"
