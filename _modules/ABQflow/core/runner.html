@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -264,7 +268,7 @@
 
 
 <div class="viewcode-block" id="extract_json">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.extract_json">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.extract_json">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_json</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract a JSON object from subprocess stdout.</span>
 
@@ -312,7 +316,7 @@
 
 
 <div class="viewcode-block" id="AbaqusRunner">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.AbaqusRunner">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusRunner">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusRunner</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Encapsulates every subprocess call a strategy may need.</span>
 
@@ -370,7 +374,7 @@
 		<span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="n">script</span><span class="p">]</span>
 
 <div class="viewcode-block" id="AbaqusRunner.run_solver">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.AbaqusRunner.run_solver">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusRunner.run_solver">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_solver</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Submit the INP file to the Abaqus solver and wait for completion.</span>
 
@@ -387,7 +391,7 @@
 
 
 <div class="viewcode-block" id="AbaqusRunner.run_hook">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.AbaqusRunner.run_hook">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusRunner.run_hook">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_hook</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>

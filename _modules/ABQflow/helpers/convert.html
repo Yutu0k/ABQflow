@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -259,7 +263,7 @@
 <span class="c1"># ======================== Array generation / degeneration ========================</span>
 
 <div class="viewcode-block" id="generate_from_array">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.generate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_array</span><span class="p">(</span><span class="n">samples_array</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">base_spec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Create N :class:`JobSpec` objects from an (N, D) parameter array.</span>
 
@@ -320,7 +324,7 @@
 
 
 <div class="viewcode-block" id="degenerate_from_array">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.degenerate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.degenerate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">output_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 						<span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">require_completed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract a 2D NumPy array of output values from a list of outcomes.</span>
@@ -366,7 +370,7 @@
 <span class="c1"># ======================== Result conversion ========================</span>
 
 <div class="viewcode-block" id="outcomes_to_list">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.outcomes_to_list">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.outcomes_to_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_list</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Convert a list of :class:`JobOutcome` objects to a list of plain dicts.</span>
 
@@ -394,7 +398,7 @@
 
 
 <div class="viewcode-block" id="outcomes_to_dict">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.outcomes_to_dict">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.outcomes_to_dict">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_dict</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Convert a list of :class:`JobOutcome` objects to a ``{job_name: {...}}`` dict.</span>
 

@@ -11,9 +11,9 @@ Design Principles
 The core insight of v0.3 is splitting the old ``AbaqusCalculation`` God-object into
 two narrow contracts:
 
-* :class:`~abaqus_batch_pack.JobContext` — **frozen** data: paths, job name, CPU count.
+* :class:`~ABQflow.JobContext` — **frozen** data: paths, job name, CPU count.
   Strategies see data, not implementation.
-* :class:`~abaqus_batch_pack.AbaqusRunner` — a **service** with three public methods:
+* :class:`~ABQflow.AbaqusRunner` — a **service** with three public methods:
   ``run_solver()``, ``run_hook()``, and the internal ``_base_command()``.
 
 Strategies depend only on ``(ctx, runner, logger)`` — not on ``AbaqusCalculation``
@@ -49,36 +49,36 @@ Strategy Pattern
 
 Workflows are composed from three strategy types:
 
-:class:`~abaqus_batch_pack.PreparationStrategy`
+:class:`~ABQflow.PreparationStrategy`
    Generates an INP file.  Built-in implementations:
 
-   * :class:`~abaqus_batch_pack.InpModifyStrategy` — replace ``{{placeholders}}``
+   * :class:`~ABQflow.InpModifyStrategy` — replace ``{{placeholders}}``
      in a base INP file.  Validates coverage at prepare-time; missing parameters
      produce a clear error, not a silently broken input file.
-   * :class:`~abaqus_batch_pack.ModelGenerationStrategy` — run a Python script
+   * :class:`~ABQflow.ModelGenerationStrategy` — run a Python script
      (with CAE kernel) that builds the model and exports an INP.
-   * *Custom* — register via :func:`~abaqus_batch_pack.register_preparation`.
+   * *Custom* — register via :func:`~ABQflow.register_preparation`.
 
-:class:`~abaqus_batch_pack.ExtractionStrategy`
+:class:`~ABQflow.ExtractionStrategy`
    Extracts data from simulation outputs.  Built-in:
 
-   * :class:`~abaqus_batch_pack.OdbExtractionStrategy` — post-simulation ODB
+   * :class:`~ABQflow.OdbExtractionStrategy` — post-simulation ODB
      extraction (uses ``odbAccess``, no CAE kernel needed).
-   * :class:`~abaqus_batch_pack.ModelPropertiesExtractionStrategy` — pre-simulation
+   * :class:`~ABQflow.ModelPropertiesExtractionStrategy` — pre-simulation
      INP extraction (uses CAE kernel / ``mdb``).
 
-:class:`~abaqus_batch_pack.JobWorkflowStrategy`
+:class:`~ABQflow.JobWorkflowStrategy`
    Orchestrates the full pipeline:
 
-   * :class:`~abaqus_batch_pack.ModularWorkflowStrategy` —
+   * :class:`~ABQflow.ModularWorkflowStrategy` —
      preparation → pre-extraction → simulation → post-extraction.
-   * :class:`~abaqus_batch_pack.MonolithicWorkflowStrategy` —
+   * :class:`~ABQflow.MonolithicWorkflowStrategy` —
      single script handles everything; results returned as JSON on stdout.
 
 Execution Environments
 ----------------------
 
-:class:`~abaqus_batch_pack.AbaqusRunner` selects the correct Python interpreter
+:class:`~ABQflow.AbaqusRunner` selects the correct Python interpreter
 based on what the script needs:
 
 .. list-table::
@@ -124,7 +124,7 @@ Example token counts: 1→5, 2→7, 4→9, 8→12, 16→16.
 where *C* = physical cores, *R* = reserved cores (default 1), *c* = cores per
 job, *L* = available tokens.
 
-Use :func:`~abaqus_batch_pack.plan_parallelism` to compute this directly.
+Use :func:`~ABQflow.plan_parallelism` to compute this directly.
 
 Fault Tolerance
 ---------------
@@ -133,7 +133,7 @@ Fault Tolerance
 guarantees:
 
 * **Single-job isolation**: an exception in one worker returns as an error
-  :class:`~abaqus_batch_pack.JobOutcome` — it does not kill the batch.
+  :class:`~ABQflow.JobOutcome` — it does not kill the batch.
 * **Clean process lifecycle**: the executor context-manager guarantees worker
   cleanup on completion or error.
 * **Pickle-safe workers**: the top-level ``_worker`` function (not a lambda or
@@ -162,7 +162,7 @@ script output, so the last ``{`` is most likely the result).
 Configuration Validation
 ------------------------
 
-:class:`~abaqus_batch_pack.JobSpec` validates at construction time:
+:class:`~ABQflow.JobSpec` validates at construction time:
 
 * ``workflow='modular'`` requires a ``preparation`` field.
 * ``workflow='monolithic'`` requires a ``monolithic_script`` field.
@@ -196,8 +196,8 @@ New (native)::
 
 Old: ``run_batch()`` returned ``list[dict]`` or ``dict[str, dict]``.
 New: returns ``list[JobOutcome]``.  Use
-:func:`~abaqus_batch_pack.outcomes_to_list` or
-:func:`~abaqus_batch_pack.outcomes_to_dict` for the old format.
+:func:`~ABQflow.outcomes_to_list` or
+:func:`~ABQflow.outcomes_to_dict` for the old format.
 
 **Strategy signatures:**
 

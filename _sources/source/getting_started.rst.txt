@@ -28,26 +28,40 @@ that get replaced per job.
 
 .. code-block:: python
 
-   from abaqus_batch_pack import (
-       JobSpec, PreparationSpec, BatchAbaqusProcessor,
-   )
+  from ABQflow import BatchAbaqusProcessor, JobSpec, PreparationSpec, HookSpec
 
-   spec = JobSpec(
-       job_name="cantilever",
-       preparation=PreparationSpec(
-           kind="inp_based",
-           source_path="base_beam.inp",
-           params={"thickness": 0.01, "load": 1000.0},
-       ),
-   )
+  spec = JobSpec(
+      job_name = "planar_stress",
+      workflow = "modular",
+      preparation = PreparationSpec(
+          kind = "inp_based",
+          source_path = "./examples/SingleParameterizedJob/cae_file/planar_stress_template.inp",
+          params = {
+              "youngs_modulus": 210000,
+              "load_magnitude": 2000,
+          }
+      ),
+      post_extraction = [
+          HookSpec(
+              script_path = "./examples/SingleParameterizedJob/cae_file/get_max_stress_mises.py",
+              tasks = [
+                  {"result_name": "max_stress_mises",},
+                  {"result_name": "max_displacement",},
+              ]
+          )
+      ]
+  )
 
-   processor = BatchAbaqusProcessor(
-       batch_data=[spec],
-       base_output_dir="./output",
-       cpus_per_job=4,
-   )
-   outcomes = processor.run_batch(num_parallel_jobs=1)
-   print(outcomes[0].status)
+  processor = BatchAbaqusProcessor(
+      batch_data = [spec],
+      base_output_dir = ("./examples/SingleParameterizedJob/output"),
+      cpus_per_job = 4,
+      duplicate_mode = "overwrite",
+  )
+  outcomes = processor.run_batch(num_parallel_jobs=1)
+
+  for oc in outcomes:
+      print(f"{oc.job_name}: {oc.status} → {oc.results}")
 
 Quick Example: Batch with ``generate_from_array``
 --------------------------------------------------
@@ -56,64 +70,61 @@ Sweep parameters by generating multiple specs from a single base.
 
 .. code-block:: python
 
-   import numpy as np
-   from abaqus_batch_pack import (
-       JobSpec, PreparationSpec, generate_from_array,
-       BatchAbaqusProcessor,
-   )
+  import numpy as np
+  from ABQflow import BatchAbaqusProcessor, JobSpec, PreparationSpec, HookSpec
+  from ABQflow import generate_from_array, degenerate_from_array
 
-   base = JobSpec(
-       job_name="beam_sweep",
-       preparation=PreparationSpec(
-           kind="inp_based",
-           source_path="base_beam.inp",
-       ),
-   )
+  param_names = ['youngs_modulus', 'load_magnitude']
+  param_values = np.array([
+  	[200000, 2000],
+  	[210000, 3000],
+  	[220000, 4000],
+  	[230000, 5000]
+  ])
 
-   # Sample 5 (thickness, load) pairs
-   samples = np.array([
-       [0.01, 1000.0],
-       [0.02, 1500.0],
-       [0.03, 2000.0],
-       [0.04, 2500.0],
-       [0.05, 3000.0],
-   ])
+  base_job_spec = JobSpec(
+      job_name = "planar_stress_batch",
+      workflow = "modular",
+      preparation = PreparationSpec(
+          kind = "inp_based",
+          source_path = "./examples/BatchParameterizedJob/cae_file/planar_stress_template.inp",
+      ),
+      pre_extraction = [
+          HookSpec(
+              script_path = "./examples/BatchParameterizedJob/cae_file/get_total_mass.py",
+              tasks = [
+                  {"result_name": "total_mass",},
+              ]
+          )
+      ],
+      post_extraction = [
+          HookSpec(
+              script_path = "./examples/BatchParameterizedJob/cae_file/get_max_stress_mises.py",
+              tasks = [
+                  {"result_name": "max_stress_mises",},
+                  {"result_name": "max_displacement",},
+              ]
+          )
+      ]
+  )
 
-   specs = generate_from_array(samples, ["thickness", "load"], base)
-   # specs[0].job_name == "beam_sweep_0001"
+  spec_list = generate_from_array(
+      samples_array = param_values,
+      param_names = param_names,
+      base_spec  = base_job_spec
+  )
 
-   processor = BatchAbaqusProcessor(
-       batch_data=specs,
-       base_output_dir="./output",
-       cpus_per_job=4,
-   )
-   outcomes = processor.run_batch(num_parallel_jobs=2)
+  proc = BatchAbaqusProcessor(spec_list, './output', cpus_per_job=4)
+  outcomes = proc.run_batch(num_parallel_jobs=2)
+
+  # Get a 2D numpy array of results
+  arr = degenerate_from_array(outcomes = outcomes, output_names = ["total_mass", "max_stress_mises", "max_displacement"])
+  print(arr)  # shape (4, 3)
 
 Quick Example: Monolithic Script
 ---------------------------------
 
-When you prefer a single self-contained Abaqus script:
-
-.. code-block:: python
-
-   from abaqus_batch_pack import JobSpec, BatchAbaqusProcessor
-
-   spec = JobSpec(
-       job_name="mono_example",
-       workflow="monolithic",
-       monolithic_script="my_script.py",
-       monolithic_params={"mesh_size": 0.5},
-   )
-
-   processor = BatchAbaqusProcessor(
-       batch_data=[spec],
-       base_output_dir="./output",
-       cpus_per_job=4,
-   )
-   outcomes = processor.run_batch(num_parallel_jobs=1)
-
-Monolithic scripts should output results using the JSON sentinel markers
-(see :ref:`json_protocol`).
+TODO
 
 Output Format: ``JobOutcome``
 -----------------------------

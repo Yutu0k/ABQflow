@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -272,7 +276,7 @@
 <span class="c1"># ======================== AbaqusCalculation (thin wrapper) ========================</span>
 
 <div class="viewcode-block" id="AbaqusCalculation">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.AbaqusCalculation">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusCalculation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusCalculation</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.</span>
 
@@ -326,7 +330,7 @@
 		<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AbaqusCalculation.execute">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.AbaqusCalculation.execute">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusCalculation.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the workflow and return the result dict.</span>
 
@@ -364,7 +368,7 @@
 <span class="c1"># ======================== JobOutcome (fix Q2-1, Q2-4) ========================</span>
 
 <div class="viewcode-block" id="JobOutcome">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.JobOutcome">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Unified result envelope returned from every job, pass or fail.</span>
@@ -394,7 +398,7 @@
 <span class="c1"># ======================== Resource planning (fix Q2-2) ========================</span>
 
 <div class="viewcode-block" id="solver_tokens">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.solver_tokens">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.solver_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solver_tokens</span><span class="p">(</span><span class="n">n_cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
 
@@ -416,7 +420,7 @@
 
 
 <div class="viewcode-block" id="plan_parallelism">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.plan_parallelism">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.plan_parallelism">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 					<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 					<span class="n">reserve_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -488,7 +492,7 @@
 <span class="c1"># ======================== BatchAbaqusProcessor ========================</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.BatchAbaqusProcessor">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbaqusProcessor</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Orchestrate a batch of Abaqus jobs through a three-phase lifecycle.</span>
 
@@ -510,7 +514,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.__init__">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.BatchAbaqusProcessor.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.__init__">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">batch_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">],</span>
@@ -587,7 +591,7 @@
 
 	<span class="c1"># ---- plan: pure computation, no side effects ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.plan">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.BatchAbaqusProcessor.plan">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.plan">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Inspect output directory for existing job subdirectories.</span>
 
@@ -686,7 +690,7 @@
 
 	<span class="c1"># ---- prepare: apply decisions, build calculations ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.BatchAbaqusProcessor.prepare">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decisions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Apply plan decisions and build the :class:`AbaqusCalculation` list.</span>
 
@@ -737,7 +741,7 @@
 
 	<span class="c1"># ---- run_batch: ProcessPoolExecutor + fault-tolerant collection ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_batch">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.BatchAbaqusProcessor.run_batch">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.run_batch">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_batch</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>

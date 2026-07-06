@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -265,7 +269,7 @@
 
 <span class="c1"># ======================== Preparation Strategies ========================</span>
 <div class="viewcode-block" id="PreparationStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.PreparationStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for preparation: produce an INP file at ``ctx.inp_path``.</span>
 
@@ -278,7 +282,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="PreparationStrategy.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.PreparationStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -304,7 +308,7 @@
 
 
 <div class="viewcode-block" id="InpModifyStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.InpModifyStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Replace ``{{placeholder}}`` tokens in a base INP template file.</span>
 
@@ -325,7 +329,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="n">data_params</span>
 
 <div class="viewcode-block" id="InpModifyStrategy.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.InpModifyStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify]: Based on INP file &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
@@ -357,7 +361,7 @@
 
 
 <div class="viewcode-block" id="ModelGenerationStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModelGenerationStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelGenerationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelGenerationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Run a model-generation script (requires CAE kernel / ``mdb`` access).</span>
 
@@ -378,7 +382,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_params</span> <span class="o">=</span> <span class="n">script_params</span>
 
 <div class="viewcode-block" id="ModelGenerationStrategy.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModelGenerationStrategy.prepare">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelGenerationStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
@@ -401,7 +405,7 @@
 
 <span class="c1"># ======================== Extraction Strategies ========================</span>
 <div class="viewcode-block" id="ExtractionStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for extraction: read results from model or ODB files.</span>
 
@@ -414,7 +418,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ExtractionStrategy.extract">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExtractionStrategy.extract">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -440,7 +444,7 @@
 
 
 <div class="viewcode-block" id="OdbExtractionStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.OdbExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.OdbExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OdbExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract results from the ODB file via hook scripts.</span>
 
@@ -458,7 +462,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="OdbExtractionStrategy.extract">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.OdbExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.OdbExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [OdbExtract]: Start extracting from ODB...&quot;</span><span class="p">)</span>
@@ -488,7 +492,7 @@
 
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModelPropertiesExtractionStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelPropertiesExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelPropertiesExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract material/property data from the INP *before* simulation.</span>
 
@@ -506,7 +510,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy.extract">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModelPropertiesExtractionStrategy.extract">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelPropertiesExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [ModelPropsExtract]: Start extracting from INP...&quot;</span><span class="p">)</span>
@@ -538,7 +542,7 @@
 <span class="c1"># ======================== Workflow Strategies ========================</span>
 
 <div class="viewcode-block" id="JobWorkflowStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.JobWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobWorkflowStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for a complete job workflow.</span>
 
@@ -552,7 +556,7 @@
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.JobWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobWorkflowStrategy.execute">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -579,7 +583,7 @@
 
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.MonolithicWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.MonolithicWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;Single-script workflow: one script does everything.</span>
 
@@ -601,7 +605,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
 
 <div class="viewcode-block" id="MonolithicWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.MonolithicWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.MonolithicWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Workflow [MonolithicWorkflow]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
@@ -632,7 +636,7 @@
 
 
 <div class="viewcode-block" id="ModularWorkflowStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModularWorkflowStrategy">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;4-phase pipeline: preparation, pre-extraction, simulation, post-extraction.</span>
 
@@ -661,7 +665,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span> <span class="o">=</span> <span class="n">post_extraction_strategies</span>
 
 <div class="viewcode-block" id="ModularWorkflowStrategy.execute">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.ModularWorkflowStrategy.execute">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the 4-phase modular workflow.</span>

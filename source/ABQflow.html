@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="ABQflow" href="modules.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="ABQflow.core package" href="ABQflow.core.html" /><link rel="prev" title="ABQflow" href="modules.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>ABQflow package - ABQflow 0.3.0 documentation</title>
@@ -202,7 +202,11 @@
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">ABQflow</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">ABQflow package</a></li>
+<li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">ABQflow package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -251,29 +255,175 @@
         <article role="main" id="furo-main-content">
           <section id="abqflow-package">
 <h1>ABQflow package<a class="headerlink" href="#abqflow-package" title="Link to this heading">¶</a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-abaqus-automation-module">
-<h2>ABQflow.abaqus_automation module<a class="headerlink" href="#abqflow-abaqus-automation-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-context-module">
-<h2>ABQflow.context module<a class="headerlink" href="#abqflow-context-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-registry-module">
-<h2>ABQflow.registry module<a class="headerlink" href="#abqflow-registry-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-runner-module">
-<h2>ABQflow.runner module<a class="headerlink" href="#abqflow-runner-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-spec-module">
-<h2>ABQflow.spec module<a class="headerlink" href="#abqflow-spec-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-status-module">
-<h2>ABQflow.status module<a class="headerlink" href="#abqflow-status-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="abqflow-strategies-module">
-<h2>ABQflow.strategies module<a class="headerlink" href="#abqflow-strategies-module" title="Link to this heading">¶</a></h2>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.abaqus_automation">ABQflow.core.abaqus_automation module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#key-classes">Key classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.AbaqusCalculation"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.AbaqusCalculation.execute"><code class="docutils literal notranslate"><span class="pre">AbaqusCalculation.execute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome"><code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome.job_name"><code class="docutils literal notranslate"><span class="pre">JobOutcome.job_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome.status"><code class="docutils literal notranslate"><span class="pre">JobOutcome.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome.results"><code class="docutils literal notranslate"><span class="pre">JobOutcome.results</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome.error"><code class="docutils literal notranslate"><span class="pre">JobOutcome.error</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.solver_tokens"><code class="docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.plan_parallelism"><code class="docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.BatchAbaqusProcessor"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.plan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.prepare()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch"><code class="docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.context">ABQflow.core.context module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext"><code class="docutils literal notranslate"><span class="pre">JobContext</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.job_name"><code class="docutils literal notranslate"><span class="pre">JobContext.job_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.output_dir"><code class="docutils literal notranslate"><span class="pre">JobContext.output_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.cpus"><code class="docutils literal notranslate"><span class="pre">JobContext.cpus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.abaqus_exe"><code class="docutils literal notranslate"><span class="pre">JobContext.abaqus_exe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.inp_path"><code class="docutils literal notranslate"><span class="pre">JobContext.inp_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.odb_path"><code class="docutils literal notranslate"><span class="pre">JobContext.odb_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext.log_path"><code class="docutils literal notranslate"><span class="pre">JobContext.log_path</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.registry">ABQflow.core.registry module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.registry.register_preparation"><code class="docutils literal notranslate"><span class="pre">register_preparation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.registry.build_workflow"><code class="docutils literal notranslate"><span class="pre">build_workflow()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.runner">ABQflow.core.runner module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.extract_json"><code class="docutils literal notranslate"><span class="pre">extract_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner"><code class="docutils literal notranslate"><span class="pre">AbaqusRunner</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner.run_solver"><code class="docutils literal notranslate"><span class="pre">AbaqusRunner.run_solver()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner.run_hook"><code class="docutils literal notranslate"><span class="pre">AbaqusRunner.run_hook()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.spec">ABQflow.core.spec module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec"><code class="docutils literal notranslate"><span class="pre">HookSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec.script_path"><code class="docutils literal notranslate"><span class="pre">HookSpec.script_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec.tasks"><code class="docutils literal notranslate"><span class="pre">HookSpec.tasks</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec"><code class="docutils literal notranslate"><span class="pre">PreparationSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec.kind"><code class="docutils literal notranslate"><span class="pre">PreparationSpec.kind</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec.source_path"><code class="docutils literal notranslate"><span class="pre">PreparationSpec.source_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec.params"><code class="docutils literal notranslate"><span class="pre">PreparationSpec.params</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec"><code class="docutils literal notranslate"><span class="pre">JobSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.job_name"><code class="docutils literal notranslate"><span class="pre">JobSpec.job_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.workflow"><code class="docutils literal notranslate"><span class="pre">JobSpec.workflow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.preparation"><code class="docutils literal notranslate"><span class="pre">JobSpec.preparation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.monolithic_script"><code class="docutils literal notranslate"><span class="pre">JobSpec.monolithic_script</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.monolithic_params"><code class="docutils literal notranslate"><span class="pre">JobSpec.monolithic_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.pre_extraction"><code class="docutils literal notranslate"><span class="pre">JobSpec.pre_extraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.post_extraction"><code class="docutils literal notranslate"><span class="pre">JobSpec.post_extraction</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec.from_dict"><code class="docutils literal notranslate"><span class="pre">JobSpec.from_dict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.status">ABQflow.core.status module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus"><code class="docutils literal notranslate"><span class="pre">JobStatus</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.CREATED"><code class="docutils literal notranslate"><span class="pre">JobStatus.CREATED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.COMPLETED"><code class="docutils literal notranslate"><span class="pre">JobStatus.COMPLETED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.PREPARING"><code class="docutils literal notranslate"><span class="pre">JobStatus.PREPARING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.PREPARATION_FAILED"><code class="docutils literal notranslate"><span class="pre">JobStatus.PREPARATION_FAILED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.PREPARATION_SUCCESS"><code class="docutils literal notranslate"><span class="pre">JobStatus.PREPARATION_SUCCESS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.SIMULATING"><code class="docutils literal notranslate"><span class="pre">JobStatus.SIMULATING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.SIMULATION_FAILED"><code class="docutils literal notranslate"><span class="pre">JobStatus.SIMULATION_FAILED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.SIMULATION_SUCCESS"><code class="docutils literal notranslate"><span class="pre">JobStatus.SIMULATION_SUCCESS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.EXTRACTING"><code class="docutils literal notranslate"><span class="pre">JobStatus.EXTRACTING</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.EXTRACTION_FAILED"><code class="docutils literal notranslate"><span class="pre">JobStatus.EXTRACTION_FAILED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.EXTRACTION_SUCCESS"><code class="docutils literal notranslate"><span class="pre">JobStatus.EXTRACTION_SUCCESS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.MONOLITHIC_SCRIPT_FAILED"><code class="docutils literal notranslate"><span class="pre">JobStatus.MONOLITHIC_SCRIPT_FAILED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.JSON_DECODE_ERROR"><code class="docutils literal notranslate"><span class="pre">JobStatus.JSON_DECODE_ERROR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.SCRIPT_ERROR"><code class="docutils literal notranslate"><span class="pre">JobStatus.SCRIPT_ERROR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.UNKNOWN_ERROR"><code class="docutils literal notranslate"><span class="pre">JobStatus.UNKNOWN_ERROR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus.UNKNOWN"><code class="docutils literal notranslate"><span class="pre">JobStatus.UNKNOWN</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager"><code class="docutils literal notranslate"><span class="pre">JobStatusManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager.error_message"><code class="docutils literal notranslate"><span class="pre">JobStatusManager.error_message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_preparation"><code class="docutils literal notranslate"><span class="pre">JobStatusManager.record_preparation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_simulation"><code class="docutils literal notranslate"><span class="pre">JobStatusManager.record_simulation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_extraction"><code class="docutils literal notranslate"><span class="pre">JobStatusManager.record_extraction()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatusManager.get_final_status"><code class="docutils literal notranslate"><span class="pre">JobStatusManager.get_final_status()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core.strategies">ABQflow.core.strategies module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.PreparationStrategy"><code class="docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.PreparationStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">PreparationStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.InpModifyStrategy"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.InpModifyStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">InpModifyStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModelGenerationStrategy"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModelGenerationStrategy.prepare"><code class="docutils literal notranslate"><span class="pre">ModelGenerationStrategy.prepare()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">ExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.OdbExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">OdbExtractionStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.OdbExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">OdbExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModelPropertiesExtractionStrategy"><code class="docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract"><code class="docutils literal notranslate"><span class="pre">ModelPropertiesExtractionStrategy.extract()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.JobWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.JobWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.MonolithicWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.MonolithicWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">MonolithicWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModularWorkflowStrategy"><code class="docutils literal notranslate"><span class="pre">ModularWorkflowStrategy</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ModularWorkflowStrategy.execute"><code class="docutils literal notranslate"><span class="pre">ModularWorkflowStrategy.execute()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.core.html#module-ABQflow.core">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ABQflow.helpers.html">ABQflow.helpers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.helpers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.helpers.html#module-ABQflow.helpers.constant">ABQflow.helpers.constant module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.helpers.html#module-ABQflow.helpers.convert">ABQflow.helpers.convert module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html#ABQflow.helpers.convert.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html#ABQflow.helpers.convert.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html#ABQflow.helpers.convert.outcomes_to_list"><code class="docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html#ABQflow.helpers.convert.outcomes_to_dict"><code class="docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ABQflow.helpers.html#module-ABQflow.helpers">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
 </section>
 <section id="module-ABQflow">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ABQflow" title="Link to this heading">¶</a></h2>
@@ -411,7 +561,7 @@ converted via <a class="reference internal" href="#ABQflow.JobSpec.from_dict" ti
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>batch_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="#ABQflow.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a><em>]</em>)</p></li>
+<li><p><strong>batch_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a><em>]</em>)</p></li>
 <li><p><strong>base_output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>cpus_per_job</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>abaqus_exe</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
@@ -503,7 +653,7 @@ their error state — they do not halt the batch.</p>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="#ABQflow.JobOutcome" title="ABQflow.core.abaqus_automation.JobOutcome"><em>JobOutcome</em></a>]</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="ABQflow.core.html#ABQflow.core.abaqus_automation.JobOutcome" title="ABQflow.core.abaqus_automation.JobOutcome"><em>JobOutcome</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -737,7 +887,7 @@ map to <code class="docutils literal notranslate"><span class="pre">None</span><
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 <li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
@@ -825,7 +975,7 @@ monolithic.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ABQflow.JobSpec.preparation">
-<span class="sig-name descname"><span class="pre">preparation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#ABQflow.PreparationSpec" title="ABQflow.core.spec.PreparationSpec"><span class="pre">PreparationSpec</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#ABQflow.JobSpec.preparation" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">preparation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec" title="ABQflow.core.spec.PreparationSpec"><span class="pre">PreparationSpec</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#ABQflow.JobSpec.preparation" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -840,12 +990,12 @@ monolithic.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ABQflow.JobSpec.pre_extraction">
-<span class="sig-name descname"><span class="pre">pre_extraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ABQflow.HookSpec" title="ABQflow.core.spec.HookSpec"><span class="pre">HookSpec</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.JobSpec.pre_extraction" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pre_extraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec" title="ABQflow.core.spec.HookSpec"><span class="pre">HookSpec</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.JobSpec.pre_extraction" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ABQflow.JobSpec.post_extraction">
-<span class="sig-name descname"><span class="pre">post_extraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#ABQflow.HookSpec" title="ABQflow.core.spec.HookSpec"><span class="pre">HookSpec</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.JobSpec.post_extraction" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">post_extraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec" title="ABQflow.core.spec.HookSpec"><span class="pre">HookSpec</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.JobSpec.post_extraction" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -876,7 +1026,7 @@ mutable data (no shared references with the caller).</p>
 <dd class="field-odd"><p><strong>d</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#ABQflow.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -887,11 +1037,11 @@ mutable data (no shared references with the caller).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>job_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>workflow</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
-<li><p><strong>preparation</strong> (<a class="reference internal" href="#ABQflow.PreparationSpec" title="ABQflow.core.spec.PreparationSpec"><em>PreparationSpec</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>preparation</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.PreparationSpec" title="ABQflow.core.spec.PreparationSpec"><em>PreparationSpec</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>monolithic_script</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>monolithic_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>)</p></li>
-<li><p><strong>pre_extraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="#ABQflow.HookSpec" title="ABQflow.core.spec.HookSpec"><em>HookSpec</em></a><em>]</em>)</p></li>
-<li><p><strong>post_extraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="#ABQflow.HookSpec" title="ABQflow.core.spec.HookSpec"><em>HookSpec</em></a><em>]</em>)</p></li>
+<li><p><strong>pre_extraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec" title="ABQflow.core.spec.HookSpec"><em>HookSpec</em></a><em>]</em>)</p></li>
+<li><p><strong>post_extraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.HookSpec" title="ABQflow.core.spec.HookSpec"><em>HookSpec</em></a><em>]</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1010,10 +1160,10 @@ wrap pre/post-extraction hooks, and return a
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spec</strong> (<a class="reference internal" href="#ABQflow.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a>)</p>
+<dd class="field-odd"><p><strong>spec</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a>)</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#ABQflow.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><em>JobWorkflowStrategy</em></a></p>
+<dd class="field-even"><p><a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><em>JobWorkflowStrategy</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1261,7 +1411,7 @@ first failure is the one that is kept.</p>
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#ABQflow.JobStatus" title="ABQflow.core.status.JobStatus"><em>JobStatus</em></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="ABQflow.core.html#ABQflow.core.status.JobStatus" title="ABQflow.core.status.JobStatus"><em>JobStatus</em></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1307,8 +1457,8 @@ first failure is the one that is kept.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1324,7 +1474,7 @@ first failure is the one that is kept.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.InpModifyStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">InpModifyStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_inp_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#InpModifyStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.InpModifyStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.PreparationStrategy" title="ABQflow.core.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.PreparationStrategy" title="ABQflow.core.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
 <p>Replace <code class="docutils literal notranslate"><span class="pre">{{placeholder}}</span></code> tokens in a base INP template file.</p>
 <p>Performs coverage validation: if the INP references a placeholder that
 is missing from <em>data_params</em>, preparation fails.  If <em>data_params</em>
@@ -1362,8 +1512,8 @@ contains keys that are not used in the INP, a warning is emitted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1387,7 +1537,7 @@ contains keys that are not used in the INP, a warning is emitted.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.ModelGenerationStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">ModelGenerationStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#ModelGenerationStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.ModelGenerationStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.PreparationStrategy" title="ABQflow.core.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.PreparationStrategy" title="ABQflow.core.strategies.PreparationStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">PreparationStrategy</span></code></a></p>
 <p>Run a model-generation script (requires CAE kernel / <code class="docutils literal notranslate"><span class="pre">mdb</span></code> access).</p>
 <p>The script is launched via <code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">cae</span> <span class="pre">noGUI=&lt;script&gt;</span></code> and is expected
 to produce an INP file at <code class="docutils literal notranslate"><span class="pre">ctx.inp_path</span></code>.  Common arguments
@@ -1425,8 +1575,8 @@ to produce an INP file at <code class="docutils literal notranslate"><span class
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1485,8 +1635,8 @@ to produce an INP file at <code class="docutils literal notranslate"><span class
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1502,7 +1652,7 @@ to produce an INP file at <code class="docutils literal notranslate"><span class
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.OdbExtractionStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">OdbExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#OdbExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.OdbExtractionStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.ExtractionStrategy" title="ABQflow.core.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ExtractionStrategy" title="ABQflow.core.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
 <p>Extract results from the ODB file via hook scripts.</p>
 <p>Runs in the <code class="docutils literal notranslate"><span class="pre">odbAccess</span></code> environment (<code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">python</span></code>), NOT the CAE
 kernel.  Each hook script receives <code class="docutils literal notranslate"><span class="pre">--odb_path</span></code> as a common argument
@@ -1538,8 +1688,8 @@ and a JSON task list via <code class="docutils literal notranslate"><span class=
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1560,7 +1710,7 @@ and a JSON task list via <code class="docutils literal notranslate"><span class=
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.ModelPropertiesExtractionStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">ModelPropertiesExtractionStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hooks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#ModelPropertiesExtractionStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.ModelPropertiesExtractionStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.ExtractionStrategy" title="ABQflow.core.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.ExtractionStrategy" title="ABQflow.core.strategies.ExtractionStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code></a></p>
 <p>Extract material/property data from the INP <em>before</em> simulation.</p>
 <p>Runs in the CAE kernel environment (<code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">cae</span> <span class="pre">noGUI</span></code>) because it
 needs <code class="docutils literal notranslate"><span class="pre">mdb</span></code> access.  Each hook script receives <code class="docutils literal notranslate"><span class="pre">--inp_path</span></code> as a
@@ -1596,8 +1746,8 @@ common argument and a JSON task list via <code class="docutils literal notransla
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1655,8 +1805,8 @@ or its string value).  May include extracted results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1672,7 +1822,7 @@ or its string value).  May include extracted results.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.MonolithicWorkflowStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">MonolithicWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#MonolithicWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.MonolithicWorkflowStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
 <p>Single-script workflow: one script does everything.</p>
 <p>The script is launched via the CAE kernel (<code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">cae</span> <span class="pre">noGUI</span></code>) and
 must print its JSON results wrapped in the sentinel markers
@@ -1712,8 +1862,8 @@ or its string value).  May include extracted results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1737,7 +1887,7 @@ or its string value).  May include extracted results.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.ModularWorkflowStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">ModularWorkflowStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preparation_strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_extraction_strategies</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_extraction_strategies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/strategies.html#ModularWorkflowStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.ModularWorkflowStrategy" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#ABQflow.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="ABQflow.core.html#ABQflow.core.strategies.JobWorkflowStrategy" title="ABQflow.core.strategies.JobWorkflowStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code></a></p>
 <p>4-phase pipeline: preparation, pre-extraction, simulation, post-extraction.</p>
 <p>Uses a <a class="reference internal" href="#ABQflow.JobStatusManager" title="ABQflow.JobStatusManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobStatusManager</span></code></a> internally to track the job through
 each phase.  If any phase fails the pipeline stops and returns the
@@ -1762,8 +1912,8 @@ phases are skipped.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ctx</strong> (<a class="reference internal" href="#ABQflow.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
-<li><p><strong>runner</strong> (<a class="reference internal" href="#ABQflow.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a>)</p></li>
+<li><p><strong>runner</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><em>AbaqusRunner</em></a>)</p></li>
 <li><p><strong>logger</strong> (<a class="reference external" href="https://docs.python.org/3/library/logging.html#logging.Logger" title="(in Python v3.14)"><em>Logger</em></a>)</p></li>
 </ul>
 </dd>
@@ -1819,7 +1969,7 @@ NumPy internally.</p>
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="#ABQflow.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference internal" href="ABQflow.core.html#ABQflow.core.spec.JobSpec" title="ABQflow.core.spec.JobSpec"><em>JobSpec</em></a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2015,7 +2165,15 @@ of Abaqus licensing behaviour.</p>
       <footer>
         
         <div class="related-pages">
-          
+          <a class="next-page" href="ABQflow.core.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">ABQflow.core package</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
           <a class="prev-page" href="modules.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
@@ -2065,14 +2223,7 @@ of Abaqus licensing behaviour.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">ABQflow package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#abqflow-abaqus-automation-module">ABQflow.abaqus_automation module</a></li>
-<li><a class="reference internal" href="#abqflow-context-module">ABQflow.context module</a></li>
-<li><a class="reference internal" href="#abqflow-registry-module">ABQflow.registry module</a></li>
-<li><a class="reference internal" href="#abqflow-runner-module">ABQflow.runner module</a></li>
-<li><a class="reference internal" href="#abqflow-spec-module">ABQflow.spec module</a></li>
-<li><a class="reference internal" href="#abqflow-status-module">ABQflow.status module</a></li>
-<li><a class="reference internal" href="#abqflow-strategies-module">ABQflow.strategies module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#module-ABQflow">Module contents</a><ul>
 <li><a class="reference internal" href="#key-modules">Key modules</a></li>
 <li><a class="reference internal" href="#key-methods">Key Methods</a></li>
