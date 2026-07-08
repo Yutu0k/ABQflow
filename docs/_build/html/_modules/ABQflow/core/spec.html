@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -248,6 +252,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 
 <div class="viewcode-block" id="HookSpec">
@@ -286,10 +291,15 @@
 <span class="sd">	params : dict</span>
 <span class="sd">		Key-value parameters forwarded to the preparation strategy (e.g.</span>
 <span class="sd">		placeholder replacements for ``inp_based``).</span>
+<span class="sd">	options : dict</span>
+<span class="sd">		Additional options for the preparation strategy (Currently only used by ``existing_inp``):</span>
+<span class="sd">		- &#39;staging_mode&#39; (str): ``&#39;copy&#39;`` (default) </span>
+<span class="sd">		- &#39;resolve_includes&#39; (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span>
-	<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+	<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+	<span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
 
 
 
@@ -321,6 +331,8 @@
 <span class="sd">		Hooks run *before* the solver (e.g. model property extraction).</span>
 <span class="sd">	post_extraction : list[HookSpec]</span>
 <span class="sd">		Hooks run *after* the solver (e.g. ODB result extraction).</span>
+<span class="sd">	meta : dict</span>
+<span class="sd">		Arbitrary user metadata</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
 	<span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>
@@ -330,6 +342,7 @@
 	<span class="n">monolithic_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 	<span class="n">pre_extraction</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 	<span class="n">post_extraction</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+	<span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Validate the spec after field assignment.</span>
@@ -351,6 +364,13 @@
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] modular workflow requires &#39;preparation&#39;&quot;</span><span class="p">)</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] monolithic workflow requires &#39;monolithic_script&#39;&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+				<span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;existing_inp&#39;</span>
+				<span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] kind=&#39;existing_inp&#39; does not use params — &quot;</span>
+				<span class="sa">f</span><span class="s2">&quot;params will be ignored. If you need template substitution, use kind=&#39;inp_based&#39;.&quot;</span>
+			<span class="p">)</span>
 
 <div class="viewcode-block" id="JobSpec.from_dict">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobSpec.from_dict">[docs]</a>

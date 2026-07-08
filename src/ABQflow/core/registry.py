@@ -8,7 +8,7 @@ framework code.
 from .spec import JobSpec
 from .strategies import (
 	JobWorkflowStrategy, ModularWorkflowStrategy, MonolithicWorkflowStrategy,
-	InpModifyStrategy, ModelGenerationStrategy,
+	InpModifyStrategy, ModelGenerationStrategy, ExistingInpStrategy,
 	OdbExtractionStrategy, ModelPropertiesExtractionStrategy,
 )
 
@@ -19,6 +19,11 @@ PREPARATION_REGISTRY: dict[str, callable] = {
 	# for modification but open for extension.
 	'inp_based':        lambda s: InpModifyStrategy(s.source_path, s.params),
 	'model_generation': lambda s: ModelGenerationStrategy(s.source_path, s.params),
+	'existing_inp':     lambda s: ExistingInpStrategy(
+		s.source_path,
+		staging_mode=s.options.get('staging_mode', 'copy'),
+		resolve_includes=s.options.get('resolve_includes', True),
+	),
 }
 
 

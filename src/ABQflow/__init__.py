@@ -30,6 +30,7 @@ from .core.runner import AbaqusRunner, extract_json
 from .core.spec import HookSpec, JobSpec, PreparationSpec
 from .core.status import JobStatus, JobStatusManager
 from .core.strategies import (
+	ExistingInpStrategy,
 	ExtractionStrategy,
 	InpModifyStrategy,
 	JobWorkflowStrategy,
@@ -44,8 +45,10 @@ from .core.strategies import (
 from .helpers.convert import (
 	degenerate_from_array,
 	generate_from_array,
+	generate_from_inp_files,
 	outcomes_to_dict,
 	outcomes_to_list,
+	sanitize_job_name,
 )
 from .helpers.constant import (
 	RESULT_BEGIN,
@@ -74,6 +77,7 @@ __all__ = [
 	"JobStatusManager",
 	# Core — strategies
 	"PreparationStrategy",
+	"ExistingInpStrategy",
 	"InpModifyStrategy",
 	"ModelGenerationStrategy",
 	"ExtractionStrategy",
@@ -84,6 +88,8 @@ __all__ = [
 	"ModularWorkflowStrategy",
 	# Helpers
 	"generate_from_array",
+	"generate_from_inp_files",
+	"sanitize_job_name",
 	"degenerate_from_array",
 	"outcomes_to_list",
 	"outcomes_to_dict",

@@ -1,0 +1,44 @@
+*Include, input=../planar_stress_main.inp
+** 
+** MATERIALS
+** 
+*Material, name=Material
+*Density
+ 2.7e-09,
+*Elastic
+200000.0, 0.3
+** ----------------------------------------------------------------
+** 
+** STEP: Elastic
+** 
+*Step, name=Elastic, nlgeom=NO
+*Static
+1., 1., 1e-05, 1.
+** 
+** BOUNDARY CONDITIONS
+** 
+** Name: BC-1 Type: �Գ�/���Գ�/��ȫ�̶�
+*Boundary
+_PickedSet5, ENCASTRE
+** Name: BC-2 Type: �Գ�/���Գ�/��ȫ�̶�
+*Boundary
+_PickedSet8, XSYMM
+** 
+** LOADS
+** 
+** Name: Load   Type: Pressure
+*Dsload
+_PickedSurf4, P, -2000.0
+** 
+** OUTPUT REQUESTS
+** 
+*Restart, write, frequency=0
+** 
+** FIELD OUTPUT: F-Output-1
+** 
+*Output, field, variable=PRESELECT
+** 
+** HISTORY OUTPUT: H-Output-1
+** 
+*Output, history, variable=PRESELECT
+*End Step

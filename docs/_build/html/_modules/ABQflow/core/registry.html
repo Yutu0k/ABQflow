@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -249,7 +253,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 	<span class="n">JobWorkflowStrategy</span><span class="p">,</span> <span class="n">ModularWorkflowStrategy</span><span class="p">,</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">,</span>
-	<span class="n">InpModifyStrategy</span><span class="p">,</span> <span class="n">ModelGenerationStrategy</span><span class="p">,</span>
+	<span class="n">InpModifyStrategy</span><span class="p">,</span> <span class="n">ModelGenerationStrategy</span><span class="p">,</span> <span class="n">ExistingInpStrategy</span><span class="p">,</span>
 	<span class="n">OdbExtractionStrategy</span><span class="p">,</span> <span class="n">ModelPropertiesExtractionStrategy</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -260,6 +264,11 @@
 	<span class="c1"># for modification but open for extension.</span>
 	<span class="s1">&#39;inp_based&#39;</span><span class="p">:</span>        <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">InpModifyStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
 	<span class="s1">&#39;model_generation&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ModelGenerationStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
+	<span class="s1">&#39;existing_inp&#39;</span><span class="p">:</span>     <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ExistingInpStrategy</span><span class="p">(</span>
+		<span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
+		<span class="n">staging_mode</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;staging_mode&#39;</span><span class="p">,</span> <span class="s1">&#39;copy&#39;</span><span class="p">),</span>
+		<span class="n">resolve_includes</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;resolve_includes&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+	<span class="p">),</span>
 <span class="p">}</span>
 
 

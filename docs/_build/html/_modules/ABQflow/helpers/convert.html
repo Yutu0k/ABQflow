@@ -201,7 +201,11 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -248,15 +252,149 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glob_module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..core.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span><span class="p">,</span> <span class="n">PreparationSpec</span>
+
+
+<span class="c1"># ======================== Job name sanitisation ========================</span>
+
+<span class="c1"># Abaqus job name rules: max 80 chars, start with letter, [A-Za-z0-9_-] only.</span>
+<span class="n">_JOB_NAME_ILLEGAL_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[^A-Za-z0-9_-]&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="sanitize_job_name">
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.sanitize_job_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_job_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">80</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Clean *name* so it is a valid Abaqus job name.</span>
+
+<span class="sd">	Replaces any character outside ``[A-Za-z0-9_-]`` with ``&#39;_&#39;``, collapses</span>
+<span class="sd">	consecutive underscores, strips leading/trailing underscores, ensures the</span>
+<span class="sd">	result starts with a letter, and truncates to *max_len*.</span>
+
+<span class="sd">	Returns *name* unchanged if it is already valid.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">cleaned</span> <span class="o">=</span> <span class="n">_JOB_NAME_ILLEGAL_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+	<span class="n">cleaned</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_+&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="n">cleaned</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">cleaned</span><span class="p">:</span>
+		<span class="n">cleaned</span> <span class="o">=</span> <span class="s1">&#39;job&#39;</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">cleaned</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">():</span>
+		<span class="n">cleaned</span> <span class="o">=</span> <span class="s1">&#39;j_&#39;</span> <span class="o">+</span> <span class="n">cleaned</span>
+	<span class="k">return</span> <span class="n">cleaned</span><span class="p">[:</span><span class="n">max_len</span><span class="p">]</span></div>
+
 
 
 <span class="c1"># ======================== Array generation / degeneration ========================</span>
+
+<div class="viewcode-block" id="generate_from_inp_files">
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_inp_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_from_inp_files</span><span class="p">(</span>
+	<span class="n">inp_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+	<span class="n">base_spec</span><span class="p">:</span> <span class="n">JobSpec</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">,</span>
+	<span class="n">naming</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;stem&#39;</span><span class="p">,</span>
+	<span class="n">sort</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">]:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Create N :class:`JobSpec` objects from a list (or glob) of existing INP files.</span>
+
+<span class="sd">	This is the batch-spec generator for the UC-03 &quot;pre-existing INP batch&quot;</span>
+<span class="sd">	use case.  Each INP file becomes a spec with ``kind=&#39;existing_inp&#39;``.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	inp_files : list[str] or str</span>
+<span class="sd">		List of INP paths, or a glob pattern (e.g. ``&#39;./legacy/*.inp&#39;``).</span>
+<span class="sd">	base_spec : JobSpec or dict</span>
+<span class="sd">		Template spec whose ``workflow``, extraction hooks, and other</span>
+<span class="sd">		non-preparation fields are copied.  The ``preparation`` field is</span>
+<span class="sd">		**overwritten** for each generated spec.</span>
+<span class="sd">	naming : str</span>
+<span class="sd">		Job-name generation rule:</span>
+
+<span class="sd">		* ``&#39;stem&#39;`` (default) — use the INP filename without extension,</span>
+<span class="sd">		sanitised via :func:`sanitize_job_name`.</span>
+<span class="sd">		* ``&#39;indexed&#39;`` — ``{base_spec.job_name}_{i:04d}``.</span>
+<span class="sd">	sort : bool</span>
+<span class="sd">		If ``True`` (default), sort files by natural key order.</span>
+
+<span class="sd">	Returns</span>
+<span class="sd">	-------</span>
+<span class="sd">	list[JobSpec]</span>
+<span class="sd">		One spec per INP file, ready for :class:`~abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor`.</span>
+
+<span class="sd">	Raises</span>
+<span class="sd">	------</span>
+<span class="sd">	ValueError</span>
+<span class="sd">		If glob expands to zero files, or if sanitised stem names collide.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c1"># 1. Expand glob / normalise input</span>
+	<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inp_files</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+		<span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">inp_files</span><span class="p">))</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Glob pattern &#39;</span><span class="si">{</span><span class="n">inp_files</span><span class="si">}</span><span class="s2">&#39; matched no files&quot;</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inp_files</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inp_files list is empty&quot;</span><span class="p">)</span>
+
+	<span class="c1"># 2. Sort (natural order)</span>
+	<span class="k">if</span> <span class="n">sort</span><span class="p">:</span>
+		<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">_natural_key</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span>
+
+	<span class="c1"># 3. Normalise base_spec (check for dict, not JobSpec — autoreload-safe)</span>
+	<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+		<span class="n">base_spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">base_spec</span><span class="p">)</span>
+
+	<span class="c1"># 4. Generate specs</span>
+	<span class="n">specs</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">seen_names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># sanitised_name -&gt; original_path (for conflict reporting)</span>
+
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+		<span class="n">abspath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+		<span class="n">s</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">base_spec</span><span class="p">)</span>
+
+		<span class="c1"># Determine job_name</span>
+		<span class="k">if</span> <span class="n">naming</span> <span class="o">==</span> <span class="s1">&#39;stem&#39;</span><span class="p">:</span>
+			<span class="n">stem</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+			<span class="n">raw</span> <span class="o">=</span> <span class="n">sanitize_job_name</span><span class="p">(</span><span class="n">stem</span><span class="p">)</span>
+			<span class="c1"># Conflict detection</span>
+			<span class="k">if</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">seen_names</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+					<span class="sa">f</span><span class="s2">&quot;Sanitised job_name collision: files &#39;</span><span class="si">{</span><span class="n">seen_names</span><span class="p">[</span><span class="n">raw</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; and &quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#39; both map to &#39;</span><span class="si">{</span><span class="n">raw</span><span class="si">}</span><span class="s2">&#39;. Rename the source files &quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;or use naming=&#39;indexed&#39;.&quot;</span><span class="p">)</span>
+			<span class="n">seen_names</span><span class="p">[</span><span class="n">raw</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+			<span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">raw</span>
+		<span class="k">elif</span> <span class="n">naming</span> <span class="o">==</span> <span class="s1">&#39;indexed&#39;</span><span class="p">:</span>
+			<span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
+		<span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">naming</span><span class="p">):</span>
+			<span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">naming</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown naming mode: &#39;</span><span class="si">{</span><span class="n">naming</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+		<span class="c1"># Overwrite preparation (warn if base_spec already had one)</span>
+		<span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;existing_inp&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">&quot;Overwriting base_spec.preparation (kind=&#39;</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&#39;) &quot;</span>
+				<span class="sa">f</span><span class="s2">&quot;with kind=&#39;existing_inp&#39; for file &#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+		<span class="n">s</span><span class="o">.</span><span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
+			<span class="n">kind</span><span class="o">=</span><span class="s1">&#39;existing_inp&#39;</span><span class="p">,</span>
+			<span class="n">source_path</span><span class="o">=</span><span class="n">abspath</span><span class="p">,</span>
+			<span class="n">params</span><span class="o">=</span><span class="p">{},</span>
+			<span class="n">options</span><span class="o">=</span><span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">options</span> <span class="k">if</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span> <span class="k">else</span> <span class="p">{}</span>
+		<span class="p">)</span>
+		<span class="n">s</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;source_inp&#39;</span><span class="p">:</span> <span class="n">abspath</span><span class="p">}</span>		<span class="c1"># 把源 INP 文件路径存储在 meta 中</span>
+
+		<span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">specs</span></div>
+
+
 
 <div class="viewcode-block" id="generate_from_array">
 <a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_array">[docs]</a>

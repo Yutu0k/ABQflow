@@ -21,6 +21,9 @@ from .status import JobStatus, JobStatusManager
 # Regex for {{placeholder}} in INP files (B8)
 _PLACEHOLDER_RE = re.compile(r"\{\{(\w+)\}\}")
 
+# Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting
+_INCLUDE_RE = re.compile(r'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)', re.IGNORECASE)
+
 
 # ======================== Preparation Strategies ========================
 class PreparationStrategy(ABC):
@@ -138,6 +141,108 @@ class ModelGenerationStrategy(PreparationStrategy):
 		except subprocess.CalledProcessError as e:
 			logger.error(f"Sub Strategy [ModelGeneration] failed. STDERR:\n{e.stderr}")
 			return False
+
+
+class ExistingInpStrategy(PreparationStrategy):
+	"""Use a pre-existing INP file directly — no generation or modification.
+
+	This strategy satisfies the preparation contract ("ensure an INP at
+	``ctx.inp_path``") by copying an already-complete INP file.  It is the
+	entry point for the UC-03 "pre-existing INP batch" use case.
+
+	Key features beyond a plain file copy:
+
+	* **INCLUDE resolution**: scans for ``*INCLUDE, INPUT=...`` lines and
+	  rewrites relative paths to absolute paths so Abaqus can find referenced
+	  files regardless of the working directory.
+	* **Template detection**: rejects INPs that still contain ``{{...}}``
+	  placeholders, steering the user toward ``kind='inp_based'`` instead.
+	* **STEP presence check**: confirms the file contains at least one
+	  ``*STEP`` keyword.
+
+	Attributes
+	----------
+	source_inp_path : str
+		Absolute or relative path to the existing INP file.
+	staging_mode : str
+		``'copy'`` (default) — copy the INP (with resolved paths) to output_dir.
+	resolve_includes : bool
+		If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use
+		absolute paths resolved against the source INP's directory.
+	"""
+
+	def __init__(
+		self,
+		source_inp_path: str,
+		staging_mode: str = 'copy',
+		resolve_includes: bool = True,
+	):
+		self.source_inp_path = source_inp_path
+		self.staging_mode = staging_mode
+		self.resolve_includes = resolve_includes
+
+	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
+				logger: logging.Logger) -> bool:
+		logger.info(f"Sub strategy [ExistingInp]: Using pre-existing INP '{self.source_inp_path}'")
+
+		# 1. Existence & readability check
+		if not os.path.isfile(self.source_inp_path):
+			logger.error(f"Source INP not found: {self.source_inp_path}")
+			return False
+
+		# 2. Read content
+		try:
+			with open(self.source_inp_path, 'r') as f:
+				content = f.read()
+		except Exception as e:
+			logger.error(f"Failed to read source INP: {e}")
+			return False
+
+		# 3. Lightweight content checks
+		if not re.search(r'^\*STEP', content, re.MULTILINE | re.IGNORECASE):
+			logger.error("INP contains no *STEP — not a valid Abaqus input file")
+			return False
+
+		if _PLACEHOLDER_RE.search(content):
+			logger.error(
+				"INP contains {{placeholder}} markers — this looks like a template, "
+				"not a finished INP. Use kind='inp_based' with params instead."
+			)
+			return False
+
+		# 4. Resolve *INCLUDE paths to absolute paths
+		if self.resolve_includes:
+			source_dir = os.path.dirname(os.path.abspath(self.source_inp_path))
+
+			def _resolve_include(m: re.Match) -> str:
+				prefix, rel_path = m.group(1), m.group(2)
+				abs_path = os.path.normpath(os.path.join(source_dir, rel_path))
+				if not os.path.isfile(abs_path):
+					raise FileNotFoundError(abs_path)
+				logger.info(f"  Resolved INCLUDE: {rel_path} -> {abs_path}")
+				return f"{prefix}{abs_path}"
+
+			try:
+				content = _INCLUDE_RE.sub(_resolve_include, content)
+			except FileNotFoundError as e:
+				logger.error(f"INCLUDE file not found: {e}")
+				return False
+
+		# 5. Write the (possibly rewritten) INP to ctx.inp_path
+		if self.staging_mode == 'copy':
+			try:
+				with open(ctx.inp_path, 'w') as f:
+					f.write(content)
+				logger.info(f"Wrote INP to {ctx.inp_path}")
+			except Exception as e:
+				logger.error(f"Failed to write INP: {e}")
+				return False
+		else:
+			# ponytail: link/in_place deferred (S5), copy covers all MVP needs
+			logger.error(f"Unsupported staging_mode: '{self.staging_mode}'. Only 'copy' is implemented.")
+			return False
+
+		return True
 
 
 # ======================== Extraction Strategies ========================
