@@ -26,5 +26,4 @@ abaqus.rpy.[0-9]*
 abaqus.rpy
 
 # Generated test/example output
-test/output/
-examples/**/output/
+**/*output*/
