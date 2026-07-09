@@ -43,6 +43,8 @@ class JobStatus(Enum):
 	PREPARATION_FAILED = "PREPARATION_FAILED"
 	PREPARATION_SUCCESS = "PREPARATION_SUCCESS"
 
+	PREFLIGHT_FAILED = "PREFLIGHT_FAILED"
+
 	SIMULATING = "SIMULATING"
 	SIMULATION_FAILED = "SIMULATION_FAILED"
 	SIMULATION_SUCCESS = "SIMULATION_SUCCESS"
@@ -62,6 +64,7 @@ class JobStatus(Enum):
 # Terminal failure states — once reached, no further state changes allowed (B4)
 _TERMINAL_FAILURES = frozenset({
 	JobStatus.PREPARATION_FAILED,
+	JobStatus.PREFLIGHT_FAILED,
 	JobStatus.SIMULATION_FAILED,
 	JobStatus.EXTRACTION_FAILED,
 	JobStatus.MONOLITHIC_SCRIPT_FAILED,
@@ -131,6 +134,21 @@ class JobStatusManager:
 			self._current_status = JobStatus.PREPARATION_SUCCESS
 		else:
 			self._fail(JobStatus.PREPARATION_FAILED, error or "Preparation step failed.")
+
+	def record_preflight(self, success: bool, error: str = None):
+		"""Record the outcome of the preflight phase (IMP-04).
+
+		Parameters
+		----------
+		success : bool
+			``True`` if syntax/datacheck passed.
+		error : str or None
+			Error message on failure; a default is used if omitted.
+		"""
+		if self._current_status in _TERMINAL_FAILURES:
+			return
+		if not success:
+			self._fail(JobStatus.PREFLIGHT_FAILED, error or "Preflight check failed.")
 
 	def record_simulation(self, success: bool, error: str = None):
 		"""Record the outcome of the Abaqus solver run.

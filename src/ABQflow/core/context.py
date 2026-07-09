@@ -43,3 +43,18 @@ class JobContext:
 	def log_path(self) -> str:
 		"""Absolute path to the job log file (``<output_dir>/<job_name>.log``)."""
 		return os.path.join(self.output_dir, f"{self.job_name}.log")
+
+	@property
+	def sta_path(self) -> str:
+		"""Absolute path to the status file (``<output_dir>/<job_name>.sta``)."""
+		return os.path.join(self.output_dir, f"{self.job_name}.sta")
+
+	@property
+	def msg_path(self) -> str:
+		"""Absolute path to the message file (``<output_dir>/<job_name>.msg``)."""
+		return os.path.join(self.output_dir, f"{self.job_name}.msg")
+
+	@property
+	def dat_path(self) -> str:
+		"""Absolute path to the data file (``<output_dir>/<job_name>.dat``)."""
+		return os.path.join(self.output_dir, f"{self.job_name}.dat")

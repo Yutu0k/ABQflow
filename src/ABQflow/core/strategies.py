@@ -16,10 +16,14 @@ from typing import List
 
 from .context import JobContext
 from .runner import AbaqusRunner, extract_json
+from .diagnostics import SolverResult
 from .status import JobStatus, JobStatusManager
 
 # Regex for {{placeholder}} in INP files (B8)
 _PLACEHOLDER_RE = re.compile(r"\{\{(\w+)\}\}")
+
+# Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting
+_INCLUDE_RE = re.compile(r'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)', re.IGNORECASE)
 
 
 # ======================== Preparation Strategies ========================
@@ -138,6 +142,108 @@ class ModelGenerationStrategy(PreparationStrategy):
 		except subprocess.CalledProcessError as e:
 			logger.error(f"Sub Strategy [ModelGeneration] failed. STDERR:\n{e.stderr}")
 			return False
+
+
+class ExistingInpStrategy(PreparationStrategy):
+	"""Use a pre-existing INP file directly — no generation or modification.
+
+	This strategy satisfies the preparation contract ("ensure an INP at
+	``ctx.inp_path``") by copying an already-complete INP file.  It is the
+	entry point for the UC-03 "pre-existing INP batch" use case.
+
+	Key features beyond a plain file copy:
+
+	* **INCLUDE resolution**: scans for ``*INCLUDE, INPUT=...`` lines and
+	  rewrites relative paths to absolute paths so Abaqus can find referenced
+	  files regardless of the working directory.
+	* **Template detection**: rejects INPs that still contain ``{{...}}``
+	  placeholders, steering the user toward ``kind='inp_based'`` instead.
+	* **STEP presence check**: confirms the file contains at least one
+	  ``*STEP`` keyword.
+
+	Attributes
+	----------
+	source_inp_path : str
+		Absolute or relative path to the existing INP file.
+	staging_mode : str
+		``'copy'`` (default) — copy the INP (with resolved paths) to output_dir.
+	resolve_includes : bool
+		If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use
+		absolute paths resolved against the source INP's directory.
+	"""
+
+	def __init__(
+		self,
+		source_inp_path: str,
+		staging_mode: str = 'copy',
+		resolve_includes: bool = True,
+	):
+		self.source_inp_path = source_inp_path
+		self.staging_mode = staging_mode
+		self.resolve_includes = resolve_includes
+
+	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
+				logger: logging.Logger) -> bool:
+		logger.info(f"Sub strategy [ExistingInp]: Using pre-existing INP '{self.source_inp_path}'")
+
+		# 1. Existence & readability check
+		if not os.path.isfile(self.source_inp_path):
+			logger.error(f"Source INP not found: {self.source_inp_path}")
+			return False
+
+		# 2. Read content
+		try:
+			with open(self.source_inp_path, 'r') as f:
+				content = f.read()
+		except Exception as e:
+			logger.error(f"Failed to read source INP: {e}")
+			return False
+
+		# 3. Lightweight content checks
+		if not re.search(r'^\*STEP', content, re.MULTILINE | re.IGNORECASE):
+			logger.error("INP contains no *STEP — not a valid Abaqus input file")
+			return False
+
+		if _PLACEHOLDER_RE.search(content):
+			logger.error(
+				"INP contains {{placeholder}} markers — this looks like a template, "
+				"not a finished INP. Use kind='inp_based' with params instead."
+			)
+			return False
+
+		# 4. Resolve *INCLUDE paths to absolute paths
+		if self.resolve_includes:
+			source_dir = os.path.dirname(os.path.abspath(self.source_inp_path))
+
+			def _resolve_include(m: re.Match) -> str:
+				prefix, rel_path = m.group(1), m.group(2)
+				abs_path = os.path.normpath(os.path.join(source_dir, rel_path))
+				if not os.path.isfile(abs_path):
+					raise FileNotFoundError(abs_path)
+				logger.info(f"  Resolved INCLUDE: {rel_path} -> {abs_path}")
+				return f"{prefix}{abs_path}"
+
+			try:
+				content = _INCLUDE_RE.sub(_resolve_include, content)
+			except FileNotFoundError as e:
+				logger.error(f"INCLUDE file not found: {e}")
+				return False
+
+		# 5. Write the (possibly rewritten) INP to ctx.inp_path
+		if self.staging_mode == 'copy':
+			try:
+				with open(ctx.inp_path, 'w') as f:
+					f.write(content)
+				logger.info(f"Wrote INP to {ctx.inp_path}")
+			except Exception as e:
+				logger.error(f"Failed to write INP: {e}")
+				return False
+		else:
+			# ponytail: link/in_place deferred (S5), copy covers all MVP needs
+			logger.error(f"Unsupported staging_mode: '{self.staging_mode}'. Only 'copy' is implemented.")
+			return False
+
+		return True
 
 
 # ======================== Extraction Strategies ========================
@@ -343,7 +449,7 @@ class MonolithicWorkflowStrategy(JobWorkflowStrategy):
 
 
 class ModularWorkflowStrategy(JobWorkflowStrategy):
-	"""4-phase pipeline: preparation, pre-extraction, simulation, post-extraction.
+	"""5-phase pipeline: preparation, [preflight], pre-extraction, simulation, post-extraction.
 
 	Uses a :class:`JobStatusManager` internally to track the job through
 	each phase.  If any phase fails the pipeline stops and returns the
@@ -353,6 +459,8 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 	----------
 	preparation_strategy : PreparationStrategy
 		Strategy that produces the INP file.
+	preflight_mode : str or None
+		``'syntaxcheck'``, ``'datacheck'``, or ``None`` (IMP-04).
 	pre_extraction_strategies : list[ExtractionStrategy]
 		Strategies run before the solver (e.g. property extraction from INP).
 	post_extraction_strategies : list[ExtractionStrategy]
@@ -364,14 +472,18 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		preparation_strategy: PreparationStrategy,
 		pre_extraction_strategies: List[ExtractionStrategy],
 		post_extraction_strategies: List[ExtractionStrategy],
+		preflight_mode: str | None = None,
+		preflight_only: bool = False,
 	):
 		self.preparation_strategy = preparation_strategy
+		self.preflight_mode = preflight_mode
 		self.pre_extraction_strategies = pre_extraction_strategies
 		self.post_extraction_strategies = post_extraction_strategies
+		self.preflight_only = preflight_only
 
 	def execute(self, ctx: JobContext, runner: AbaqusRunner,
 				logger: logging.Logger) -> dict:
-		"""Run the 4-phase modular workflow.
+		"""Run the modular workflow (5 phases with optional preflight).
 
 		Returns a dict with at least a ``'status'`` key plus any results
 		from pre- and post-extraction hooks.  Failing early means later
@@ -388,21 +500,45 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 			return all_results
 		status_manager.record_preparation(success=True)
 
-		# 2. Pre-extraction
+		# 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)
+		if self.preflight_mode:
+			logger.info(f"Preflight [{self.preflight_mode}]: checking INP...")
+			passed, pf_errors = runner.run_preflight(self.preflight_mode)
+			if not passed:
+				status_manager.record_preflight(
+					success=False,
+					error=pf_errors[0] if pf_errors else f"Preflight [{self.preflight_mode}] failed",
+				)
+				all_results['status'] = status_manager.get_final_status()
+				return all_results
+			status_manager.record_preflight(success=True)
+			logger.info(f"Preflight [{self.preflight_mode}]: passed")
+
+		# IMP-04: preflight_only mode — stop after preflight, skip solver & extraction
+		if self.preflight_only:
+			all_results['status'] = status_manager.get_final_status()
+			return all_results
+
+		# 3. Pre-extraction
 		for strategy in self.pre_extraction_strategies:
 			pre_ext_results = strategy.extract(ctx, runner, logger)
 			status_manager.record_extraction(pre_ext_results)
 			all_results.update(pre_ext_results)
 
-		# 3. Simulation
-		run_successful = runner.run_solver()
-		if not run_successful:
-			status_manager.record_simulation(success=False)
+		# 4. Simulation (IMP-02: diagnostics-backed verdict)
+		solver_result = runner.run_solver()
+		# Attach diagnostics on failure and on the rc≠0+COMPLETED edge case
+		if solver_result.diagnostics is not None:
+			if not solver_result.success or solver_result.error:
+				from dataclasses import asdict
+				all_results['diagnostics'] = asdict(solver_result.diagnostics)
+		if not solver_result.success:
+			status_manager.record_simulation(success=False, error=solver_result.error)
 			all_results['status'] = status_manager.get_final_status()
 			return all_results
 		status_manager.record_simulation(success=True)
 
-		# 4. Post-extraction
+		# 5. Post-extraction
 		for strategy in self.post_extraction_strategies:
 			post_ext_results = strategy.extract(ctx, runner, logger)
 			status_manager.record_extraction(post_ext_results)

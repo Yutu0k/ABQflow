@@ -7,6 +7,7 @@ in ``__post_init__`` so errors are caught before batch execution begins.
 from __future__ import annotations
 from dataclasses import dataclass, field
 import copy
+import warnings
 
 
 @dataclass
@@ -40,10 +41,15 @@ class PreparationSpec:
 	params : dict
 		Key-value parameters forwarded to the preparation strategy (e.g.
 		placeholder replacements for ``inp_based``).
+	options : dict
+		Additional options for the preparation strategy (Currently only used by ``existing_inp``):
+		- 'staging_mode' (str): ``'copy'`` (default) 
+		- 'resolve_includes' (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).
 	"""
 	kind: str
 	source_path: str
 	params: dict = field(default_factory=dict)
+	options: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -63,6 +69,11 @@ class JobSpec:
 	preparation : PreparationSpec or None
 		Preparation spec; required when ``workflow='modular'``, ignored for
 		monolithic.
+	preflight : str, default=None
+		Preflight mode for modular workflows. 
+		- None: No preflight checks (default)
+		- 'syntaxcheck': Run abaqus syntax check
+		- 'datacheck': Run abaqus datacheck
 	monolithic_script : str or None
 		Path to the monolithic script; required when
 		``workflow='monolithic'``.
@@ -72,15 +83,19 @@ class JobSpec:
 		Hooks run *before* the solver (e.g. model property extraction).
 	post_extraction : list[HookSpec]
 		Hooks run *after* the solver (e.g. ODB result extraction).
+	meta : dict
+		Arbitrary user metadata
 	"""
 
 	job_name: str
 	workflow: str = 'modular'
 	preparation: PreparationSpec | None = None
+	preflight: str | None = None  # IMP-04: None | 'syntaxcheck' | 'datacheck'
 	monolithic_script: str | None = None
 	monolithic_params: dict = field(default_factory=dict)
 	pre_extraction: list[HookSpec] = field(default_factory=list)
 	post_extraction: list[HookSpec] = field(default_factory=list)
+	meta: dict = field(default_factory=dict)
 
 	def __post_init__(self):
 		"""Validate the spec after field assignment.
@@ -102,6 +117,18 @@ class JobSpec:
 			raise ValueError(f"[{self.job_name}] modular workflow requires 'preparation'")
 		if self.workflow == 'monolithic' and not self.monolithic_script:
 			raise ValueError(f"[{self.job_name}] monolithic workflow requires 'monolithic_script'")
+		if self.preflight is not None and self.preflight not in ('syntaxcheck', 'datacheck'):
+			raise ValueError(
+				f"[{self.job_name}] preflight must be 'syntaxcheck', 'datacheck', or None; "
+				f"got '{self.preflight}'."
+			)
+		if (self.preparation is not None
+				and self.preparation.kind == 'existing_inp'
+				and self.preparation.params):
+			warnings.warn(
+				f"[{self.job_name}] kind='existing_inp' does not use params — "
+				f"params will be ignored. If you need template substitution, use kind='inp_based'."
+			)
 
 	@classmethod
 	def from_dict(cls, d: dict) -> "JobSpec":
