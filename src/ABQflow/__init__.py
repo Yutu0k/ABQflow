@@ -57,6 +57,8 @@ from .helpers.convert import (
 	generate_from_array,
 	generate_from_inp_files,
 	is_sidecar,
+	iter_fields,
+	load_field,
 	outcomes_to_dict,
 	outcomes_to_list,
 	resolve_sidecar,
@@ -119,6 +121,8 @@ __all__ = [
 	"outcomes_to_dict",
 	"is_sidecar",
 	"resolve_sidecar",
+	"load_field",
+	"iter_fields",
 	"RESULT_BEGIN",
 	"RESULT_END",
 ]

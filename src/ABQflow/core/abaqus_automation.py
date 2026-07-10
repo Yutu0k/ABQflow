@@ -167,6 +167,7 @@ class JobOutcome:
 	results: dict | None = None
 	error: str | None = None
 	diagnostics: dict | None = None
+	output_dir: str | None = None
 
 
 # ======================== Resource planning (fix Q2-2) ========================
@@ -253,10 +254,12 @@ def _worker(calc: AbaqusCalculation) -> JobOutcome:
 		status = raw.value if isinstance(raw, JobStatus) else str(raw)
 		# IMP-02: promote solver diagnostics from results to top-level field
 		diag = results.pop('diagnostics', None)
-		return JobOutcome(calc.job_name, status, results, diagnostics=diag)
+		return JobOutcome(calc.job_name, status, results,
+						diagnostics=diag, output_dir=calc.ctx.output_dir)
 	except Exception as e:
 		return JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
-						error=f"{type(e).__name__}: {e}")
+						error=f"{type(e).__name__}: {e}",
+						output_dir=calc.ctx.output_dir)
 
 
 # ======================== BatchAbaqusProcessor ========================

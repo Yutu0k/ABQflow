@@ -7,6 +7,7 @@ entire batch-processing machinery.
 
 from __future__ import annotations
 import copy
+import csv
 import glob as glob_module
 import os
 import re
@@ -74,6 +75,177 @@ def resolve_sidecar(value: dict, output_dir: str, load: bool = False):
 		return (data, meta)
 	meta = {k: v for k, v in value.items() if k != _SIDECAR_KEY}
 	return (abspath, meta)
+
+
+# ======================== SC-01: sidecar field loading ========================
+
+
+def load_field(outcome, result_name, numeric_only=True):
+	"""Load a single named field from a ``JobOutcome``.
+
+	Normalises inline values and sidecar CSV envelopes into a uniform
+	``numpy.ndarray``.  This is the single-job entry point for consuming
+	sidecar results; for batch consumption use :func:`iter_fields`.
+
+	Parameters
+	----------
+	outcome : JobOutcome
+		Outcome from :meth:`BatchAbaqusProcessor.run_batch`.
+	result_name : str
+		Key in ``outcome.results`` to load.
+	numeric_only : bool
+		If ``True`` (default), non-numeric CSV columns are dropped with a
+		warning.  If ``False``, return an object array preserving string
+		columns (for callers that need label columns).
+
+	Returns
+	-------
+	numpy.ndarray or None
+		``None`` when the result is missing, the extraction failed, the
+		sidecar file is gone, or the path is unsafe.
+	"""
+	if outcome.results is None:
+		return None
+
+	value = outcome.results.get(result_name)
+	if value is None:
+		return None
+
+	# Inline: scalar or list -> ndarray (dual-representation normalisation)
+	if not is_sidecar(value):
+		return np.asarray(value, dtype=float)
+
+	# Sidecar envelope: resolve path
+	output_dir = getattr(outcome, 'output_dir', None)
+	if output_dir is None:
+		warnings.warn(
+			f"Cannot resolve sidecar '{result_name}' for job '{outcome.job_name}': "
+			f"outcome has no output_dir"
+		)
+		return None
+
+	rel = value[_SIDECAR_KEY]
+	abspath = os.path.normpath(os.path.join(output_dir, rel))
+
+	# Path safety check
+	if not abspath.startswith(os.path.normpath(output_dir) + os.sep):
+		warnings.warn(
+			f"Sidecar path escape rejected: '{rel}' for job '{outcome.job_name}'"
+		)
+		return None
+
+	# Existence check
+	if not os.path.isfile(abspath) or os.path.getsize(abspath) == 0:
+		warnings.warn(
+			f"Sidecar file missing or empty: '{abspath}' for job '{outcome.job_name}'"
+		)
+		return None
+
+	# Read CSV
+	try:
+		with open(abspath, 'r', newline='') as f:
+			reader = csv.reader(f)
+			header = next(reader)
+			raw_rows = list(reader)
+	except Exception as e:
+		warnings.warn(
+			f"Cannot read sidecar CSV '{abspath}' for '{result_name}': {e}"
+		)
+		return None
+
+	# Header vs claimed columns
+	claimed_columns = value.get('columns')
+	if claimed_columns is not None and claimed_columns != header:
+		warnings.warn(
+			f"Sidecar columns mismatch for '{result_name}' in '{outcome.job_name}': "
+			f"claimed {claimed_columns}, file has {header}"
+		)
+
+	# Shape vs reality
+	claimed_shape = value.get('shape')
+	actual_rows = len(raw_rows)
+	actual_cols = len(header)
+	if claimed_shape is not None:
+		if claimed_shape[0] != actual_rows or claimed_shape[1] != actual_cols:
+			warnings.warn(
+				f"Sidecar shape mismatch for '{result_name}' in '{outcome.job_name}': "
+				f"claimed {claimed_shape}, file has [{actual_rows}, {actual_cols}]"
+			)
+
+	if numeric_only:
+		# Per-column numeric conversion — drop non-numeric columns
+		numeric_cols = []
+		for j, col_name in enumerate(header):
+			try:
+				col_data = [float(row[j]) for row in raw_rows]
+				numeric_cols.append(col_data)
+			except (ValueError, IndexError):
+				warnings.warn(
+					f"Non-numeric column '{col_name}' in '{result_name}' "
+					f"for job '{outcome.job_name}' — dropped"
+				)
+		if not numeric_cols:
+			return None
+		return np.array(numeric_cols).T  # (R, C)
+	else:
+		return np.array(raw_rows, dtype=object)
+
+
+def iter_fields(outcomes, result_name, on_missing='skip'):
+	"""Yield ``(job_name, ndarray)`` pairs for a named field across a batch.
+
+	Outcomes are sorted by :func:`_natural_key` on ``job_name`` so the
+	iteration order is deterministic and matches the row order of
+	:func:`degenerate_from_array` (row-order contract).
+
+	Parameters
+	----------
+	outcomes : list[JobOutcome]
+		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
+	result_name : str
+		Key in ``outcome.results`` to load.
+	on_missing : str
+		How to handle jobs where :func:`load_field` returns ``None``:
+
+		* ``'skip'`` (default) — omit the job; a single summary warning
+		  lists all skipped job names at generator exit.
+		* ``'none'`` — yield ``(job_name, None)`` so the caller can
+		  align rows with :func:`degenerate_from_array`.
+		* ``'raise'`` — raise :class:`ValueError` on the first missing field.
+
+	Yields
+	------
+	tuple[str, numpy.ndarray or None]
+		``(job_name, ndarray)`` pairs.  ``ndarray`` is ``None`` only when
+		``on_missing='none'``.
+	"""
+	if on_missing not in ('skip', 'none', 'raise'):
+		raise ValueError(
+			f"on_missing must be 'skip', 'none', or 'raise', got '{on_missing}'"
+		)
+
+	sorted_outcomes = sorted(outcomes, key=lambda o: _natural_key(o.job_name))
+	missing = []
+
+	for oc in sorted_outcomes:
+		arr = load_field(oc, result_name)
+		if arr is None:
+			if on_missing == 'raise':
+				raise ValueError(
+					f"Field '{result_name}' missing for job '{oc.job_name}'"
+				)
+			elif on_missing == 'skip':
+				missing.append(oc.job_name)
+			else:  # 'none'
+				yield (oc.job_name, None)
+		else:
+			yield (oc.job_name, arr)
+
+	if missing and on_missing == 'skip':
+		warnings.warn(
+			f"iter_fields('{result_name}'): {len(missing)} job(s) skipped "
+			f"due to missing field: {missing}"
+		)
 
 
 # ======================== Job name sanitisation ========================
@@ -301,10 +473,9 @@ def degenerate_from_array(outcomes: list, output_names: list[str],
 			v = r.get(n, default_value)
 			if is_sidecar(v):
 				raise ValueError(
-					f"Sidecar envelope found for '{n}' in job '{oc.job_name}'. "
-					f"Sidecar data (large-field results) cannot be packed into a "
-					f"matrix. Use resolve_sidecar() to load explicitly, or remove "
-					f"'{n}' from output_names."
+					f"'{n}' is a sidecar field. Load it with iter_fields() and "
+					f"reduce it yourself, then hstack with this matrix (row order "
+					f"is guaranteed to match)."
 				)
 			row.append(v)
 		rows.append(row)
