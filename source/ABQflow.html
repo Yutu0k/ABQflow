@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="ABQflow.core package" href="ABQflow.core.html" /><link rel="prev" title="ABQflow" href="modules.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow package - ABQflow 0.3.0 documentation</title>
+        <title>ABQflow package - ABQflow 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -1042,8 +1042,13 @@ called and the truth table applied.</p>
 <dd><p>Execute a hook script with a JSON task list, return per-task results.</p>
 <p>Writes tasks to a temporary JSON file, launches the script via
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">_base_command()</span></code> (so the correct environment is used), appends
-<code class="docutils literal notranslate"><span class="pre">common_args</span></code> and <code class="docutils literal notranslate"><span class="pre">--tasks_json</span></code>, then extracts the JSON result
-payload from stdout.</p>
+<code class="docutils literal notranslate"><span class="pre">common_args</span></code>, <code class="docutils literal notranslate"><span class="pre">--job_name</span></code>, and <code class="docutils literal notranslate"><span class="pre">--tasks_json</span></code>, then extracts
+the JSON result payload from stdout.</p>
+<p>Before execution, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_stage_hookkit()</span></code> copies <code class="docutils literal notranslate"><span class="pre">hookkit.py</span></code> into
+the job output directory so hooks can <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">hookkit</span></code>.</p>
+<p>After execution, every sidecar envelope in the results dict passes
+through <code class="xref py py-meth docutils literal notranslate"><span class="pre">_validate_envelope()</span></code> for path-safety, existence, and
+metadata-augmentation checks.</p>
 <section id="id15">
 <h4>Parameters<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h4>
 <dl class="simple">
@@ -1339,7 +1344,7 @@ mutable data (no shared references with the caller).</p>
 <section id="id24">
 <h3>Attributes<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>kind<span class="classifier">str</span></dt><dd><p>Preparation strategy identifier.  Currently <code class="docutils literal notranslate"><span class="pre">'inp_based'</span></code> or
+<dt>kind<span class="classifier">str</span></dt><dd><p>Preparation strategy identifier.  Currently <code class="docutils literal notranslate"><span class="pre">'inp_based'</span></code>, <code class="docutils literal notranslate"><span class="pre">'existing_inp'</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">'model_generation'</span></code>.</p>
 </dd>
 <dt>source_path<span class="classifier">str</span></dt><dd><p>Path to the base INP file (for <code class="docutils literal notranslate"><span class="pre">inp_based</span></code>) or model-generation
@@ -2538,6 +2543,39 @@ clipped to <em>k_chars</em> characters.</p>
 <dd><p>Combine subprocess return code and .sta verdict into a single judgment.</p>
 <p>The principle: <strong>.sta’s ``COMPLETED`` marker is the only success
 certificate; the return code is merely corroborating evidence.</strong></p>
+<div class="table-wrapper docutils container" id="id93">
+<table class="docutils align-default" id="id93">
+<caption><span class="caption-text">Truth table</span><a class="headerlink" href="#id93" title="Link to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>returncode</p></th>
+<th class="head"><p>sta_verdict</p></th>
+<th class="head"><p>result</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>COMPLETED</p></td>
+<td><p><strong>success</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p>0</p></td>
+<td><p>NOT_COMPLETED / ABORTED</p></td>
+<td><p>failure</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>INDETERMINATE</p></td>
+<td><p>failure (rc=0 but no .sta marker)</p></td>
+</tr>
+<tr class="row-odd"><td><p>!=0</p></td>
+<td><p>COMPLETED</p></td>
+<td><p><strong>success</strong> (warning: cleanup error)</p></td>
+</tr>
+<tr class="row-even"><td><p>!=0</p></td>
+<td><p>any other</p></td>
+<td><p>failure</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <section id="id69">
 <h3>Parameters<a class="headerlink" href="#id69" title="Link to this heading">¶</a></h3>
 <dl class="simple">
@@ -2699,10 +2737,10 @@ non-preparation fields are copied.  The <code class="docutils literal notranslat
 </dd>
 <dt>naming<span class="classifier">str</span></dt><dd><p>Job-name generation rule:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">'stem'</span></code> (default) — use the INP filename without extension,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'stem'</span></code> (default) - use the INP filename without extension,</p></li>
 </ul>
 <p>sanitised via <a class="reference internal" href="#ABQflow.sanitize_job_name" title="ABQflow.sanitize_job_name"><code class="xref py py-func docutils literal notranslate"><span class="pre">sanitize_job_name()</span></code></a>.
-* <code class="docutils literal notranslate"><span class="pre">'indexed'</span></code> — <code class="docutils literal notranslate"><span class="pre">{base_spec.job_name}_{i:04d}</span></code>.</p>
+* <code class="docutils literal notranslate"><span class="pre">'indexed'</span></code> - <code class="docutils literal notranslate"><span class="pre">{base_spec.job_name}_{i:04d}</span></code>.</p>
 </dd>
 <dt>sort<span class="classifier">bool</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), sort files by natural key order.</p>
 </dd>
@@ -3192,7 +3230,7 @@ Default <code class="docutils literal notranslate"><span class="pre">False</span
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=e4caa2eb"></script>
+</div><script src="../_static/documentation_options.js?v=8ee541af"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

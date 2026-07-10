@@ -6,8 +6,8 @@ strategy-pattern workflows, fault-tolerant parallel execution, resource-aware sc
 
 | |version| | |python| | |license|
 
-.. |version| image:: https://img.shields.io/badge/version-0.3.0-blue.svg
-   :alt: Version 0.3.0
+.. |version| image:: https://img.shields.io/badge/version-|release|-blue.svg
+   :alt: Version |release|
 .. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :alt: Python 3.9+
 .. |license| image:: https://img.shields.io/badge/license-MIT-green.svg

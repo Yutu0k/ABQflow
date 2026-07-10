@@ -1,7 +1,7 @@
 Architecture
 ============
 
-This page describes the design rationale and internals of ABQflow (v0.3.0).
+This page describes the design rationale and internals of ABQflow (v\ |release|).
 
 Design Principles
 -----------------

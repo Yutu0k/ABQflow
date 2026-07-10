@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.diagnostics - ABQflow 0.3.0 documentation</title>
+        <title>ABQflow.core.diagnostics - ABQflow 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -594,15 +594,27 @@
 <span class="sd">	The principle: **.sta&#39;s ``COMPLETED`` marker is the only success</span>
 <span class="sd">	certificate; the return code is merely corroborating evidence.**</span>
 
-<span class="sd">	==========  ===================  ==============</span>
-<span class="sd">	returncode  sta_verdict           result</span>
-<span class="sd">	==========  ===================  ==============</span>
-<span class="sd">	0           COMPLETED             **success**</span>
-<span class="sd">	0           NOT_COMPLETED/ABORTED failure</span>
-<span class="sd">	0           INDETERMINATE         failure (suspicious — rc=0 but no marker)</span>
-<span class="sd">	≠0          COMPLETED             **success** (warning: cleanup error)</span>
-<span class="sd">	≠0          any other             failure</span>
-<span class="sd">	==========  ===================  ==============</span>
+<span class="sd">	.. list-table:: Truth table</span>
+<span class="sd">	   :header-rows: 1</span>
+
+<span class="sd">	   * - returncode</span>
+<span class="sd">	     - sta_verdict</span>
+<span class="sd">	     - result</span>
+<span class="sd">	   * - 0</span>
+<span class="sd">	     - COMPLETED</span>
+<span class="sd">	     - **success**</span>
+<span class="sd">	   * - 0</span>
+<span class="sd">	     - NOT_COMPLETED / ABORTED</span>
+<span class="sd">	     - failure</span>
+<span class="sd">	   * - 0</span>
+<span class="sd">	     - INDETERMINATE</span>
+<span class="sd">	     - failure (rc=0 but no .sta marker)</span>
+<span class="sd">	   * - !=0</span>
+<span class="sd">	     - COMPLETED</span>
+<span class="sd">	     - **success** (warning: cleanup error)</span>
+<span class="sd">	   * - !=0</span>
+<span class="sd">	     - any other</span>
+<span class="sd">	     - failure</span>
 
 <span class="sd">	Parameters</span>
 <span class="sd">	----------</span>
@@ -667,7 +679,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=e4caa2eb"></script>
+</div><script src="../../../_static/documentation_options.js?v=8ee541af"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

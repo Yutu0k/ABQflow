@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="ABQflow.helpers package" href="ABQflow.helpers.html" /><link rel="prev" title="ABQflow package" href="ABQflow.html" />
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core package - ABQflow 0.3.0 documentation</title>
+        <title>ABQflow.core package - ABQflow 0.4.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -1073,8 +1073,13 @@ called and the truth table applied.</p>
 <dd><p>Execute a hook script with a JSON task list, return per-task results.</p>
 <p>Writes tasks to a temporary JSON file, launches the script via
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">_base_command()</span></code> (so the correct environment is used), appends
-<code class="docutils literal notranslate"><span class="pre">common_args</span></code> and <code class="docutils literal notranslate"><span class="pre">--tasks_json</span></code>, then extracts the JSON result
-payload from stdout.</p>
+<code class="docutils literal notranslate"><span class="pre">common_args</span></code>, <code class="docutils literal notranslate"><span class="pre">--job_name</span></code>, and <code class="docutils literal notranslate"><span class="pre">--tasks_json</span></code>, then extracts
+the JSON result payload from stdout.</p>
+<p>Before execution, <code class="xref py py-meth docutils literal notranslate"><span class="pre">_stage_hookkit()</span></code> copies <code class="docutils literal notranslate"><span class="pre">hookkit.py</span></code> into
+the job output directory so hooks can <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">hookkit</span></code>.</p>
+<p>After execution, every sidecar envelope in the results dict passes
+through <code class="xref py py-meth docutils literal notranslate"><span class="pre">_validate_envelope()</span></code> for path-safety, existence, and
+metadata-augmentation checks.</p>
 <section id="id26">
 <h4>Parameters<a class="headerlink" href="#id26" title="Link to this heading">¶</a></h4>
 <dl class="simple">
@@ -1174,7 +1179,7 @@ in <code class="docutils literal notranslate"><span class="pre">__post_init__</s
 <section id="id29">
 <h3>Attributes<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h3>
 <dl class="simple">
-<dt>kind<span class="classifier">str</span></dt><dd><p>Preparation strategy identifier.  Currently <code class="docutils literal notranslate"><span class="pre">'inp_based'</span></code> or
+<dt>kind<span class="classifier">str</span></dt><dd><p>Preparation strategy identifier.  Currently <code class="docutils literal notranslate"><span class="pre">'inp_based'</span></code>, <code class="docutils literal notranslate"><span class="pre">'existing_inp'</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">'model_generation'</span></code>.</p>
 </dd>
 <dt>source_path<span class="classifier">str</span></dt><dd><p>Path to the base INP file (for <code class="docutils literal notranslate"><span class="pre">inp_based</span></code>) or model-generation
@@ -2469,7 +2474,7 @@ phases are skipped.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=e4caa2eb"></script>
+</div><script src="../_static/documentation_options.js?v=8ee541af"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
