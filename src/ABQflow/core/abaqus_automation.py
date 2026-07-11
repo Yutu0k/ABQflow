@@ -15,6 +15,7 @@ import copy
 import logging
 import math
 import os
+import psutil
 import shutil
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -218,7 +219,8 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 	int
 		Feasible parallelism level (at least 1).
 	"""
-	total = os.cpu_count() or 1
+	# total = os.cpu_count() or 1
+	total = psutil.cpu_count(logical=False)
 	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
 	p = min(requested, p_cpu)
 	if license_tokens is not None:
