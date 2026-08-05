@@ -320,11 +320,18 @@ from abaqus_batch_pack import solver_tokens, plan_parallelism
 # Tokens for 4 CPUs: ceil(5 * 4^0.422) = 9
 print(solver_tokens(4))  # → 9
 
-# Max parallel jobs on a 16-core machine with 4 CPUs/job
-print(plan_parallelism(requested=8, cpus_per_job=4))  # → 3
+# With 45 license tokens available, 4 CPUs/job (9 tokens each): capped to 5
+print(plan_parallelism(requested=8, cpus_per_job=4, license_tokens=45))  # → 5
+
+# With no license limit, CPU cores are informational only — oversubscription
+# is allowed, but logs a warning if it exceeds physical core capacity.
+print(plan_parallelism(requested=8, cpus_per_job=4))  # → 8 (+ warning)
 ```
 
-Formula: `T(n) = ⌈5 × n^0.422⌉` (Abaqus official)
+Formula: `T(n) = ⌈5 × n^0.422⌉` (Abaqus official). License tokens are a hard
+cap — Abaqus refuses to start a job it cannot license. CPU cores are not:
+requesting more parallel jobs than physical cores support is allowed, since
+small jobs rarely saturate a full core; it only triggers a warning.
 
 
 ## License

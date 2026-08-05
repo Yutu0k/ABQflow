@@ -243,13 +243,13 @@ def solver_tokens(n_cpus: int) -> int:
 def plan_parallelism(requested: int, cpus_per_job: int,
 					license_tokens: int | None = None,
 					reserve_cores: int = 1) -> int:
-	"""Compute the actual number of concurrent jobs given hardware and license limits.
+	"""Compute the actual number of concurrent jobs given license limits.
 
-	Constraints applied in order:
-
-	1. CPU cores available (``os.cpu_count() - reserve_cores``).
-	2. License tokens (if provided).
-	3. User-requested maximum.
+	License tokens (if provided) are a hard cap — Abaqus will refuse to start
+	a job it cannot license.  CPU cores are informational only: requesting
+	more parallel jobs than physical cores support is allowed (CPU
+	oversubscription), since small jobs rarely saturate a full core, but it
+	is flagged with a warning so the user can see the allocation.
 
 	Parameters
 	----------
@@ -267,16 +267,21 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 	int
 		Feasible parallelism level (at least 1).
 	"""
-	# total = os.cpu_count() or 1
 	total = psutil.cpu_count(logical=False)
 	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
-	p = min(requested, p_cpu)
+	p = requested
 	if license_tokens is not None:
 		p = min(p, max(1, license_tokens // solver_tokens(cpus_per_job)))
+	p = max(1, p)
+	if p > p_cpu:
+		logging.getLogger('BatchAbaqusProcessor').warning(
+			f"Parallelism {p} oversubscribes available CPU cores "
+			f"(fits {p_cpu} jobs x {cpus_per_job} cores in {total - reserve_cores} "
+			f"usable physical cores); proceeding anyway.")
 	if p < requested:
 		logging.getLogger('BatchAbaqusProcessor').warning(
-			f"Parallelism reduced from {requested} to {p} "
-			f"(CPU limit {p_cpu}, tokens per job {solver_tokens(cpus_per_job)})")
+			f"Parallelism reduced from {requested} to {p} by the license token limit "
+			f"(tokens per job {solver_tokens(cpus_per_job)}, available tokens {license_tokens}).")
 	return p
 
 
