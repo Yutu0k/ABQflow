@@ -255,6 +255,7 @@
 	<span class="n">JobWorkflowStrategy</span><span class="p">,</span> <span class="n">ModularWorkflowStrategy</span><span class="p">,</span> <span class="n">MonolithicWorkflowStrategy</span><span class="p">,</span>
 	<span class="n">InpModifyStrategy</span><span class="p">,</span> <span class="n">ModelGenerationStrategy</span><span class="p">,</span> <span class="n">ExistingInpStrategy</span><span class="p">,</span>
 	<span class="n">OdbExtractionStrategy</span><span class="p">,</span> <span class="n">ModelPropertiesExtractionStrategy</span><span class="p">,</span>
+	<span class="n">SubroutineCompileStrategy</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># ---- Preparation strategy factories ----</span>
@@ -333,16 +334,14 @@
 			<span class="sa">f</span><span class="s2">&quot;Available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">PREPARATION_REGISTRY</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
 		<span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
-	<span class="n">pre</span> <span class="o">=</span> <span class="p">[</span><span class="n">ModelPropertiesExtractionStrategy</span><span class="p">(</span>
-		<span class="p">[{</span><span class="s1">&#39;script_path&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span><span class="p">]</span>
-	<span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span> <span class="k">else</span> <span class="p">[]</span>
+	<span class="n">pre</span> <span class="o">=</span> <span class="p">[</span><span class="n">ModelPropertiesExtractionStrategy</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span><span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">pre_extraction</span> <span class="k">else</span> <span class="p">[]</span>
+	<span class="n">post</span> <span class="o">=</span> <span class="p">[</span><span class="n">OdbExtractionStrategy</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span><span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span> <span class="k">else</span> <span class="p">[]</span>
 
-	<span class="n">post</span> <span class="o">=</span> <span class="p">[</span><span class="n">OdbExtractionStrategy</span><span class="p">(</span>
-		<span class="p">[{</span><span class="s1">&#39;script_path&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="s1">&#39;tasks&#39;</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span><span class="p">]</span>
-	<span class="p">)]</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span> <span class="k">else</span> <span class="p">[]</span>
+	<span class="n">compile_strategy</span> <span class="o">=</span> <span class="n">SubroutineCompileStrategy</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="p">)</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span> <span class="k">else</span> <span class="kc">None</span>
 
 	<span class="k">return</span> <span class="n">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">prep</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">preflight_mode</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">preflight</span><span class="p">,</span>
-	                                <span class="n">preflight_only</span><span class="o">=</span><span class="n">preflight_only</span><span class="p">)</span></div>
+	                                <span class="n">preflight_only</span><span class="o">=</span><span class="n">preflight_only</span><span class="p">,</span>
+	                                <span class="n">compile_strategy</span><span class="o">=</span><span class="n">compile_strategy</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

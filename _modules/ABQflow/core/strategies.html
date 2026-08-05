@@ -255,13 +255,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">extract_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">HookSpec</span><span class="p">,</span> <span class="n">SubroutineSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobStatusManager</span>
 
 <span class="c1"># Regex for {{placeholder}} in INP files (B8)</span>
@@ -395,14 +396,16 @@
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
 		<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">job_name</span><span class="p">])</span>
-		<span class="k">try</span><span class="p">:</span>
-			<span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-						<span class="n">cwd</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">runner</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully generated model.&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
-		<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration] failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span></div>
+
+		<span class="c1"># Route through runner._run so timeout, error logging, and</span>
+		<span class="c1"># record_only dry-run all apply — no strategy calls subprocess directly.</span>
+		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;preparation&#39;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">False</span>
+		<span class="k">if</span> <span class="n">runner</span><span class="o">.</span><span class="n">record_only</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">True</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully generated model.&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span></div>
 </div>
 
 
@@ -516,6 +519,68 @@
 
 
 
+<span class="c1"># ======================== Compile Strategies ========================</span>
+
+<div class="viewcode-block" id="SubroutineCompileStrategy">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineCompileStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubroutineCompileStrategy</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Compiles a user subroutine via ``abaqus make`` before preparation.</span>
+
+<span class="sd">	Not part of the :class:`PreparationStrategy`/:class:`ExtractionStrategy`</span>
+<span class="sd">	ABC hierarchies — compilation is its own concern with a single</span>
+<span class="sd">	implementation today (YAGNI; add a registry like</span>
+<span class="sd">	:data:`~ABQflow.core.registry.PREPARATION_REGISTRY` if multiple compile</span>
+<span class="sd">	backends are ever needed).</span>
+
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	subroutine : SubroutineSpec</span>
+<span class="sd">		Subroutine to compile.</span>
+<span class="sd">	cache : bool</span>
+<span class="sd">		If ``True`` (default), skip recompilation when the source file&#39;s</span>
+<span class="sd">		content hash matches the last successful compile (see</span>
+<span class="sd">		:meth:`~ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile`).</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subroutine</span><span class="p">:</span> <span class="n">SubroutineSpec</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span> <span class="o">=</span> <span class="n">subroutine</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache</span>
+
+<div class="viewcode-block" id="SubroutineCompileStrategy.compile">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineCompileStrategy.compile">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
+				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Compile the subroutine, or skip if precompiled/cached.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		tuple[bool, str]</span>
+<span class="sd">			``(success, message)`` — *message* is empty on success (or a</span>
+<span class="sd">			skip note), or the compiler&#39;s raw stdout+stderr on failure. No</span>
+<span class="sd">			regex parsing of compiler errors is performed (see</span>
+<span class="sd">			:meth:`~ABQflow.core.runner.AbaqusRunner.run_compile`).</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">precompiled</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: precompiled, skipping compile.&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">runner</span><span class="o">.</span><span class="n">subroutine_needs_recompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: unchanged, skipping recompile.&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Compiling subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">] (solver=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">solver</span><span class="si">}</span><span class="s2">)...&quot;</span><span class="p">)</span>
+		<span class="n">ok</span><span class="p">,</span> <span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stdout</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">runner</span><span class="o">.</span><span class="n">record_only</span><span class="p">:</span>
+			<span class="n">runner</span><span class="o">.</span><span class="n">_record_compile_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Subroutine compiled successfully.&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span></div>
+</div>
+
+
+
 <span class="c1"># ======================== Extraction Strategies ========================</span>
 <div class="viewcode-block" id="ExtractionStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExtractionStrategy">[docs]</a>
@@ -567,11 +632,11 @@
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	hooks : list[dict]</span>
+<span class="sd">	hooks : list[HookSpec]</span>
 <span class="sd">		List of hook descriptors, each with ``script_path`` and ``tasks``.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]):</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="OdbExtractionStrategy.extract">
@@ -584,14 +649,14 @@
 			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ODB file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]:</span>
+				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
 					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
 
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">]</span>
-			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">script_path</span>
+			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run ODB hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
 			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
 				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
@@ -615,11 +680,11 @@
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	hooks : list[dict]</span>
+<span class="sd">	hooks : list[HookSpec]</span>
 <span class="sd">		List of hook descriptors, each with ``script_path`` and ``tasks``.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]):</span>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
 
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy.extract">
@@ -632,14 +697,14 @@
 			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]:</span>
+				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
 					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
 
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
-			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;script_path&#39;</span><span class="p">]</span>
-			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="p">[</span><span class="s1">&#39;tasks&#39;</span><span class="p">]</span>
+			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">script_path</span>
+			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run model property hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
 			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
 				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
@@ -664,8 +729,21 @@
 <span class="sd">	MonolithicWorkflowStrategy</span>
 <span class="sd">		Single-script workflow that handles everything itself.</span>
 <span class="sd">	ModularWorkflowStrategy</span>
-<span class="sd">		4-phase pipeline: preparation, pre-extraction, simulation,</span>
-<span class="sd">		post-extraction.</span>
+<span class="sd">		Multi-phase pipeline: optional subroutine compile, preparation,</span>
+<span class="sd">		optional preflight, pre-extraction, simulation, post-extraction.</span>
+
+<span class="sd">	Optional phase-separated protocol</span>
+<span class="sd">	----------------------------------</span>
+<span class="sd">	Subclasses *may* additionally implement ``prepare_only(ctx, runner,</span>
+<span class="sd">	logger, status_manager=None) -&gt; tuple[dict, JobStatusManager]``,</span>
+<span class="sd">	``simulate_only(...) -&gt; tuple[dict, JobStatusManager, bool]`` (the</span>
+<span class="sd">	``bool`` signals whether the pipeline should stop), and</span>
+<span class="sd">	``extract_only(...) -&gt; tuple[dict, JobStatusManager]`` so that</span>
+<span class="sd">	:class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` can invoke a</span>
+<span class="sd">	single phase (see its ``execute(phase=...)`` parameter). This is not</span>
+<span class="sd">	required by the ABC — :class:`MonolithicWorkflowStrategy` and</span>
+<span class="sd">	user-defined strategies that don&#39;t implement it simply raise</span>
+<span class="sd">	``NotImplementedError`` when a phase-only call is attempted.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
@@ -727,23 +805,23 @@
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
 
+		<span class="c1"># Route through runner._run so timeout, error logging, and</span>
+		<span class="c1"># record_only dry-run all apply — no strategy calls subprocess directly.</span>
+		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;monolithic&#39;</span><span class="p">)</span>  <span class="c1"># B9: error already logged by runner</span>
+		<span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span>
+					<span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Monolithic script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; failed to run (see log for details).&quot;</span><span class="p">}</span>
+
 		<span class="k">try</span><span class="p">:</span>
-			<span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-								<span class="n">cwd</span><span class="o">=</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">runner</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
-			<span class="n">results</span> <span class="o">=</span> <span class="n">extract_json</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>              <span class="c1"># B7: sentinel-based extraction</span>
-			<span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monolithic script run successfully.&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="n">results</span>
-		<span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Monolithic script failed. STDERR:</span><span class="se">\n</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># B9: correct message</span>
-			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">stderr</span><span class="p">}</span>
+			<span class="n">results</span> <span class="o">=</span> <span class="n">extract_json</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>  <span class="c1"># B7: sentinel-based extraction</span>
 		<span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to decode JSON from script output. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">JSON_DECODE_ERROR</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
-		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Script Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">SCRIPT_ERROR</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span></div>
+
+		<span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monolithic script run successfully.&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">results</span></div>
 </div>
 
 
@@ -751,11 +829,20 @@
 <div class="viewcode-block" id="ModularWorkflowStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;5-phase pipeline: preparation, [preflight], pre-extraction, simulation, post-extraction.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Multi-phase pipeline: [compile], preparation, [preflight], pre-extraction, simulation, post-extraction.</span>
 
 <span class="sd">	Uses a :class:`JobStatusManager` internally to track the job through</span>
 <span class="sd">	each phase.  If any phase fails the pipeline stops and returns the</span>
 <span class="sd">	terminal status immediately.</span>
+
+<span class="sd">	``execute()`` composes three independently callable phase methods —</span>
+<span class="sd">	:meth:`prepare_only`, :meth:`simulate_only`, :meth:`extract_only` — so</span>
+<span class="sd">	that :class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` (and</span>
+<span class="sd">	:class:`~ABQflow.core.abaqus_automation.BatchAbaqusProcessor`&#39;s</span>
+<span class="sd">	``run_preparation``/``run_simulation``/``run_extraction``) can invoke a</span>
+<span class="sd">	single phase without running the rest of the pipeline. The external</span>
+<span class="sd">	contract of ``execute()`` — return-dict shape and terminal-status</span>
+<span class="sd">	semantics — is unchanged by this split.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -767,6 +854,8 @@
 <span class="sd">		Strategies run before the solver (e.g. property extraction from INP).</span>
 <span class="sd">	post_extraction_strategies : list[ExtractionStrategy]</span>
 <span class="sd">		Strategies run after the solver (e.g. result extraction from ODB).</span>
+<span class="sd">	compile_strategy : SubroutineCompileStrategy or None</span>
+<span class="sd">		Optional user-subroutine compile step, run before preparation.</span>
 <span class="sd">	&quot;&quot;&quot;</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -776,80 +865,196 @@
 		<span class="n">post_extraction_strategies</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="p">],</span>
 		<span class="n">preflight_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 		<span class="n">preflight_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+		<span class="n">compile_strategy</span><span class="p">:</span> <span class="n">SubroutineCompileStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span> <span class="o">=</span> <span class="n">preparation_strategy</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span> <span class="o">=</span> <span class="n">preflight_mode</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span> <span class="o">=</span> <span class="n">pre_extraction_strategies</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span> <span class="o">=</span> <span class="n">post_extraction_strategies</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">preflight_only</span> <span class="o">=</span> <span class="n">preflight_only</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">compile_strategy</span> <span class="o">=</span> <span class="n">compile_strategy</span>
+
+<div class="viewcode-block" id="ModularWorkflowStrategy.prepare_only">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.prepare_only">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">prepare_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 1: optional subroutine compile, preparation, optional preflight.</span>
+
+<span class="sd">		Standalone entry point for &quot;produce an INP (and compiled</span>
+<span class="sd">		subroutine) only&quot;. Does not run pre-extraction, the solver, or</span>
+<span class="sd">		post-extraction — those live in :meth:`simulate_only` /</span>
+<span class="sd">		:meth:`extract_only`.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		tuple[dict, JobStatusManager]</span>
+<span class="sd">			``(results, status_manager)`` — *results* has at least</span>
+<span class="sd">			``&#39;status&#39;`` and ``&#39;_phase_history&#39;``; the manager is returned</span>
+<span class="sd">			so :meth:`execute` can thread it into the next phase.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: prepare_only phase...&quot;</span><span class="p">)</span>
+		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="c1"># 0. Subroutine compilation (optional)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_strategy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_compiling</span><span class="p">()</span>
+			<span class="n">ok</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_strategy</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_compile</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="n">ok</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+				<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
+
+		<span class="c1"># 1. Preparation</span>
+		<span class="n">sm</span><span class="o">.</span><span class="n">mark_preparing</span><span class="p">()</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
+		<span class="n">sm</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+		<span class="c1"># 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: checking INP...&quot;</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_preflight</span><span class="p">()</span>
+			<span class="n">passed</span><span class="p">,</span> <span class="n">pf_errors</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_preflight</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">)</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">passed</span><span class="p">:</span>
+				<span class="n">sm</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span>
+					<span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+					<span class="n">error</span><span class="o">=</span><span class="n">pf_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">pf_errors</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">] failed&quot;</span><span class="p">,</span>
+				<span class="p">)</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+				<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: passed&quot;</span><span class="p">)</span>
+
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span></div>
+
+
+<div class="viewcode-block" id="ModularWorkflowStrategy.simulate_only">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.simulate_only">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">simulate_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 2: pre-extraction hooks, then the solver run.</span>
+
+<span class="sd">		Assumes ``ctx.inp_path`` already exists (produced by a prior</span>
+<span class="sd">		:meth:`prepare_only` call — possibly in an earlier process/session,</span>
+<span class="sd">		e.g. via ``BatchAbaqusProcessor.run_simulation()``). Mirrors the</span>
+<span class="sd">		original monolithic behavior: a pre-extraction failure does *not*</span>
+<span class="sd">		stop the solver from running, but a solver failure does stop the</span>
+<span class="sd">		pipeline.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		tuple[dict, JobStatusManager, bool]</span>
+<span class="sd">			``(results, status_manager, stop)`` — *stop* is ``True`` when</span>
+<span class="sd">			the caller (e.g. :meth:`execute`) should not proceed to</span>
+<span class="sd">			:meth:`extract_only` (INP missing or solver failed).</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: simulate_only phase...&quot;</span><span class="p">)</span>
+		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span>
+				<span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+				<span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;INP not found: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2"> (run preparation first)&quot;</span><span class="p">,</span>
+			<span class="p">)</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">True</span>
+
+		<span class="c1"># 3. Pre-extraction</span>
+		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span><span class="p">:</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">&#39;pre_extraction&#39;</span><span class="p">)</span>
+			<span class="n">pre_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
+			<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
+
+		<span class="c1"># 4. Simulation (IMP-02: diagnostics-backed verdict)</span>
+		<span class="n">sm</span><span class="o">.</span><span class="n">mark_simulating</span><span class="p">()</span>
+		<span class="n">solver_result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_solver</span><span class="p">()</span>
+		<span class="c1"># Attach diagnostics on failure and on the rc≠0+COMPLETED edge case</span>
+		<span class="k">if</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span> <span class="ow">or</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">True</span>
+		<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="ModularWorkflowStrategy.extract_only">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.extract_only">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">extract_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
+					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 3: post-extraction hooks only.</span>
+
+<span class="sd">		Assumes ``ctx.odb_path`` already exists. No existence guard is</span>
+<span class="sd">		needed — :class:`OdbExtractionStrategy` already reports every task</span>
+<span class="sd">		as ``None`` when the ODB is missing, and :meth:`JobStatusManager.record_extraction`</span>
+<span class="sd">		already turns that into ``EXTRACTION_FAILED``.</span>
+
+<span class="sd">		Returns</span>
+<span class="sd">		-------</span>
+<span class="sd">		tuple[dict, JobStatusManager]</span>
+<span class="sd">			``(results, status_manager)``.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: extract_only phase...&quot;</span><span class="p">)</span>
+		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+		<span class="c1"># 5. Post-extraction</span>
+		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span><span class="p">:</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">&#39;post_extraction&#39;</span><span class="p">)</span>
+			<span class="n">post_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
+			<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
+
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span></div>
+
 
 <div class="viewcode-block" id="ModularWorkflowStrategy.execute">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the modular workflow (5 phases with optional preflight).</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the full modular workflow by composing the three phase methods.</span>
 
 <span class="sd">		Returns a dict with at least a ``&#39;status&#39;`` key plus any results</span>
 <span class="sd">		from pre- and post-extraction hooks.  Failing early means later</span>
-<span class="sd">		phases are skipped.</span>
+<span class="sd">		phases are skipped — return-dict shape and terminal-status</span>
+<span class="sd">		semantics are unchanged from before the phase-separation refactor.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...&quot;</span><span class="p">)</span>
-		<span class="n">status_manager</span> <span class="o">=</span> <span class="n">JobStatusManager</span><span class="p">()</span>
-		<span class="n">all_results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
 
-		<span class="c1"># 1. Preparation</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-			<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="k">return</span> <span class="n">all_results</span>
-		<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-		<span class="c1"># 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: checking INP...&quot;</span><span class="p">)</span>
-			<span class="n">passed</span><span class="p">,</span> <span class="n">pf_errors</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_preflight</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">)</span>
-			<span class="k">if</span> <span class="ow">not</span> <span class="n">passed</span><span class="p">:</span>
-				<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span>
-					<span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-					<span class="n">error</span><span class="o">=</span><span class="n">pf_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">pf_errors</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">] failed&quot;</span><span class="p">,</span>
-				<span class="p">)</span>
-				<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-				<span class="k">return</span> <span class="n">all_results</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: passed&quot;</span><span class="p">)</span>
-
+		<span class="n">results</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_only</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span> <span class="o">!=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">results</span>
 		<span class="c1"># IMP-04: preflight_only mode — stop after preflight, skip solver &amp; extraction</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight_only</span><span class="p">:</span>
-			<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="k">return</span> <span class="n">all_results</span>
+			<span class="k">return</span> <span class="n">results</span>
 
-		<span class="c1"># 3. Pre-extraction</span>
-		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span><span class="p">:</span>
-			<span class="n">pre_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
-			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
+		<span class="n">sim_results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulate_only</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">status_manager</span><span class="o">=</span><span class="n">sm</span><span class="p">)</span>
+		<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sim_results</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">results</span>
 
-		<span class="c1"># 4. Simulation (IMP-02: diagnostics-backed verdict)</span>
-		<span class="n">solver_result</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_solver</span><span class="p">()</span>
-		<span class="c1"># Attach diagnostics on failure and on the rc≠0+COMPLETED edge case</span>
-		<span class="k">if</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-			<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span> <span class="ow">or</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-				<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
-				<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">)</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
-			<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="k">return</span> <span class="n">all_results</span>
-		<span class="n">status_manager</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-		<span class="c1"># 5. Post-extraction</span>
-		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span><span class="p">:</span>
-			<span class="n">post_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
-			<span class="n">status_manager</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
-			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
-
-		<span class="n">all_results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">status_manager</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-		<span class="k">return</span> <span class="n">all_results</span></div>
+		<span class="n">ext_results</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_only</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">status_manager</span><span class="o">=</span><span class="n">sm</span><span class="p">)</span>
+		<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ext_results</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">results</span></div>
 </div>
 
 </pre></div>

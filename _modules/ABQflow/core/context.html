@@ -275,6 +275,7 @@
 	<span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">cpus</span><span class="p">:</span> <span class="nb">int</span>
 	<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;abaqus&quot;</span>
+	<span class="n">user_subroutine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">inp_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -288,8 +289,24 @@
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the job log file (``&lt;output_dir&gt;/&lt;job_name&gt;.log``).&quot;&quot;&quot;</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to Abaqus&#39;s own native job log (``&lt;output_dir&gt;/&lt;job_name&gt;.log``).</span>
+
+<span class="sd">		This file is owned and written by the Abaqus solver process itself</span>
+<span class="sd">		(``abaqus job=... interactive`` writes it as a side effect). ABQflow</span>
+<span class="sd">		never opens this path for writing — see :attr:`exec_log_path` for</span>
+<span class="sd">		ABQflow&#39;s own execution log, which uses a distinct filename to avoid</span>
+<span class="sd">		colliding with this one.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log&quot;</span><span class="p">)</span>
+
+	<span class="nd">@property</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">exec_log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to ABQflow&#39;s own execution log (``&lt;output_dir&gt;/&lt;job_name&gt;_abqflow.log``).</span>
+
+<span class="sd">		Deliberately distinct from :attr:`log_path` (Abaqus&#39;s native job log)</span>
+<span class="sd">		so the two writers never collide on the same file.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">_abqflow.log&quot;</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">sta_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
