@@ -19,6 +19,7 @@ import logging
 
 from .context import JobContext
 from .diagnostics import diagnose, apply_truth_table, SolverResult, SolverDiagnostics
+from .spec import SubroutineSpec
 from ..helpers.constant import RESULT_BEGIN, RESULT_END
 
 # ---------------------------------------------------------------------------
@@ -256,8 +257,15 @@ class AbaqusRunner:
 		return enriched
 
 	# ---- Execution environment selection (fix B5/B6/B11) ----
-	def _base_command(self, script: str, needs_cae_kernel: bool) -> list[str]:
+	@staticmethod
+	def build_script_command(script: str, needs_cae_kernel: bool,
+							abaqus_exe: str, has_abqpy: bool) -> list[str]:
 		"""Select the correct interpreter and Abaqus entry-point for *script*.
+
+		Pure function — no instance state required — so both the real
+		execution path (:meth:`_base_command`) and dry-run planning
+		(:meth:`~abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor._dry_run_plan`)
+		can share one definition instead of maintaining separate copies.
 
 		Decision logic (first match wins):
 
@@ -273,17 +281,74 @@ class AbaqusRunner:
 			Path to the Python script to execute.
 		needs_cae_kernel : bool
 			Whether the script requires the CAE kernel (``mdb`` access).
+		abaqus_exe : str
+			Path or command name for the Abaqus executable.
+		has_abqpy : bool
+			Whether the ``abqpy`` package is importable in this environment.
 
 		Returns
 		-------
 		list[str]
 			Command line as a list of tokens ready for ``subprocess.run``.
 		"""
-		if self._has_abqpy:
+		if has_abqpy:
 			return ['python', script]
 		if needs_cae_kernel:
-			return [self.ctx.abaqus_exe, 'cae', f'noGUI={script}', '--']
-		return [self.ctx.abaqus_exe, 'python', script]
+			return [abaqus_exe, 'cae', f'noGUI={script}', '--']
+		return [abaqus_exe, 'python', script]
+
+	def _base_command(self, script: str, needs_cae_kernel: bool) -> list[str]:
+		"""Instance-bound convenience wrapper around :meth:`build_script_command`."""
+		return self.build_script_command(script, needs_cae_kernel,
+										self.ctx.abaqus_exe, self._has_abqpy)
+
+	@staticmethod
+	def build_solver_command(ctx: JobContext) -> list[str]:
+		"""Build the ``abaqus job=... input=... cpus=... [user=...] interactive`` command line.
+
+		Pure function of *ctx* — shared by :meth:`run_solver` and dry-run
+		planning so the two never drift apart. ``user=<ctx.user_subroutine>``
+		is inserted (before ``interactive``) when a subroutine is configured.
+		"""
+		cmd = [ctx.abaqus_exe, f'job={ctx.job_name}',
+				f'input={ctx.inp_path}', f'cpus={ctx.cpus}']
+		if ctx.user_subroutine:
+			cmd.append(f'user={ctx.user_subroutine}')
+		cmd.append('interactive')
+		return cmd
+
+	@staticmethod
+	def build_preflight_command(ctx: JobContext, mode: str) -> tuple[list[str], str]:
+		"""Build the ``abaqus <mode> job=<job>_chk input=... [user=...]`` command line.
+
+		Returns
+		-------
+		tuple[list[str], str]
+			``(cmd, chk_name)`` — *chk_name* is the temporary job name used
+			so preflight output never overwrites the real job's files.
+		"""
+		chk_name = f"{ctx.job_name}_chk"
+		cmd = [ctx.abaqus_exe, mode, f'job={chk_name}', f'input={ctx.inp_path}']
+		if ctx.user_subroutine:
+			cmd.append(f'user={ctx.user_subroutine}')
+		if mode == 'datacheck':
+			cmd.append('cpus=1')
+		return cmd, chk_name
+
+	@staticmethod
+	def build_make_command(ctx: JobContext, subroutine: SubroutineSpec) -> list[str]:
+		"""Build the ``abaqus make library=<source> [explicit|cfd]`` command line.
+
+		Pure function shared by :meth:`run_compile` and dry-run planning.
+		``solver='standard'`` needs no extra flag; ``'explicit'``/``'cfd'``
+		are appended as bare flags — mirrors the convention documented in
+		``reference/abaqus-cli`` (verify against the installed Abaqus
+		version before relying on this in production).
+		"""
+		cmd = [ctx.abaqus_exe, 'make', f'library={subroutine.source_path}']
+		if subroutine.solver in ('explicit', 'cfd'):
+			cmd.append(subroutine.solver)
+		return cmd
 
 	def run_solver(self) -> SolverResult:
 		"""Submit the INP file to the Abaqus solver and wait for completion.
@@ -309,8 +374,7 @@ class AbaqusRunner:
 		SolverResult
 			Success/failure judgment with diagnostics.
 		"""
-		cmd = [self.ctx.abaqus_exe, f'job={self.ctx.job_name}',
-			   f'input={self.ctx.inp_path}', f'cpus={self.ctx.cpus}', 'interactive']
+		cmd = self.build_solver_command(self.ctx)
 
 		if self.record_only:
 			self.command_log.append(CommandRecord('solver', cmd, self.ctx.output_dir))
@@ -416,11 +480,7 @@ class AbaqusRunner:
 			``(passed, errors)`` — *errors* are harvested from the temporary
 			``.dat`` file via :func:`harvest_errors` (IMP-01/04 synergy).
 		"""
-		chk_name = f"{self.ctx.job_name}_chk"
-		cmd = [self.ctx.abaqus_exe, mode, f'job={chk_name}',
-			   f'input={self.ctx.inp_path}']
-		if mode == 'datacheck':
-			cmd.append('cpus=1')
+		cmd, chk_name = self.build_preflight_command(self.ctx, mode)
 
 		if self.record_only:
 			self.command_log.append(CommandRecord('preflight', cmd, self.ctx.output_dir))
@@ -459,6 +519,84 @@ class AbaqusRunner:
 
 		passed = (returncode == 0) and (len(errors) == 0)
 		return (passed, errors)
+
+	# ---- user subroutine compilation ----
+
+	def _compile_hash_path(self, subroutine: SubroutineSpec) -> str:
+		stem = os.path.splitext(os.path.basename(subroutine.source_path))[0]
+		return os.path.join(self.ctx.output_dir, f".{stem}.compiled.sha256")
+
+	def subroutine_needs_recompile(self, subroutine: SubroutineSpec) -> bool:
+		"""Return ``True`` if *subroutine* has changed since the last successful compile.
+
+		Compares the sha256 of ``subroutine.source_path`` against a sidecar
+		hash file written by :meth:`_record_compile_hash` after a successful
+		compile (same hash-compare-and-skip pattern as :meth:`_stage_hookkit`).
+		Always ``True`` if no prior compile record exists.
+		"""
+		hash_path = self._compile_hash_path(subroutine)
+		if not os.path.isfile(hash_path):
+			return True
+		try:
+			with open(subroutine.source_path, 'rb') as f:
+				current_hash = hashlib.sha256(f.read()).hexdigest()
+			with open(hash_path, 'r') as f:
+				recorded_hash = f.read().strip()
+		except OSError:
+			return True
+		return current_hash != recorded_hash
+
+	def _record_compile_hash(self, subroutine: SubroutineSpec):
+		"""Write the sidecar hash file marking *subroutine* as freshly compiled."""
+		with open(subroutine.source_path, 'rb') as f:
+			current_hash = hashlib.sha256(f.read()).hexdigest()
+		with open(self._compile_hash_path(subroutine), 'w') as f:
+			f.write(current_hash)
+
+	def run_compile(self, subroutine: SubroutineSpec) -> tuple[bool, str, str]:
+		"""Run ``abaqus make`` to compile *subroutine*.
+
+		No regex parsing of compiler errors is performed — stdout/stderr are
+		captured and returned as-is for the caller to log (matches the
+		reference tool's approach: compiler-error classification is left to
+		a human/LLM reading the raw output, not this library).
+
+		Parameters
+		----------
+		subroutine : SubroutineSpec
+			Subroutine to compile.
+
+		Returns
+		-------
+		tuple[bool, str, str]
+			``(success, stdout, stderr)``.
+		"""
+		cmd = self.build_make_command(self.ctx, subroutine)
+
+		if self.record_only:
+			self.command_log.append(CommandRecord('compile', cmd, self.ctx.output_dir))
+			self.logger.info(f"[record_only] would run: {' '.join(cmd)}")
+			return (True, '', '')
+
+		self.logger.info(f"Compile subroutine: {' '.join(cmd)}")
+		try:
+			proc = subprocess.run(
+				cmd, cwd=self.ctx.output_dir,
+				capture_output=True, text=True, timeout=self.timeout or 600,
+			)
+		except subprocess.TimeoutExpired:
+			msg = f"Compile timed out ({self.timeout or 600}s): {' '.join(cmd)}"
+			self.logger.error(msg)
+			return (False, '', msg)
+		except Exception as e:
+			self.logger.error(f"Compile launch failed: {e}")
+			return (False, '', str(e))
+
+		if proc.returncode != 0:
+			self.logger.error(f"Compile failed (rc={proc.returncode}):\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}")
+			return (False, proc.stdout, proc.stderr)
+
+		return (True, proc.stdout, proc.stderr)
 
 	def run_hook(
 		self,
@@ -546,8 +684,13 @@ class AbaqusRunner:
 				# os.remove(tmp)
 				pass
 
-	def _run(self, cmd: list[str], cwd: str | None = None):
+	def _run(self, cmd: list[str], cwd: str | None = None, stage: str = 'hook'):
 		"""Execute *cmd* via ``subprocess.run``, capturing all output.
+
+		This is the single subprocess entry point every strategy should use
+		(directly or via :meth:`run_hook`) so that ``timeout``, error logging,
+		and ``record_only`` dry-run behavior are applied uniformly — no
+		strategy should call ``subprocess.run`` on its own.
 
 		Timeout behavior: if ``self.timeout`` is set and the process exceeds
 		it, a ``TimeoutExpired`` exception is caught, logged, and ``None`` is
@@ -559,6 +702,9 @@ class AbaqusRunner:
 			Command tokens to execute.
 		cwd : str or None
 			Working directory.  Defaults to ``self.ctx.output_dir``.
+		stage : str
+			Label recorded on the :class:`CommandRecord` in ``record_only``
+			mode (e.g. ``'preparation'``, ``'monolithic'``, ``'hook'``).
 
 		Returns
 		-------
@@ -566,7 +712,7 @@ class AbaqusRunner:
 			Completed process on success, ``None`` on timeout or non-zero exit.
 		"""
 		if self.record_only:
-			self.command_log.append(CommandRecord('hook', cmd, cwd or self.ctx.output_dir))
+			self.command_log.append(CommandRecord(stage, cmd, cwd or self.ctx.output_dir))
 			self.logger.info(f"[record_only] would run: {' '.join(cmd)}")
 			# Return a fake success — caller checks for None
 			# ponytail: fake CompletedProcess; use a real one only if a caller
