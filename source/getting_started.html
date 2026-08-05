@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Architecture" href="architecture.html" /><link rel="prev" title="ABQflow" href="../index.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>Getting Started - ABQflow 0.4.0 documentation</title>
+        <title>Getting Started - ABQflow 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -259,7 +259,16 @@
 sweeps, and the output format.</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>add<span class="w"> </span>--pypi<span class="w"> </span><span class="s2">&quot;ABQflow @ git+https://github.com/Yutu0k/ABQflow.git&quot;</span>
+<p>Install from PyPI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>ABQflow
+</pre></div>
+</div>
+<p>If you want the optional <code class="docutils literal notranslate"><span class="pre">abqpy</span></code> integration path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;ABQflow[abqpy]&quot;</span>
+</pre></div>
+</div>
+<p>If you manage environments with Pixi:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pixi<span class="w"> </span>add<span class="w"> </span>--pypi<span class="w"> </span>ABQflow
 </pre></div>
 </div>
 </section>
@@ -284,7 +293,7 @@ that get replaced per job.</p>
     <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;modular&quot;</span><span class="p">,</span>
     <span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;inp_based&quot;</span><span class="p">,</span>
-        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/SingleParameterizedJob/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
+        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;youngs_modulus&quot;</span><span class="p">:</span> <span class="mi">210000</span><span class="p">,</span>
             <span class="s2">&quot;load_magnitude&quot;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span>
@@ -292,7 +301,7 @@ that get replaced per job.</p>
     <span class="p">),</span>
     <span class="n">post_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/SingleParameterizedJob/cae_file/get_max_stress_mises.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_max_stress_mises.py&quot;</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_stress_mises&quot;</span><span class="p">,},</span>
                 <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_displacement&quot;</span><span class="p">,},</span>
@@ -303,7 +312,7 @@ that get replaced per job.</p>
 
 <span class="n">processor</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span>
     <span class="n">batch_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="p">],</span>
-    <span class="n">base_output_dir</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;./examples/SingleParameterizedJob/output&quot;</span><span class="p">),</span>
+    <span class="n">base_output_dir</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;./examples/01_SingleParameterizedJob/output&quot;</span><span class="p">),</span>
     <span class="n">cpus_per_job</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
     <span class="n">duplicate_mode</span> <span class="o">=</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span>
 <span class="p">)</span>
@@ -334,11 +343,11 @@ that get replaced per job.</p>
     <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;modular&quot;</span><span class="p">,</span>
     <span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
         <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;inp_based&quot;</span><span class="p">,</span>
-        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/BatchParameterizedJob/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
+        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="n">pre_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/BatchParameterizedJob/cae_file/get_total_mass.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_total_mass.py&quot;</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;total_mass&quot;</span><span class="p">,},</span>
             <span class="p">]</span>
@@ -346,7 +355,7 @@ that get replaced per job.</p>
     <span class="p">],</span>
     <span class="n">post_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/BatchParameterizedJob/cae_file/get_max_stress_mises.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_max_stress_mises.py&quot;</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_stress_mises&quot;</span><span class="p">,},</span>
                 <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_displacement&quot;</span><span class="p">,},</span>
@@ -361,7 +370,7 @@ that get replaced per job.</p>
     <span class="n">base_spec</span>  <span class="o">=</span> <span class="n">base_job_spec</span>
 <span class="p">)</span>
 
-<span class="n">proc</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span><span class="n">spec_list</span><span class="p">,</span> <span class="s1">&#39;./output&#39;</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">proc</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span><span class="n">spec_list</span><span class="p">,</span> <span class="s1">&#39;./examples/02_BatchParameterizedJob/output&#39;</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 <span class="n">outcomes</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="c1"># Get a 2D numpy array of results</span>
@@ -376,7 +385,7 @@ that get replaced per job.</p>
 </section>
 <section id="output-format-joboutcome">
 <h2>Output Format: <code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code><a class="headerlink" href="#output-format-joboutcome" title="Link to this heading">¶</a></h2>
-<p>Every job returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> dataclass:</p>
+<p>Every job returns a <a class="reference internal" href="ABQflow.html#ABQflow.JobOutcome" title="ABQflow.JobOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code></a> dataclass:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
     <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># e.g. &quot;beam_sweep_0001&quot;</span>
@@ -387,9 +396,9 @@ that get replaced per job.</p>
 </div>
 <p>Converter helpers are available:</p>
 <ul class="simple">
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code> – <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> format.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code> – <code class="docutils literal notranslate"><span class="pre">{job_name:</span> <span class="pre">dict}</span></code> format.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code> – <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> from batch results.</p></li>
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_list" title="ABQflow.outcomes_to_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> format.</p></li>
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_dict" title="ABQflow.outcomes_to_dict"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">{job_name:</span> <span class="pre">dict}</span></code> format.</p></li>
+<li><p><a class="reference internal" href="ABQflow.html#ABQflow.degenerate_from_array" title="ABQflow.degenerate_from_array"><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> from batch results.</p></li>
 </ul>
 </section>
 <section id="configuration-reference">
@@ -446,18 +455,114 @@ that get replaced per job.</p>
 <p><strong>``run_batch``</strong> parameters:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">num_parallel_jobs</span></code> – Requested parallelism. May be reduced by the
-<code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code> resource planner.</p></li>
+<a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> resource planner.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">license_tokens</span></code> (optional) – Total Abaqus license tokens available.
 If provided, parallelism is also capped by token consumption
-(<code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code>).</p></li>
+(<a class="reference internal" href="ABQflow.html#ABQflow.solver_tokens" title="ABQflow.solver_tokens"><code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a>).</p></li>
 </ul>
+</section>
+<section id="license-token-planning">
+<h2>License Token Planning<a class="headerlink" href="#license-token-planning" title="Link to this heading">¶</a></h2>
+<p><a class="reference internal" href="ABQflow.html#ABQflow.solver_tokens" title="ABQflow.solver_tokens"><code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a> and <a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> let you
+work out parallelism ahead of time instead of guessing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ABQflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">solver_tokens</span><span class="p">,</span> <span class="n">plan_parallelism</span>
+
+<span class="c1"># Tokens for 4 CPUs: ceil(5 * 4^0.422) = 9</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">solver_tokens</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>  <span class="c1"># -&gt; 9</span>
+
+<span class="c1"># With 45 license tokens available, 4 CPUs/job (9 tokens each): capped to 5</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">license_tokens</span><span class="o">=</span><span class="mi">45</span><span class="p">))</span>  <span class="c1"># -&gt; 5</span>
+
+<span class="c1"># With no license limit, CPU cores are informational only -- oversubscription</span>
+<span class="c1"># is allowed, but logs a warning if it exceeds physical core capacity.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>  <span class="c1"># -&gt; 8 (+ warning)</span>
+</pre></div>
+</div>
+<p>License tokens are a hard cap – Abaqus refuses to start a job it cannot
+license. CPU cores are not: requesting more parallel jobs than physical
+cores support is allowed, since small jobs rarely saturate a full core; it
+only triggers a warning.</p>
 </section>
 <section id="hook-script-conventions">
 <span id="json-protocol"></span><h2>Hook Script Conventions<a class="headerlink" href="#hook-script-conventions" title="Link to this heading">¶</a></h2>
 <p>Hook scripts (post-processing scripts that extract data from ODB or INP files)
-communicate results back to the framework via JSON on stdout.  Two conventions
-are supported:</p>
-<p><strong>Sentinel markers (recommended):</strong></p>
+run under the <strong>Abaqus Python interpreter</strong> (<code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">python</span></code> or
+<code class="docutils literal notranslate"><span class="pre">abaqus</span> <span class="pre">cae</span> <span class="pre">noGUI</span></code>) and communicate results back to the framework via JSON
+on stdout. ABQflow provides <strong>hookkit</strong> – a single-file, stdlib-only harness
+that eliminates the boilerplate below; you write only the physics.</p>
+<p><strong>Quick start (ODB):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_extract.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>     <span class="c1"># hookkit is staged here by ABQflow</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hookkit</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_one</span><span class="p">(</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Physics in, value out. Raise on failure.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">odbAccess</span><span class="w"> </span><span class="kn">import</span> <span class="n">openOdb</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
+
+    <span class="k">with</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">opened</span><span class="p">(</span><span class="n">openOdb</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">readOnly</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="k">as</span> <span class="n">odb</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;step&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">asm</span> <span class="o">=</span> <span class="n">odb</span><span class="o">.</span><span class="n">rootAssembly</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;max_stress_mises&#39;</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">fieldOutputs</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">getSubset</span><span class="p">(</span>
+                <span class="n">region</span><span class="o">=</span><span class="n">asm</span><span class="o">.</span><span class="n">elementSets</span><span class="p">[</span><span class="s1">&#39; ALL ELEMENTS&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">return</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">mises</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">))</span>
+
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unsupported result_name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Quick start (INP / mdb):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_mass_extract.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hookkit</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_one</span><span class="p">(</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">abaqus</span><span class="w"> </span><span class="kn">import</span> <span class="n">mdb</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
+
+    <span class="n">mdb</span><span class="o">.</span><span class="n">ModelFromInputFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;_hook_temp&#39;</span><span class="p">,</span> <span class="n">inputFileName</span><span class="o">=</span><span class="n">inp_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;Model-1&#39;</span> <span class="ow">in</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;Model-1&#39;</span><span class="p">]</span>
+
+    <span class="n">root_assembly</span> <span class="o">=</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;_hook_temp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rootAssembly</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">sets</span><span class="p">[</span><span class="s1">&#39;ALL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">elements</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;total_mass&#39;</span><span class="p">:</span>
+        <span class="n">mass</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">getMassProperties</span><span class="p">(</span><span class="n">regions</span><span class="o">=</span><span class="n">region</span><span class="p">)[</span><span class="s1">&#39;mass&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unsupported result_name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Field output (large data -&gt; CSV sidecar):</strong></p>
+<p>For field quantities (stress tensors, displacement fields), use
+<code class="docutils literal notranslate"><span class="pre">hookkit.field()</span></code>. The mode is controlled by <code class="docutils literal notranslate"><span class="pre">&quot;output&quot;</span></code> in the task
+dict – <code class="docutils literal notranslate"><span class="pre">&quot;inline&quot;</span></code> always returns through stdout JSON, <code class="docutils literal notranslate"><span class="pre">&quot;file&quot;</span></code> always
+writes a CSV and returns a lightweight envelope, and leaving it unset lets
+hookkit decide automatically (&gt;10k rows or &gt;1MB -&gt; file, else inline):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HookSpec</span><span class="p">(</span>
+    <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./hooks/get_stress_field.py&quot;</span><span class="p">,</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;stress_field&quot;</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;file&quot;</span><span class="p">}]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Only <code class="docutils literal notranslate"><span class="pre">result_name</span></code> is required in a task dict; every other key
+(<code class="docutils literal notranslate"><span class="pre">output</span></code>, <code class="docutils literal notranslate"><span class="pre">step</span></code>, <code class="docutils literal notranslate"><span class="pre">columns</span></code>, …) is user-defined and read via
+<code class="docutils literal notranslate"><span class="pre">task.get()</span></code> inside your <code class="docutils literal notranslate"><span class="pre">extract_one</span></code>.</p>
+<p><strong>Underlying protocol:</strong></p>
+<p>hookkit implements the following conventions for you; write to them
+directly only if you need a custom, non-Python-2/3-compatible harness.</p>
+<p><em>Sentinel markers:</em></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
 
 <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_stress&quot;</span><span class="p">:</span> <span class="mf">123.4</span><span class="p">,</span> <span class="s2">&quot;mass&quot;</span><span class="p">:</span> <span class="mf">0.56</span><span class="p">}</span>
@@ -467,7 +572,7 @@ are supported:</p>
 </pre></div>
 </div>
 <p>The framework splits on these markers, ignoring Abaqus banner noise.</p>
-<p><strong>argparse interface for hook scripts:</strong></p>
+<p><em>argparse interface for hook scripts:</em></p>
 <p>The framework invokes hook scripts with these arguments automatically:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--odb_path</span> <span class="pre">&lt;path&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">--inp_path</span> <span class="pre">&lt;path&gt;</span></code> – the file to process.</p></li>
@@ -549,6 +654,7 @@ and collect results into a <code class="docutils literal notranslate"><span clas
 <li><a class="reference internal" href="#quick-example-monolithic-script">Quick Example: Monolithic Script</a></li>
 <li><a class="reference internal" href="#output-format-joboutcome">Output Format: <code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code></a></li>
 <li><a class="reference internal" href="#configuration-reference">Configuration Reference</a></li>
+<li><a class="reference internal" href="#license-token-planning">License Token Planning</a></li>
 <li><a class="reference internal" href="#hook-script-conventions">Hook Script Conventions</a></li>
 </ul>
 </li>
@@ -561,7 +667,7 @@ and collect results into a <code class="docutils literal notranslate"><span clas
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8ee541af"></script>
+</div><script src="../_static/documentation_options.js?v=11a7d535"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
