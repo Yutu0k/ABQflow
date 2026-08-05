@@ -267,7 +267,7 @@ Hook 收到的 `task` 是一个 dict。仅 `result_name` 为必填项；其余 k
 
 ## Abaqus License Token 并行规划
 
-ABQflow 内置了 Abaqus License Token 计算与并行规划工具，可根据 CPU 数量自动估算所需的 Token 数，并结合机器资源确定可同时运行的任务数量。
+ABQflow 内置了 Abaqus License Token 计算与并行规划工具，可根据 CPU 数量自动估算所需的 Token 数，并据此确定可同时运行的任务数量。License Token 是硬性限制（超出会导致任务无法启动）；CPU 核数不做硬性限制——小模型往往吃不满一整个核，允许并行数超过物理核数（CPU 超订），只是会打印一条警告提示当前的资源分配情况，具体是否超订由用户自行判断。
 
 ```python
 from abaqus_batch_pack import solver_tokens, plan_parallelism
@@ -276,9 +276,11 @@ from abaqus_batch_pack import solver_tokens, plan_parallelism
 # ceil(5 * 4^0.422) = 9
 print(solver_tokens(4))  # → 9
 
-# 在一台 16 核机器上，每个任务使用 4 个 CPU，
-# 当请求同时运行 8 个任务时，实际允许的最大并行任务数：
-print(plan_parallelism(requested=8, cpus_per_job=4))  # → 3
+# 假设可用 45 个 License Token，每个任务用 4 个 CPU（占 9 个 Token）：
+print(plan_parallelism(requested=8, cpus_per_job=4, license_tokens=45))  # → 5
+
+# 不传 license_tokens 时不设上限，只在超过物理核数时打印警告：
+print(plan_parallelism(requested=8, cpus_per_job=4))  # → 8（并打印 CPU 超订警告）
 ```
 
 Abaqus 官方推荐的 Token 计算公式为：
