@@ -17,6 +17,7 @@ import math
 import os
 import psutil
 import shutil
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
@@ -24,7 +25,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeEl
 
 from .context import JobContext
 from .registry import build_workflow
-from .runner import AbaqusRunner, CommandRecord
+from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
 from .spec import JobSpec
 from .status import JobStatus
 
@@ -87,6 +88,7 @@ class AbaqusCalculation:
 		cpus_per_job: int,
 		abaqus_exe: str = 'abaqus',
 		timeout: float | None = None,
+		user_subroutine: str | None = None,
 	):
 
 		self.job_name = job_name
@@ -95,6 +97,7 @@ class AbaqusCalculation:
 		self.cpus_per_job = cpus_per_job
 		self.abaqus_exe = abaqus_exe
 		self.timeout = timeout
+		self.user_subroutine = user_subroutine
 		self.logger: logging.Logger | None = None
 
 		# Build internals
@@ -103,26 +106,56 @@ class AbaqusCalculation:
 			output_dir=output_dir,
 			cpus=cpus_per_job,
 			abaqus_exe=abaqus_exe,
+			user_subroutine=user_subroutine,
 		)
 		os.makedirs(output_dir, exist_ok=True)
 
-	def execute(self) -> dict:
-		"""Run the workflow and return the result dict.
+	def execute(self, phase: str = 'full') -> dict:
+		"""Run the workflow (or a single phase of it) and return the result dict.
 
 		Creates the logger and the :class:`AbaqusRunner` on first call, then
-		delegates to ``self.workflow_strategy.execute()``.
+		delegates to ``self.workflow_strategy.execute()`` (``phase='full'``)
+		or to the matching ``<phase>_only`` method on the strategy.
+
+		Parameters
+		----------
+		phase : str
+			``'full'`` (default) runs the complete workflow. ``'prepare'``,
+			``'simulate'``, or ``'extract'`` run only that phase via the
+			strategy's ``prepare_only``/``simulate_only``/``extract_only``
+			method (see :class:`~ABQflow.core.strategies.JobWorkflowStrategy`'s
+			optional phase-separated protocol).
 
 		Returns
 		-------
 		dict
 			Must contain at least ``'status'``.  May include extracted values.
+
+		Raises
+		------
+		NotImplementedError
+			If ``phase != 'full'`` and ``self.workflow_strategy`` does not
+			implement the corresponding ``<phase>_only`` method (e.g.
+			:class:`~ABQflow.core.strategies.MonolithicWorkflowStrategy`).
 		"""
 		if self.logger is None:
 			self.logger = self._setup_logging()
-		self.logger.info(f"======== [AbaqusCalculation] Start Workflow: {self.job_name} ========")
+		self.logger.info(f"======== [AbaqusCalculation] Start Workflow ({phase}): {self.job_name} ========")
 		runner = AbaqusRunner(self.ctx, self.logger, timeout=self.timeout)
-		results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
-		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished: {self.job_name} ========")
+
+		if phase == 'full':
+			results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
+		else:
+			method = getattr(self.workflow_strategy, f'{phase}_only', None)
+			if method is None:
+				raise NotImplementedError(
+					f"{type(self.workflow_strategy).__name__} does not support "
+					f"phase-separated execution ('{phase}_only' not implemented)."
+				)
+			outcome = method(self.ctx, runner, self.logger)
+			results = outcome[0]  # (results, status_manager) or (results, status_manager, stop)
+
+		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished ({phase}): {self.job_name} ========")
 		return results
 
 	def _setup_logging(self) -> logging.Logger:
@@ -131,7 +164,7 @@ class AbaqusCalculation:
 			logger.handlers.clear()
 		logger.setLevel(logging.INFO)
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-		file_handler = logging.FileHandler(self.ctx.log_path, encoding='utf-8')
+		file_handler = logging.FileHandler(self.ctx.exec_log_path, encoding='utf-8')
 		file_handler.setLevel(logging.DEBUG)
 		file_handler.setFormatter(formatter)
 		logger.addHandler(file_handler)
@@ -162,6 +195,13 @@ class JobOutcome:
 		Solver diagnostics snapshot (IMP-02).  Populated on failure and
 		on the ``rc≠0 + COMPLETED`` edge case.  ``None`` for clean success
 		or jobs that never reached the solver phase.
+	phases : list[dict] or None
+		Phase-by-phase history (name/status/duration/error) collected from
+		:class:`~ABQflow.core.status.JobStatusManager`. ``None`` for
+		strategies that don't populate it (e.g. monolithic workflows).
+	duration_s : float or None
+		Wall-clock seconds spent in :meth:`AbaqusCalculation.execute` for
+		this job.
 	"""
 	job_name: str
 	status: str
@@ -169,6 +209,8 @@ class JobOutcome:
 	error: str | None = None
 	diagnostics: dict | None = None
 	output_dir: str | None = None
+	phases: list[dict] | None = None
+	duration_s: float | None = None
 
 
 # ======================== Resource planning (fix Q2-2) ========================
@@ -234,7 +276,7 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 
 # ======================== Worker (fix B18, fix Q2-1) ========================
 
-def _worker(calc: AbaqusCalculation) -> JobOutcome:
+def _worker(calc: AbaqusCalculation, phase: str = 'full') -> JobOutcome:
 	"""Top-level entry point for :class:`~concurrent.futures.ProcessPoolExecutor`.
 
 	All exceptions are caught and wrapped in a :class:`JobOutcome` — they
@@ -244,24 +286,33 @@ def _worker(calc: AbaqusCalculation) -> JobOutcome:
 	----------
 	calc : AbaqusCalculation
 		Fully configured calculation to run.
+	phase : str
+		Forwarded to :meth:`AbaqusCalculation.execute` — ``'full'``,
+		``'prepare'``, ``'simulate'``, or ``'extract'``.
 
 	Returns
 	-------
 	JobOutcome
-		Result envelope (status is always a plain string).
+		Result envelope (status is always a plain string). ``phases`` and
+		``duration_s`` are populated so the main process can log a
+		phase-by-phase summary (see :meth:`BatchAbaqusProcessor._log_job_summary`).
 	"""
+	started_at = time.time()
 	try:
-		results = calc.execute()
+		results = calc.execute(phase=phase)
 		raw = results.pop('status', JobStatus.UNKNOWN)
 		status = raw.value if isinstance(raw, JobStatus) else str(raw)
 		# IMP-02: promote solver diagnostics from results to top-level field
 		diag = results.pop('diagnostics', None)
+		phases = results.pop('_phase_history', None)
 		return JobOutcome(calc.job_name, status, results,
-						diagnostics=diag, output_dir=calc.ctx.output_dir)
+						diagnostics=diag, output_dir=calc.ctx.output_dir,
+						phases=phases, duration_s=time.time() - started_at)
 	except Exception as e:
 		return JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
 						error=f"{type(e).__name__}: {e}",
-						output_dir=calc.ctx.output_dir)
+						output_dir=calc.ctx.output_dir,
+						duration_s=time.time() - started_at)
 
 
 # ======================== BatchAbaqusProcessor ========================
@@ -397,53 +448,66 @@ class BatchAbaqusProcessor:
 			raise ValueError(f"Unknown dry_run level: '{level}'. Use 'plan' or 'stage'.")
 
 	def _dry_run_plan(self) -> list[JobPlan]:
-		"""L1: zero-side-effect command plan from specs only."""
+		"""L1: zero-side-effect command plan from specs only.
+
+		Reuses :class:`AbaqusRunner`'s pure command-builder static methods
+		(``build_preflight_command`` / ``build_solver_command`` /
+		``build_script_command``) instead of re-deriving the Abaqus CLI
+		syntax here — the two paths would otherwise silently drift apart.
+		Constructing a :class:`JobContext` has no side effects (no directory
+		is created), so L1 stays a pure read of the specs.
+		"""
+		has_abqpy = _check_abqpy_installed()
 		plans: list[JobPlan] = []
 		for spec in self.specs:
 			cmds: list = []
 			out_dir = os.path.join(self.base_output_dir, spec.job_name)
-			inp_path = os.path.join(out_dir, f"{spec.job_name}.inp")
+			ctx = JobContext(job_name=spec.job_name, output_dir=out_dir,
+							cpus=self.cpus_per_job, abaqus_exe=self.abaqus_exe,
+							user_subroutine=spec.subroutine.source_path if spec.subroutine else None)
+
+			# Subroutine compile command (modular only)
+			if spec.subroutine and spec.workflow == 'modular' and not spec.subroutine.precompiled:
+				cmds.append(CommandRecord(
+					'compile', AbaqusRunner.build_make_command(ctx, spec.subroutine), out_dir))
 
 			# Preflight command
 			if spec.preflight:
-				chk_name = f"{spec.job_name}_chk"
-				pf_cmd = [self.abaqus_exe, spec.preflight, f'job={chk_name}',
-						f'input={inp_path}']
-				if spec.preflight == 'datacheck':
-					pf_cmd.append('cpus=1')
+				pf_cmd, _ = AbaqusRunner.build_preflight_command(ctx, spec.preflight)
 				cmds.append(CommandRecord('preflight', pf_cmd, out_dir))
 
 			# Solver command (modular only; monolithic handles its own)
 			if spec.workflow == 'modular':
-				cmds.append(CommandRecord(
-					'solver',
-					[self.abaqus_exe, f'job={spec.job_name}', f'input={inp_path}',
-					f'cpus={self.cpus_per_job}', 'interactive'],
-					out_dir,
-				))
+				cmds.append(CommandRecord('solver', AbaqusRunner.build_solver_command(ctx), out_dir))
 
-			# Hook commands (pre- and post-extraction)
-			for hook in (spec.pre_extraction or []) + (spec.post_extraction or []):
-				cmds.append(CommandRecord(
-					f'hook:{hook.script_path}',
-					['<abaqus>', hook.script_path, '--tasks_json', '<generated-at-runtime>'],
-					out_dir,
-				))
+			# Hook commands — pre-extraction needs the CAE kernel (mdb), like
+			# ModelPropertiesExtractionStrategy; post-extraction only needs
+			# odbAccess, like OdbExtractionStrategy.
+			for hook in spec.pre_extraction or []:
+				cmd = AbaqusRunner.build_script_command(
+					hook.script_path, needs_cae_kernel=True,
+					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy)
+				cmd += ['--job_name', spec.job_name, '--tasks_json', '<generated-at-runtime>']
+				cmds.append(CommandRecord(f'hook:{hook.script_path}', cmd, out_dir))
+			for hook in spec.post_extraction or []:
+				cmd = AbaqusRunner.build_script_command(
+					hook.script_path, needs_cae_kernel=False,
+					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy)
+				cmd += ['--job_name', spec.job_name, '--tasks_json', '<generated-at-runtime>']
+				cmds.append(CommandRecord(f'hook:{hook.script_path}', cmd, out_dir))
 
 			# Monolithic workflow
 			if spec.workflow == 'monolithic' and spec.monolithic_script:
-				cmds.append(CommandRecord(
-					'monolithic',
-					[self.abaqus_exe, 'cae', f'noGUI={spec.monolithic_script}', '--'],
-					out_dir,
-				))
+				cmd = AbaqusRunner.build_script_command(
+					spec.monolithic_script, needs_cae_kernel=True,
+					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy)
+				cmds.append(CommandRecord('monolithic', cmd, out_dir))
 
 			tokens_per = solver_tokens(self.cpus_per_job)
 			plans.append(JobPlan(
 				job_name=spec.job_name,
 				commands=cmds,
-				paths={'inp': inp_path, 'odb': f'{out_dir}/{spec.job_name}.odb',
-					'output_dir': out_dir},
+				paths={'inp': ctx.inp_path, 'odb': ctx.odb_path, 'output_dir': out_dir},
 				resource_summary={
 					'cpus_per_job': self.cpus_per_job,
 					'tokens_per_job': tokens_per,
@@ -468,16 +532,7 @@ class BatchAbaqusProcessor:
 				spec = copy.deepcopy(spec)
 				spec.job_name = decision
 
-			workflow = build_workflow(spec)
-			calc = AbaqusCalculation(
-				job_name=spec.job_name,
-				output_dir=os.path.join(self.base_output_dir, spec.job_name),
-				workflow_strategy=workflow,
-				cpus_per_job=self.cpus_per_job,
-				abaqus_exe=self.abaqus_exe,
-				timeout=self.timeout,
-			)
-			calcs.append(calc)
+			calcs.append(self._build_calc(spec))
 
 		plans: list[JobPlan] = []
 		for calc in calcs:
@@ -594,6 +649,30 @@ class BatchAbaqusProcessor:
 
 
 
+	# ---- shared calculation builder (used by prepare(), dry-run, and the phase-only methods) ----
+	def _build_calc(self, spec: JobSpec) -> AbaqusCalculation:
+		"""Build an :class:`AbaqusCalculation` directly from *spec*.
+
+		No conflict resolution (no overwrite/rename/skip, no interactive
+		prompt) — ``output_dir`` is always deterministically derived from
+		*spec* (``base_output_dir/spec.job_name``), reusing an existing
+		directory in place if present. This is what lets
+		:meth:`run_preparation`/:meth:`run_simulation`/:meth:`run_extraction`
+		be called standalone (even in a fresh process/session): the caller
+		just needs to reconstruct a :class:`BatchAbaqusProcessor` with the
+		same ``batch_data``/``base_output_dir`` used before.
+		"""
+		workflow = build_workflow(spec, preflight_only=self.preflight_only)
+		return AbaqusCalculation(
+			job_name=spec.job_name,
+			output_dir=os.path.join(self.base_output_dir, spec.job_name),
+			workflow_strategy=workflow,
+			cpus_per_job=self.cpus_per_job,
+			abaqus_exe=self.abaqus_exe,
+			timeout=self.timeout,
+			user_subroutine=spec.subroutine.source_path if spec.subroutine else None,
+		)
+
 	# ---- prepare: apply decisions, build calculations ----
 	def prepare(self, decisions: dict[str, str] | None = None):
 		"""Apply plan decisions and build the :class:`AbaqusCalculation` list.
@@ -628,21 +707,94 @@ class BatchAbaqusProcessor:
 				spec = copy.deepcopy(spec)
 				spec.job_name = decision
 
-			workflow = build_workflow(spec, preflight_only=self.preflight_only)
-			calc = AbaqusCalculation(
-				job_name=spec.job_name,
-				output_dir=os.path.join(self.base_output_dir, spec.job_name),
-				workflow_strategy=workflow,
-				cpus_per_job=self.cpus_per_job,
-				abaqus_exe=self.abaqus_exe,
-				timeout=self.timeout,
-			)
-			calcs.append(calc)
+			calcs.append(self._build_calc(spec))
 
 		self.calculations = calcs
 		self.logger.info(f"Prepared {len(calcs)} jobs.")
 
-	# ---- run_batch: ProcessPoolExecutor + fault-tolerant collection ----
+	# ---- batch log summary (lightweight aggregation) ----
+	def _log_job_summary(self, oc: JobOutcome):
+		"""Write a phase-by-phase summary of *oc* to ``batch_processor.log``.
+
+		Called once per completed job, right after its
+		:class:`~concurrent.futures.ProcessPoolExecutor` future resolves —
+		a post-hoc block, not a live cross-process log stream. This is what
+		makes preparation/simulation/extraction activity show up in the
+		batch-level log, which previously stopped recording after
+		:meth:`prepare`.
+		"""
+		self.logger.info(f"---- {oc.job_name}: {oc.status} ({oc.duration_s or 0:.1f}s) ----")
+		for p in (oc.phases or []):
+			err = f" — {p['error']}" if p.get('error') else ""
+			self.logger.info(f"    [{p['phase']}] {p['status']} ({p.get('duration_s') or 0:.2f}s){err}")
+		if oc.error and not oc.phases:
+			self.logger.info(f"    error: {oc.error}")
+
+	# ---- shared ProcessPoolExecutor driver ----
+	def _execute_pool(
+		self,
+		calcs: list[AbaqusCalculation],
+		phase: str,
+		num_parallel_jobs: int,
+		license_tokens: int | None = None,
+	) -> list[JobOutcome]:
+		"""Run *calcs* through :class:`~concurrent.futures.ProcessPoolExecutor`.
+
+		Shared by :meth:`run_batch` and the phase-only methods
+		(:meth:`run_preparation`/:meth:`run_simulation`/:meth:`run_extraction`)
+		so progress reporting and batch-log summarization
+		(:meth:`_log_job_summary`) apply uniformly to all of them.
+
+		Parameters
+		----------
+		calcs : list[AbaqusCalculation]
+			Calculations to execute.
+		phase : str
+			Forwarded to :func:`_worker` / :meth:`AbaqusCalculation.execute`
+			— ``'full'``, ``'prepare'``, ``'simulate'``, or ``'extract'``.
+		num_parallel_jobs : int
+			Desired maximum concurrent jobs.
+		license_tokens : int or None
+			Total license tokens available; ``None`` means no license limit.
+
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per executed job.  Failed jobs are included with
+			their error state — they do not halt the batch.
+		"""
+		p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
+		outcomes: list[JobOutcome] = []
+
+		progress_columns = [
+			SpinnerColumn(),
+			TextColumn("[progress.description]{task.description}", justify="right"),
+			BarColumn(),
+			TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+			TextColumn("({task.completed} of {task.total})"),
+			TimeElapsedColumn(),
+		]
+
+		with Progress(*progress_columns) as progress, \
+			ProcessPoolExecutor(max_workers=p) as pool:
+			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
+			futures = {pool.submit(_worker, c, phase): c.job_name for c in calcs}
+
+			for fut in as_completed(futures):
+				try:
+					oc = fut.result()
+				except Exception as e:
+					oc = JobOutcome(futures[fut], JobStatus.UNKNOWN_ERROR.value,
+									error=str(e))
+				outcomes.append(oc)
+				self._log_job_summary(oc)
+				icon = "✅" if oc.status == "COMPLETED" else "❌"
+				progress.update(task, advance=1,
+								description=f"{icon} {oc.job_name} ({oc.status})")
+
+		return outcomes
+
+	# ---- run_batch: full pipeline (all calculations, all phases) ----
 	def run_batch(
 		self,
 		num_parallel_jobs: int,
@@ -668,33 +820,84 @@ class BatchAbaqusProcessor:
 		"""
 		if self.calculations is None:
 			self.prepare(self.plan())
+		return self._execute_pool(self.calculations, 'full', num_parallel_jobs, license_tokens)
 
-		p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
-		outcomes: list[JobOutcome] = []
+	# ---- phase-separated batch methods ----
+	def run_preparation(
+		self, num_parallel_jobs: int = 1, license_tokens: int | None = None
+	) -> list[JobOutcome]:
+		"""Run only the preparation phase (produce INPs, and compile a
+		subroutine if configured) for every spec in ``self.specs``.
 
-		progress_columns = [
-			SpinnerColumn(),
-			TextColumn("[progress.description]{task.description}", justify="right"),
-			BarColumn(),
-			TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-			TextColumn("({task.completed} of {task.total})"),
-			TimeElapsedColumn(),
-		]
+		Builds :class:`AbaqusCalculation`\\ s directly from ``self.specs``
+		(see :meth:`_build_calc`) rather than through :meth:`plan`/
+		:meth:`prepare`'s duplicate-directory handling — call :meth:`plan`/
+		:meth:`prepare` first if you need overwrite/rename/skip semantics.
+		Only ``workflow='modular'`` specs are supported; a ``monolithic``
+		spec raises :class:`NotImplementedError` (it has no separable
+		preparation phase).
 
-		with Progress(*progress_columns) as progress, \
-			ProcessPoolExecutor(max_workers=p) as pool:
-			task = progress.add_task("[bold blue]Running...", total=len(self.calculations))
-			futures = {pool.submit(_worker, c): c.job_name for c in self.calculations}
+		Parameters
+		----------
+		num_parallel_jobs : int
+			Desired maximum concurrent jobs (default ``1``).
+		license_tokens : int or None
+			Total license tokens available; ``None`` means no license limit.
 
-			for fut in as_completed(futures):
-				try:
-					oc = fut.result()
-				except Exception as e:
-					oc = JobOutcome(futures[fut], JobStatus.UNKNOWN_ERROR.value,
-									error=str(e))
-				outcomes.append(oc)
-				icon = "✅" if oc.status == "COMPLETED" else "❌"
-				progress.update(task, advance=1,
-								description=f"{icon} {oc.job_name} ({oc.status})")
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per job.
+		"""
+		calcs = [self._build_calc(spec) for spec in self.specs]
+		return self._execute_pool(calcs, 'prepare', num_parallel_jobs, license_tokens)
 
-		return outcomes
+	def run_simulation(
+		self, num_parallel_jobs: int = 1, license_tokens: int | None = None
+	) -> list[JobOutcome]:
+		"""Run only the solver phase (pre-extraction + solve) for every spec.
+
+		Assumes ``ctx.inp_path`` already exists for every job (e.g. from a
+		prior :meth:`run_preparation` call — possibly in an earlier
+		process/session; reconstruct the :class:`BatchAbaqusProcessor` with
+		the same ``batch_data``/``base_output_dir`` to resume). Only
+		``workflow='modular'`` specs are supported.
+
+		Parameters
+		----------
+		num_parallel_jobs : int
+			Desired maximum concurrent jobs (default ``1``).
+		license_tokens : int or None
+			Total license tokens available; ``None`` means no license limit.
+
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per job.
+		"""
+		calcs = [self._build_calc(spec) for spec in self.specs]
+		return self._execute_pool(calcs, 'simulate', num_parallel_jobs, license_tokens)
+
+	def run_extraction(
+		self, num_parallel_jobs: int = 1, license_tokens: int | None = None
+	) -> list[JobOutcome]:
+		"""Run only the post-extraction phase for every spec.
+
+		Assumes ``ctx.odb_path`` already exists for every job (e.g. from a
+		prior :meth:`run_simulation` call). Only ``workflow='modular'``
+		specs are supported.
+
+		Parameters
+		----------
+		num_parallel_jobs : int
+			Desired maximum concurrent jobs (default ``1``).
+		license_tokens : int or None
+			Total license tokens available; ``None`` means no license limit.
+
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per job.
+		"""
+		calcs = [self._build_calc(spec) for spec in self.specs]
+		return self._execute_pool(calcs, 'extract', num_parallel_jobs, license_tokens)

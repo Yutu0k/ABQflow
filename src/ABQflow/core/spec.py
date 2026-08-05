@@ -27,6 +27,40 @@ class HookSpec:
 
 
 @dataclass
+class SubroutineSpec:
+	"""Specification for an Abaqus user subroutine (UMAT/VUMAT/UEL/...).
+
+	Attributes
+	----------
+	source_path : str
+		Path to the subroutine source file (or, when ``precompiled=True``,
+		to the already-compiled object/library).
+	language : str
+		``'fortran'`` (default), ``'c'``, or ``'cpp'``.
+	solver : str
+		Target solver: ``'standard'`` (default), ``'explicit'``, or ``'cfd'``.
+		Controls the flag passed to ``abaqus make`` (see
+		:meth:`~ABQflow.core.runner.AbaqusRunner.build_make_command`).
+	precompiled : bool
+		If ``True``, skip the compile phase entirely and pass
+		``source_path`` straight through to ``user=`` on the solver/preflight
+		commands. Default ``False``.
+	"""
+	source_path: str
+	language: str = 'fortran'
+	solver: str = 'standard'
+	precompiled: bool = False
+
+	def __post_init__(self):
+		if self.language not in ('fortran', 'c', 'cpp'):
+			raise ValueError(
+				f"SubroutineSpec.language must be 'fortran', 'c', or 'cpp'; got '{self.language}'.")
+		if self.solver not in ('standard', 'explicit', 'cfd'):
+			raise ValueError(
+				f"SubroutineSpec.solver must be 'standard', 'explicit', or 'cfd'; got '{self.solver}'.")
+
+
+@dataclass
 class PreparationSpec:
 	"""Specification for the preparation phase of a modular workflow.
 
@@ -83,6 +117,9 @@ class JobSpec:
 		Hooks run *before* the solver (e.g. model property extraction).
 	post_extraction : list[HookSpec]
 		Hooks run *after* the solver (e.g. ODB result extraction).
+	subroutine : SubroutineSpec or None
+		User subroutine to compile and pass via ``user=`` to the solver
+		(modular workflow only; ignored for ``workflow='monolithic'``).
 	meta : dict
 		Arbitrary user metadata
 	"""
@@ -95,6 +132,7 @@ class JobSpec:
 	monolithic_params: dict = field(default_factory=dict)
 	pre_extraction: list[HookSpec] = field(default_factory=list)
 	post_extraction: list[HookSpec] = field(default_factory=list)
+	subroutine: SubroutineSpec | None = None
 	meta: dict = field(default_factory=dict)
 
 	def __post_init__(self):

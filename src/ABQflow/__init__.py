@@ -37,7 +37,7 @@ from .core.diagnostics import (
 )
 from .core.registry import PREPARATION_REGISTRY, build_workflow, register_preparation
 from .core.runner import AbaqusRunner, CommandRecord, extract_json
-from .core.spec import HookSpec, JobSpec, PreparationSpec
+from .core.spec import HookSpec, JobSpec, PreparationSpec, SubroutineSpec
 from .core.status import JobStatus, JobStatusManager
 from .core.strategies import (
 	ExistingInpStrategy,
@@ -50,6 +50,7 @@ from .core.strategies import (
 	MonolithicWorkflowStrategy,
 	OdbExtractionStrategy,
 	PreparationStrategy,
+	SubroutineCompileStrategy,
 )
 
 from .helpers.convert import (
@@ -84,6 +85,7 @@ __all__ = [
 	"JobSpec",
 	"HookSpec",
 	"PreparationSpec",
+	"SubroutineSpec",
 	# Core — registry
 	"build_workflow",
 	"register_preparation",
@@ -102,6 +104,7 @@ __all__ = [
 	"JobWorkflowStrategy",
 	"MonolithicWorkflowStrategy",
 	"ModularWorkflowStrategy",
+	"SubroutineCompileStrategy",
 	# Core — diagnostics
 	"SolverDiagnostics",
 	"SolverResult",

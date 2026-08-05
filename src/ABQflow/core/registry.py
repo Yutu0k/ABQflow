@@ -10,6 +10,7 @@ from .strategies import (
 	JobWorkflowStrategy, ModularWorkflowStrategy, MonolithicWorkflowStrategy,
 	InpModifyStrategy, ModelGenerationStrategy, ExistingInpStrategy,
 	OdbExtractionStrategy, ModelPropertiesExtractionStrategy,
+	SubroutineCompileStrategy,
 )
 
 # ---- Preparation strategy factories ----
@@ -83,13 +84,11 @@ def build_workflow(spec: JobSpec, preflight_only: bool = False) -> JobWorkflowSt
 			f"Available: {list(PREPARATION_REGISTRY)}"
 		) from None
 
-	pre = [ModelPropertiesExtractionStrategy(
-		[{'script_path': h.script_path, 'tasks': h.tasks} for h in spec.pre_extraction]
-	)] if spec.pre_extraction else []
+	pre = [ModelPropertiesExtractionStrategy(spec.pre_extraction)] if spec.pre_extraction else []
+	post = [OdbExtractionStrategy(spec.post_extraction)] if spec.post_extraction else []
 
-	post = [OdbExtractionStrategy(
-		[{'script_path': h.script_path, 'tasks': h.tasks} for h in spec.post_extraction]
-	)] if spec.post_extraction else []
+	compile_strategy = SubroutineCompileStrategy(spec.subroutine) if spec.subroutine else None
 
 	return ModularWorkflowStrategy(prep, pre, post, preflight_mode=spec.preflight,
-	                                preflight_only=preflight_only)
+	                                preflight_only=preflight_only,
+	                                compile_strategy=compile_strategy)

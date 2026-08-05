@@ -28,6 +28,7 @@ class JobContext:
 	output_dir: str
 	cpus: int
 	abaqus_exe: str = "abaqus"
+	user_subroutine: str | None = None
 
 	@property
 	def inp_path(self) -> str:
@@ -41,8 +42,24 @@ class JobContext:
 
 	@property
 	def log_path(self) -> str:
-		"""Absolute path to the job log file (``<output_dir>/<job_name>.log``)."""
+		"""Absolute path to Abaqus's own native job log (``<output_dir>/<job_name>.log``).
+
+		This file is owned and written by the Abaqus solver process itself
+		(``abaqus job=... interactive`` writes it as a side effect). ABQflow
+		never opens this path for writing — see :attr:`exec_log_path` for
+		ABQflow's own execution log, which uses a distinct filename to avoid
+		colliding with this one.
+		"""
 		return os.path.join(self.output_dir, f"{self.job_name}.log")
+
+	@property
+	def exec_log_path(self) -> str:
+		"""Absolute path to ABQflow's own execution log (``<output_dir>/<job_name>_abqflow.log``).
+
+		Deliberately distinct from :attr:`log_path` (Abaqus's native job log)
+		so the two writers never collide on the same file.
+		"""
+		return os.path.join(self.output_dir, f"{self.job_name}_abqflow.log")
 
 	@property
 	def sta_path(self) -> str:

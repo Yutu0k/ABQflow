@@ -10,13 +10,14 @@ import json
 import logging
 import os
 import re
-import subprocess
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 from typing import List
 
 from .context import JobContext
 from .runner import AbaqusRunner, extract_json
 from .diagnostics import SolverResult
+from .spec import HookSpec, SubroutineSpec
 from .status import JobStatus, JobStatusManager
 
 # Regex for {{placeholder}} in INP files (B8)
@@ -134,14 +135,16 @@ class ModelGenerationStrategy(PreparationStrategy):
 		for key, value in self.script_params.items():
 			cmd.extend([f'--{key}', str(value)])
 		cmd.extend(['--job_name', ctx.job_name])
-		try:
-			subprocess.run(cmd, check=True, capture_output=True, text=True,
-						cwd=ctx.output_dir, timeout=runner.timeout)
-			logger.info("Successfully generated model.")
-			return os.path.exists(ctx.inp_path)
-		except subprocess.CalledProcessError as e:
-			logger.error(f"Sub Strategy [ModelGeneration] failed. STDERR:\n{e.stderr}")
+
+		# Route through runner._run so timeout, error logging, and
+		# record_only dry-run all apply — no strategy calls subprocess directly.
+		proc = runner._run(cmd, stage='preparation')
+		if proc is None:
 			return False
+		if runner.record_only:
+			return True
+		logger.info("Successfully generated model.")
+		return os.path.exists(ctx.inp_path)
 
 
 class ExistingInpStrategy(PreparationStrategy):
@@ -247,6 +250,62 @@ class ExistingInpStrategy(PreparationStrategy):
 		return True
 
 
+# ======================== Compile Strategies ========================
+
+class SubroutineCompileStrategy:
+	"""Compiles a user subroutine via ``abaqus make`` before preparation.
+
+	Not part of the :class:`PreparationStrategy`/:class:`ExtractionStrategy`
+	ABC hierarchies — compilation is its own concern with a single
+	implementation today (YAGNI; add a registry like
+	:data:`~ABQflow.core.registry.PREPARATION_REGISTRY` if multiple compile
+	backends are ever needed).
+
+	Attributes
+	----------
+	subroutine : SubroutineSpec
+		Subroutine to compile.
+	cache : bool
+		If ``True`` (default), skip recompilation when the source file's
+		content hash matches the last successful compile (see
+		:meth:`~ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile`).
+	"""
+
+	def __init__(self, subroutine: SubroutineSpec, cache: bool = True):
+		self.subroutine = subroutine
+		self.cache = cache
+
+	def compile(self, ctx: JobContext, runner: AbaqusRunner,
+				logger: logging.Logger) -> tuple[bool, str]:
+		"""Compile the subroutine, or skip if precompiled/cached.
+
+		Returns
+		-------
+		tuple[bool, str]
+			``(success, message)`` — *message* is empty on success (or a
+			skip note), or the compiler's raw stdout+stderr on failure. No
+			regex parsing of compiler errors is performed (see
+			:meth:`~ABQflow.core.runner.AbaqusRunner.run_compile`).
+		"""
+		if self.subroutine.precompiled:
+			logger.info(f"Subroutine [{self.subroutine.source_path}]: precompiled, skipping compile.")
+			return True, ''
+
+		if self.cache and not runner.subroutine_needs_recompile(self.subroutine):
+			logger.info(f"Subroutine [{self.subroutine.source_path}]: unchanged, skipping recompile.")
+			return True, ''
+
+		logger.info(f"Compiling subroutine [{self.subroutine.source_path}] (solver={self.subroutine.solver})...")
+		ok, stdout, stderr = runner.run_compile(self.subroutine)
+		if not ok:
+			return False, f"{stdout}\n{stderr}".strip()
+
+		if self.cache and not runner.record_only:
+			runner._record_compile_hash(self.subroutine)
+		logger.info("Subroutine compiled successfully.")
+		return True, ''
+
+
 # ======================== Extraction Strategies ========================
 class ExtractionStrategy(ABC):
 	"""Interface for extraction: read results from model or ODB files.
@@ -290,11 +349,11 @@ class OdbExtractionStrategy(ExtractionStrategy):
 
 	Attributes
 	----------
-	hooks : list[dict]
+	hooks : list[HookSpec]
 		List of hook descriptors, each with ``script_path`` and ``tasks``.
 	"""
 
-	def __init__(self, hooks: list[dict]):
+	def __init__(self, hooks: list[HookSpec]):
 		self.hooks = hooks
 
 	def extract(self, ctx: JobContext, runner: AbaqusRunner,
@@ -305,14 +364,14 @@ class OdbExtractionStrategy(ExtractionStrategy):
 			logger.error(f"ODB file does not exist: {ctx.odb_path}")
 			all_results = {}
 			for hook in self.hooks:
-				for task in hook['tasks']:
+				for task in hook.tasks:
 					all_results[task['result_name']] = None
 			return all_results
 
 		all_results = {}
 		for hook in self.hooks:
-			script_path = hook['script_path']
-			tasks = hook['tasks']
+			script_path = hook.script_path
+			tasks = hook.tasks
 			logger.info(f"  -> Run ODB hook script: {script_path} ({len(tasks)} tasks)")
 			results = runner.run_hook(
 				script_path=script_path,
@@ -332,11 +391,11 @@ class ModelPropertiesExtractionStrategy(ExtractionStrategy):
 
 	Attributes
 	----------
-	hooks : list[dict]
+	hooks : list[HookSpec]
 		List of hook descriptors, each with ``script_path`` and ``tasks``.
 	"""
 
-	def __init__(self, hooks: list[dict]):
+	def __init__(self, hooks: list[HookSpec]):
 		self.hooks = hooks
 
 	def extract(self, ctx: JobContext, runner: AbaqusRunner,
@@ -347,14 +406,14 @@ class ModelPropertiesExtractionStrategy(ExtractionStrategy):
 			logger.error(f"INP file does not exist: {ctx.inp_path}")
 			all_results = {}
 			for hook in self.hooks:
-				for task in hook['tasks']:
+				for task in hook.tasks:
 					all_results[task['result_name']] = None
 			return all_results
 
 		all_results = {}
 		for hook in self.hooks:
-			script_path = hook['script_path']
-			tasks = hook['tasks']
+			script_path = hook.script_path
+			tasks = hook.tasks
 			logger.info(f"  -> Run model property hook script: {script_path} ({len(tasks)} tasks)")
 			results = runner.run_hook(
 				script_path=script_path,
@@ -375,8 +434,21 @@ class JobWorkflowStrategy(ABC):
 	MonolithicWorkflowStrategy
 		Single-script workflow that handles everything itself.
 	ModularWorkflowStrategy
-		4-phase pipeline: preparation, pre-extraction, simulation,
-		post-extraction.
+		Multi-phase pipeline: optional subroutine compile, preparation,
+		optional preflight, pre-extraction, simulation, post-extraction.
+
+	Optional phase-separated protocol
+	----------------------------------
+	Subclasses *may* additionally implement ``prepare_only(ctx, runner,
+	logger, status_manager=None) -> tuple[dict, JobStatusManager]``,
+	``simulate_only(...) -> tuple[dict, JobStatusManager, bool]`` (the
+	``bool`` signals whether the pipeline should stop), and
+	``extract_only(...) -> tuple[dict, JobStatusManager]`` so that
+	:class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` can invoke a
+	single phase (see its ``execute(phase=...)`` parameter). This is not
+	required by the ABC — :class:`MonolithicWorkflowStrategy` and
+	user-defined strategies that don't implement it simply raise
+	``NotImplementedError`` when a phase-only call is attempted.
 	"""
 
 	@abstractmethod
@@ -430,31 +502,40 @@ class MonolithicWorkflowStrategy(JobWorkflowStrategy):
 		for key, value in self.params.items():
 			cmd.extend([f'--{key}', str(value)])
 
+		# Route through runner._run so timeout, error logging, and
+		# record_only dry-run all apply — no strategy calls subprocess directly.
+		proc = runner._run(cmd, stage='monolithic')  # B9: error already logged by runner
+		if proc is None:
+			return {'status': JobStatus.MONOLITHIC_SCRIPT_FAILED,
+					'error': f"Monolithic script '{self.script_path}' failed to run (see log for details)."}
+
 		try:
-			proc = subprocess.run(cmd, check=True, capture_output=True, text=True,
-								cwd=ctx.output_dir, timeout=runner.timeout)
-			results = extract_json(proc.stdout)              # B7: sentinel-based extraction
-			if 'status' not in results:
-				results['status'] = JobStatus.COMPLETED
-			logger.info("Monolithic script run successfully.")
-			return results
-		except subprocess.CalledProcessError as e:
-			logger.error(f"Monolithic script failed. STDERR:\n{e.stderr}")  # B9: correct message
-			return {'status': JobStatus.MONOLITHIC_SCRIPT_FAILED, 'error': e.stderr}
+			results = extract_json(proc.stdout)  # B7: sentinel-based extraction
 		except (ValueError, json.JSONDecodeError) as e:
 			logger.error(f"Unable to decode JSON from script output. Error: {e}")
 			return {'status': JobStatus.JSON_DECODE_ERROR, 'error': str(e)}
-		except Exception as e:
-			logger.error(f"Script Error: {e}")
-			return {'status': JobStatus.SCRIPT_ERROR, 'error': str(e)}
+
+		if 'status' not in results:
+			results['status'] = JobStatus.COMPLETED
+		logger.info("Monolithic script run successfully.")
+		return results
 
 
 class ModularWorkflowStrategy(JobWorkflowStrategy):
-	"""5-phase pipeline: preparation, [preflight], pre-extraction, simulation, post-extraction.
+	"""Multi-phase pipeline: [compile], preparation, [preflight], pre-extraction, simulation, post-extraction.
 
 	Uses a :class:`JobStatusManager` internally to track the job through
 	each phase.  If any phase fails the pipeline stops and returns the
 	terminal status immediately.
+
+	``execute()`` composes three independently callable phase methods —
+	:meth:`prepare_only`, :meth:`simulate_only`, :meth:`extract_only` — so
+	that :class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` (and
+	:class:`~ABQflow.core.abaqus_automation.BatchAbaqusProcessor`'s
+	``run_preparation``/``run_simulation``/``run_extraction``) can invoke a
+	single phase without running the rest of the pipeline. The external
+	contract of ``execute()`` — return-dict shape and terminal-status
+	semantics — is unchanged by this split.
 
 	Attributes
 	----------
@@ -466,6 +547,8 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		Strategies run before the solver (e.g. property extraction from INP).
 	post_extraction_strategies : list[ExtractionStrategy]
 		Strategies run after the solver (e.g. result extraction from ODB).
+	compile_strategy : SubroutineCompileStrategy or None
+		Optional user-subroutine compile step, run before preparation.
 	"""
 
 	def __init__(
@@ -475,75 +558,182 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		post_extraction_strategies: List[ExtractionStrategy],
 		preflight_mode: str | None = None,
 		preflight_only: bool = False,
+		compile_strategy: SubroutineCompileStrategy | None = None,
 	):
 		self.preparation_strategy = preparation_strategy
 		self.preflight_mode = preflight_mode
 		self.pre_extraction_strategies = pre_extraction_strategies
 		self.post_extraction_strategies = post_extraction_strategies
 		self.preflight_only = preflight_only
+		self.compile_strategy = compile_strategy
 
-	def execute(self, ctx: JobContext, runner: AbaqusRunner,
-				logger: logging.Logger) -> dict:
-		"""Run the modular workflow (5 phases with optional preflight).
+	def prepare_only(self, ctx: JobContext, runner: AbaqusRunner, logger: logging.Logger,
+					status_manager: JobStatusManager | None = None) -> tuple[dict, JobStatusManager]:
+		"""Phase 1: optional subroutine compile, preparation, optional preflight.
 
-		Returns a dict with at least a ``'status'`` key plus any results
-		from pre- and post-extraction hooks.  Failing early means later
-		phases are skipped.
+		Standalone entry point for "produce an INP (and compiled
+		subroutine) only". Does not run pre-extraction, the solver, or
+		post-extraction — those live in :meth:`simulate_only` /
+		:meth:`extract_only`.
+
+		Returns
+		-------
+		tuple[dict, JobStatusManager]
+			``(results, status_manager)`` — *results* has at least
+			``'status'`` and ``'_phase_history'``; the manager is returned
+			so :meth:`execute` can thread it into the next phase.
 		"""
-		logger.info("Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...")
-		status_manager = JobStatusManager()
-		all_results: dict = {}
+		logger.info("Workflow Strategy [ModularWorkflow]: prepare_only phase...")
+		sm = status_manager or JobStatusManager()
+		results: dict = {}
+
+		# 0. Subroutine compilation (optional)
+		if self.compile_strategy is not None:
+			sm.mark_compiling()
+			ok, msg = self.compile_strategy.compile(ctx, runner, logger)
+			sm.record_compile(success=ok, error=None if ok else msg)
+			if not ok:
+				results['status'] = sm.get_final_status()
+				results['_phase_history'] = sm.phase_history
+				return results, sm
 
 		# 1. Preparation
+		sm.mark_preparing()
 		if not self.preparation_strategy.prepare(ctx, runner, logger):
-			status_manager.record_preparation(success=False)
-			all_results['status'] = status_manager.get_final_status()
-			return all_results
-		status_manager.record_preparation(success=True)
+			sm.record_preparation(success=False)
+			results['status'] = sm.get_final_status()
+			results['_phase_history'] = sm.phase_history
+			return results, sm
+		sm.record_preparation(success=True)
 
 		# 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)
 		if self.preflight_mode:
 			logger.info(f"Preflight [{self.preflight_mode}]: checking INP...")
+			sm.mark_preflight()
 			passed, pf_errors = runner.run_preflight(self.preflight_mode)
 			if not passed:
-				status_manager.record_preflight(
+				sm.record_preflight(
 					success=False,
 					error=pf_errors[0] if pf_errors else f"Preflight [{self.preflight_mode}] failed",
 				)
-				all_results['status'] = status_manager.get_final_status()
-				return all_results
-			status_manager.record_preflight(success=True)
+				results['status'] = sm.get_final_status()
+				results['_phase_history'] = sm.phase_history
+				return results, sm
+			sm.record_preflight(success=True)
 			logger.info(f"Preflight [{self.preflight_mode}]: passed")
 
-		# IMP-04: preflight_only mode — stop after preflight, skip solver & extraction
-		if self.preflight_only:
-			all_results['status'] = status_manager.get_final_status()
-			return all_results
+		results['status'] = sm.get_final_status()
+		results['_phase_history'] = sm.phase_history
+		return results, sm
+
+	def simulate_only(self, ctx: JobContext, runner: AbaqusRunner, logger: logging.Logger,
+					status_manager: JobStatusManager | None = None) -> tuple[dict, JobStatusManager, bool]:
+		"""Phase 2: pre-extraction hooks, then the solver run.
+
+		Assumes ``ctx.inp_path`` already exists (produced by a prior
+		:meth:`prepare_only` call — possibly in an earlier process/session,
+		e.g. via ``BatchAbaqusProcessor.run_simulation()``). Mirrors the
+		original monolithic behavior: a pre-extraction failure does *not*
+		stop the solver from running, but a solver failure does stop the
+		pipeline.
+
+		Returns
+		-------
+		tuple[dict, JobStatusManager, bool]
+			``(results, status_manager, stop)`` — *stop* is ``True`` when
+			the caller (e.g. :meth:`execute`) should not proceed to
+			:meth:`extract_only` (INP missing or solver failed).
+		"""
+		logger.info("Workflow Strategy [ModularWorkflow]: simulate_only phase...")
+		sm = status_manager or JobStatusManager()
+		results: dict = {}
+
+		if not os.path.exists(ctx.inp_path):
+			sm.record_simulation(
+				success=False,
+				error=f"INP not found: {ctx.inp_path} (run preparation first)",
+			)
+			results['status'] = sm.get_final_status()
+			results['_phase_history'] = sm.phase_history
+			return results, sm, True
 
 		# 3. Pre-extraction
 		for strategy in self.pre_extraction_strategies:
+			sm.mark_extracting('pre_extraction')
 			pre_ext_results = strategy.extract(ctx, runner, logger)
-			status_manager.record_extraction(pre_ext_results)
-			all_results.update(pre_ext_results)
+			sm.record_extraction(pre_ext_results)
+			results.update(pre_ext_results)
 
 		# 4. Simulation (IMP-02: diagnostics-backed verdict)
+		sm.mark_simulating()
 		solver_result = runner.run_solver()
 		# Attach diagnostics on failure and on the rc≠0+COMPLETED edge case
 		if solver_result.diagnostics is not None:
 			if not solver_result.success or solver_result.error:
-				from dataclasses import asdict
-				all_results['diagnostics'] = asdict(solver_result.diagnostics)
+				results['diagnostics'] = asdict(solver_result.diagnostics)
 		if not solver_result.success:
-			status_manager.record_simulation(success=False, error=solver_result.error)
-			all_results['status'] = status_manager.get_final_status()
-			return all_results
-		status_manager.record_simulation(success=True)
+			sm.record_simulation(success=False, error=solver_result.error)
+			results['status'] = sm.get_final_status()
+			results['_phase_history'] = sm.phase_history
+			return results, sm, True
+		sm.record_simulation(success=True)
+
+		results['status'] = sm.get_final_status()
+		results['_phase_history'] = sm.phase_history
+		return results, sm, False
+
+	def extract_only(self, ctx: JobContext, runner: AbaqusRunner, logger: logging.Logger,
+					status_manager: JobStatusManager | None = None) -> tuple[dict, JobStatusManager]:
+		"""Phase 3: post-extraction hooks only.
+
+		Assumes ``ctx.odb_path`` already exists. No existence guard is
+		needed — :class:`OdbExtractionStrategy` already reports every task
+		as ``None`` when the ODB is missing, and :meth:`JobStatusManager.record_extraction`
+		already turns that into ``EXTRACTION_FAILED``.
+
+		Returns
+		-------
+		tuple[dict, JobStatusManager]
+			``(results, status_manager)``.
+		"""
+		logger.info("Workflow Strategy [ModularWorkflow]: extract_only phase...")
+		sm = status_manager or JobStatusManager()
+		results: dict = {}
 
 		# 5. Post-extraction
 		for strategy in self.post_extraction_strategies:
+			sm.mark_extracting('post_extraction')
 			post_ext_results = strategy.extract(ctx, runner, logger)
-			status_manager.record_extraction(post_ext_results)
-			all_results.update(post_ext_results)
+			sm.record_extraction(post_ext_results)
+			results.update(post_ext_results)
 
-		all_results['status'] = status_manager.get_final_status()
-		return all_results
+		results['status'] = sm.get_final_status()
+		results['_phase_history'] = sm.phase_history
+		return results, sm
+
+	def execute(self, ctx: JobContext, runner: AbaqusRunner,
+				logger: logging.Logger) -> dict:
+		"""Run the full modular workflow by composing the three phase methods.
+
+		Returns a dict with at least a ``'status'`` key plus any results
+		from pre- and post-extraction hooks.  Failing early means later
+		phases are skipped — return-dict shape and terminal-status
+		semantics are unchanged from before the phase-separation refactor.
+		"""
+		logger.info("Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...")
+
+		results, sm = self.prepare_only(ctx, runner, logger)
+		if sm.get_final_status() != JobStatus.COMPLETED:
+			return results
+		# IMP-04: preflight_only mode — stop after preflight, skip solver & extraction
+		if self.preflight_only:
+			return results
+
+		sim_results, sm, stop = self.simulate_only(ctx, runner, logger, status_manager=sm)
+		results.update(sim_results)
+		if stop:
+			return results
+
+		ext_results, sm = self.extract_only(ctx, runner, logger, status_manager=sm)
+		results.update(ext_results)
+		return results
