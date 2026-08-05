@@ -256,24 +256,30 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="n">Progress</span><span class="p">,</span> <span class="n">SpinnerColumn</span><span class="p">,</span> <span class="n">BarColumn</span><span class="p">,</span> <span class="n">TextColumn</span><span class="p">,</span> <span class="n">TimeElapsedColumn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+	<span class="n">BarColumn</span><span class="p">,</span>
+	<span class="n">Progress</span><span class="p">,</span>
+	<span class="n">SpinnerColumn</span><span class="p">,</span>
+	<span class="n">TextColumn</span><span class="p">,</span>
+	<span class="n">TimeElapsedColumn</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_workflow</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">CommandRecord</span><span class="p">,</span> <span class="n">_check_abqpy_installed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
-
 
 <span class="c1"># ======================== IMP-05: dry-run data model ========================</span>
 

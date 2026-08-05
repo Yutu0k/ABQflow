@@ -249,9 +249,10 @@
 <span class="sd">or a terminal failure state.  Once a job enters a failure state no further</span>
 <span class="sd">state transitions are allowed.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">asdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
 
@@ -496,7 +497,7 @@
 
 <div class="viewcode-block" id="JobStatusManager.record_compile">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_compile">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of user-subroutine compilation.</span>
 
 <span class="sd">		Parameters</span>
@@ -519,7 +520,7 @@
 
 <div class="viewcode-block" id="JobStatusManager.record_preparation">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preparation">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_preparation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_preparation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the preparation phase.</span>
 
 <span class="sd">		Parameters</span>
@@ -542,7 +543,7 @@
 
 <div class="viewcode-block" id="JobStatusManager.record_preflight">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preflight">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the preflight phase (IMP-04).</span>
 
 <span class="sd">		Parameters</span>
@@ -564,7 +565,7 @@
 
 <div class="viewcode-block" id="JobStatusManager.record_simulation">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_simulation">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the Abaqus solver run.</span>
 
 <span class="sd">		Parameters</span>
