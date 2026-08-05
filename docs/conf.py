@@ -8,15 +8,19 @@
 
 import os
 import sys
-import toml
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback for local tools
+    import tomli as tomllib
 
 sys.path.insert(0, os.path.abspath('../..'))
 
 # --- Read project metadata from pyproject.toml ---
 pyproject_path = Path(__file__).parents[1] / "pyproject.toml"
-with pyproject_path.open("r", encoding="utf-8") as f:
-    pyproject_data = toml.load(f)
+with pyproject_path.open("rb") as f:
+    pyproject_data = tomllib.load(f)
 
 project_metadata = pyproject_data["project"]
 

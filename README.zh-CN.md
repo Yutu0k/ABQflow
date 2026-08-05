@@ -26,15 +26,37 @@
 
 ## 安装
 
-使用 Pixi：
+从 PyPI 安装：
 
 ```bash
-pixi add --pypi "ABQflow @ git+https://github.com/Yutu0k/ABQflow.git"
+pip install ABQflow
+```
+
+如果需要可选的 `abqpy` 集成路径：
+
+```bash
+pip install "ABQflow[abqpy]"
+```
+
+如果你使用 Pixi 管理环境：
+
+```bash
+pixi add --pypi ABQflow
 ```
 
 - Abaqus（确保命令 `abaqus` 已加入系统 `PATH`）
 - Python ≥ 3.9
-- [`abqpy`](https://github.com/haiiliin/abqpy)(可选): 安装 `abqpy` 后，可以直接使用普通 `python` 解释器运行脚本，而无需调用 Abaqus 自带的 Python 环境。
+- [`abqpy`](https://github.com/haiiliin/abqpy)（可选）：仅在你想让部分脚本直接通过普通 `python` 运行时需要。
+
+## 打包发布
+
+先在本地构建分发包：
+
+```bash
+python -m build
+```
+
+然后把 `dist/` 目录中的产物上传到 TestPyPI 或正式 PyPI。
 
 ## 如何使用？
 

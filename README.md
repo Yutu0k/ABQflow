@@ -44,16 +44,40 @@ English | [简体中文](../README.zh-CN.md)
 └──────────────────────────────────────────────────┘
 ``` -->
 
-![](docs/image/architecture.png)
+![](https://raw.githubusercontent.com/Yutu0k/ABQflow/main/docs/image/architecture.png)
 
 
 ## Installation
 
+Install from PyPI:
+
 ```bash
-pixi add --pypi "ABQflow @ git+https://github.com/Yutu0k/ABQflow.git"
+pip install ABQflow
 ```
 
-**Prerequisites:** Abaqus (with `abaqus` on PATH), Python ≥ 3.9. Optional: [`abqpy`](https://github.com/haiiliin/abqpy) for running scripts directly with `python` instead of the Abaqus kernel.
+If you want the optional `abqpy` integration path:
+
+```bash
+pip install "ABQflow[abqpy]"
+```
+
+If you manage environments with Pixi:
+
+```bash
+pixi add --pypi ABQflow
+```
+
+**Prerequisites:** Abaqus (with `abaqus` on PATH), Python ≥ 3.9. `abqpy` is optional and only needed when you want to run eligible scripts through plain `python` instead of the Abaqus kernel.
+
+## Packaging
+
+Build a source distribution and wheel locally with:
+
+```bash
+python -m build
+```
+
+Then upload the artifacts from `dist/` to TestPyPI or PyPI.
 
 ## How to use?
 

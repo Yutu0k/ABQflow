@@ -18,6 +18,9 @@ Key Methods
 """
 
 
+from pathlib import Path
+import re
+
 from .core.abaqus_automation import (
 	AbaqusCalculation,
 	BatchAbaqusProcessor,
@@ -140,11 +143,11 @@ def _get_version() -> str:
 		pass
 	# 2. Fallback: parse pyproject.toml directly (works in dev / editable installs)
 	try:
-		from pathlib import Path
-		import toml
 		_pyproject = Path(__file__).parents[2] / "pyproject.toml"
 		if _pyproject.exists():
-			return toml.load(_pyproject)["project"]["version"]
+			match = re.search(r'(?m)^version\s*=\s*["\']([^"\']+)["\']', _pyproject.read_text(encoding="utf-8"))
+			if match:
+				return match.group(1)
 	except Exception:
 		pass
 	# 3. Last resort

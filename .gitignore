@@ -4,6 +4,9 @@
 .vscode/
 *.code-workspace
 
+reference/
+prompt/
+
 __pycache__/
 *.pyc
 *.pyo
@@ -27,3 +30,6 @@ abaqus.rpy
 
 # Generated test/example output
 **/*output*/
+
+# Build artifacts
+dist/
