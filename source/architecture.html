@@ -358,8 +358,12 @@ based on what the script needs:</p>
 </section>
 <section id="resource-planning">
 <h2>Resource Planning<a class="headerlink" href="#resource-planning" title="Link to this heading">¶</a></h2>
-<p>The framework automatically caps parallelism to avoid oversubscribing CPU cores
-or Abaqus license tokens.</p>
+<p>The framework automatically caps parallelism to avoid oversubscribing Abaqus
+license tokens, since a job that cannot obtain a license will simply fail to
+start. CPU cores are not hard-capped — small jobs rarely saturate a full
+core, so requesting more parallel jobs than physical cores support (CPU
+oversubscription) is allowed, but it is flagged with a warning so the
+allocation stays visible.</p>
 <p><strong>Abaqus license token formula</strong> (official): a job using <em>n</em> CPU cores consumes</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
@@ -371,10 +375,12 @@ or Abaqus license tokens.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}P_{cpu}     &amp;= \lfloor (C - R) / c \rfloor \\
 P_{license} &amp;= \lfloor L / T(c) \rfloor \\
-P_{actual}  &amp;= \max(1, \min(P_{req}, P_{cpu}, P_{license}))\end{split}\]</div>
+P_{actual}  &amp;= \max(1, \min(P_{req}, P_{license}))\end{split}\]</div>
 </div>
 <p>where <em>C</em> = physical cores, <em>R</em> = reserved cores (default 1), <em>c</em> = cores per
-job, <em>L</em> = available tokens.</p>
+job, and <em>L</em> = available tokens. <span class="math notranslate nohighlight">\(P_{cpu}\)</span> is computed only to decide
+whether to emit the CPU-oversubscription warning — it no longer bounds
+<span class="math notranslate nohighlight">\(P_{actual}\)</span>.</p>
 <p>Use <a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> to compute this directly.</p>
 </section>
 <section id="fault-tolerance">

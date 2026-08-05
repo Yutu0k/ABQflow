@@ -3346,13 +3346,12 @@ populated for the <code class="docutils literal notranslate"><span class="pre">r
 <dl class="py function">
 <dt class="sig sig-object py" id="ABQflow.plan_parallelism">
 <span class="sig-prename descclassname"><span class="pre">ABQflow.</span></span><span class="sig-name descname"><span class="pre">plan_parallelism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">requested</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cpus_per_job</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">license_tokens</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reserve_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/abaqus_automation.html#plan_parallelism"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.plan_parallelism" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the actual number of concurrent jobs given hardware and license limits.</p>
-<p>Constraints applied in order:</p>
-<ol class="arabic simple">
-<li><p>CPU cores available (<code class="docutils literal notranslate"><span class="pre">os.cpu_count()</span> <span class="pre">-</span> <span class="pre">reserve_cores</span></code>).</p></li>
-<li><p>License tokens (if provided).</p></li>
-<li><p>User-requested maximum.</p></li>
-</ol>
+<dd><p>Compute the actual number of concurrent jobs given license limits.</p>
+<p>License tokens (if provided) are a hard cap — Abaqus will refuse to start
+a job it cannot license.  CPU cores are informational only: requesting
+more parallel jobs than physical cores support is allowed (CPU
+oversubscription), since small jobs rarely saturate a full core, but it
+is flagged with a warning so the user can see the allocation.</p>
 <section id="id92">
 <h3>Parameters<a class="headerlink" href="#id92" title="Link to this heading">¶</a></h3>
 <dl class="simple">

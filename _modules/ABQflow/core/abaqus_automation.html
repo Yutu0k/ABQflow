@@ -505,13 +505,13 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 					<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 					<span class="n">reserve_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Compute the actual number of concurrent jobs given hardware and license limits.</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Compute the actual number of concurrent jobs given license limits.</span>
 
-<span class="sd">	Constraints applied in order:</span>
-
-<span class="sd">	1. CPU cores available (``os.cpu_count() - reserve_cores``).</span>
-<span class="sd">	2. License tokens (if provided).</span>
-<span class="sd">	3. User-requested maximum.</span>
+<span class="sd">	License tokens (if provided) are a hard cap — Abaqus will refuse to start</span>
+<span class="sd">	a job it cannot license.  CPU cores are informational only: requesting</span>
+<span class="sd">	more parallel jobs than physical cores support is allowed (CPU</span>
+<span class="sd">	oversubscription), since small jobs rarely saturate a full core, but it</span>
+<span class="sd">	is flagged with a warning so the user can see the allocation.</span>
 
 <span class="sd">	Parameters</span>
 <span class="sd">	----------</span>
@@ -529,16 +529,21 @@
 <span class="sd">	int</span>
 <span class="sd">		Feasible parallelism level (at least 1).</span>
 <span class="sd">	&quot;&quot;&quot;</span>
-	<span class="c1"># total = os.cpu_count() or 1</span>
 	<span class="n">total</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 	<span class="n">p_cpu</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="n">reserve_cores</span><span class="p">)</span> <span class="o">//</span> <span class="n">cpus_per_job</span><span class="p">)</span>
-	<span class="n">p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">requested</span><span class="p">,</span> <span class="n">p_cpu</span><span class="p">)</span>
+	<span class="n">p</span> <span class="o">=</span> <span class="n">requested</span>
 	<span class="k">if</span> <span class="n">license_tokens</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="n">p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">license_tokens</span> <span class="o">//</span> <span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)))</span>
+	<span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="n">p_cpu</span><span class="p">:</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Parallelism </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> oversubscribes available CPU cores &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;(fits </span><span class="si">{</span><span class="n">p_cpu</span><span class="si">}</span><span class="s2"> jobs x </span><span class="si">{</span><span class="n">cpus_per_job</span><span class="si">}</span><span class="s2"> cores in </span><span class="si">{</span><span class="n">total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">reserve_cores</span><span class="si">}</span><span class="s2"> &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;usable physical cores); proceeding anyway.&quot;</span><span class="p">)</span>
 	<span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">requested</span><span class="p">:</span>
 		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-			<span class="sa">f</span><span class="s2">&quot;Parallelism reduced from </span><span class="si">{</span><span class="n">requested</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> &quot;</span>
-			<span class="sa">f</span><span class="s2">&quot;(CPU limit </span><span class="si">{</span><span class="n">p_cpu</span><span class="si">}</span><span class="s2">, tokens per job </span><span class="si">{</span><span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+			<span class="sa">f</span><span class="s2">&quot;Parallelism reduced from </span><span class="si">{</span><span class="n">requested</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> by the license token limit &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;(tokens per job </span><span class="si">{</span><span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)</span><span class="si">}</span><span class="s2">, available tokens </span><span class="si">{</span><span class="n">license_tokens</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
 	<span class="k">return</span> <span class="n">p</span></div>
 
 

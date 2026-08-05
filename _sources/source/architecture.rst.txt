@@ -102,8 +102,12 @@ The ``--`` separator after ``noGUI=`` prevents Abaqus from consuming custom argu
 Resource Planning
 -----------------
 
-The framework automatically caps parallelism to avoid oversubscribing CPU cores
-or Abaqus license tokens.
+The framework automatically caps parallelism to avoid oversubscribing Abaqus
+license tokens, since a job that cannot obtain a license will simply fail to
+start. CPU cores are not hard-capped — small jobs rarely saturate a full
+core, so requesting more parallel jobs than physical cores support (CPU
+oversubscription) is allowed, but it is flagged with a warning so the
+allocation stays visible.
 
 **Abaqus license token formula** (official): a job using *n* CPU cores consumes
 
@@ -119,10 +123,12 @@ Example token counts: 1→5, 2→7, 4→9, 8→12, 16→16.
 
    P_{cpu}     &= \lfloor (C - R) / c \rfloor \\
    P_{license} &= \lfloor L / T(c) \rfloor \\
-   P_{actual}  &= \max(1, \min(P_{req}, P_{cpu}, P_{license}))
+   P_{actual}  &= \max(1, \min(P_{req}, P_{license}))
 
 where *C* = physical cores, *R* = reserved cores (default 1), *c* = cores per
-job, *L* = available tokens.
+job, and *L* = available tokens. :math:`P_{cpu}` is computed only to decide
+whether to emit the CPU-oversubscription warning — it no longer bounds
+:math:`P_{actual}`.
 
 Use :func:`~ABQflow.plan_parallelism` to compute this directly.
 
