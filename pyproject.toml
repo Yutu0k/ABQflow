@@ -23,7 +23,7 @@ name = "ABQflow"
 description = "A modular batch-processing framework for Abaqus FEA — typed job specs, strategy pattern workflow, fault-tolerant parallel execution, and resource-aware scheduling."
 requires-python = ">=3.9"
 readme = "README.md"
-version = "0.4.0"
+version = "0.5.0"
 
 [project.optional-dependencies]
 abqpy = [

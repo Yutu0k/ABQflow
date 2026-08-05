@@ -5,7 +5,7 @@
 **Modular batch-processing framework for [Abaqus FEA](https://www.3ds.com/products/simulia/abaqus) based on [python](https://www.python.org/).**
 Typed job specs, strategy-pattern workflows, fault-tolerant parallel execution, resource-aware scheduling — no more hand-crafted launch scripts.
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  ![Version](https://img.shields.io/badge/version-v0.4.0-green.svg?style=flat-square) ![python](https://img.shields.io/badge/python-3.9+-blue.svg)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  ![Version](https://img.shields.io/badge/version-v0.5.0-green.svg?style=flat-square) ![python](https://img.shields.io/badge/python-3.9+-blue.svg)
 <!-- ↑ version badge: update on release (single source: pyproject.toml) -->
 
 English | [简体中文](../README.zh-CN.md) 

@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow.helpers.convert - ABQflow 0.4.0 documentation</title>
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>ABQflow.helpers.convert - ABQflow 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -251,7 +251,9 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glob_module</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
@@ -260,7 +262,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..core.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span><span class="p">,</span> <span class="n">PreparationSpec</span>
-
 
 <span class="c1"># ======================== IMP-06: sidecar CSV contract ========================</span>
 
@@ -324,6 +325,183 @@
 		<span class="k">return</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
 	<span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">_SIDECAR_KEY</span><span class="p">}</span>
 	<span class="k">return</span> <span class="p">(</span><span class="n">abspath</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ======================== SC-01: sidecar field loading ========================</span>
+
+
+<div class="viewcode-block" id="load_field">
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.load_field">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_field</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">result_name</span><span class="p">,</span> <span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Load a single named field from a ``JobOutcome``.</span>
+
+<span class="sd">	Normalises inline values and sidecar CSV envelopes into a uniform</span>
+<span class="sd">	``numpy.ndarray``.  This is the single-job entry point for consuming</span>
+<span class="sd">	sidecar results; for batch consumption use :func:`iter_fields`.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	outcome : JobOutcome</span>
+<span class="sd">		Outcome from :meth:`BatchAbaqusProcessor.run_batch`.</span>
+<span class="sd">	result_name : str</span>
+<span class="sd">		Key in ``outcome.results`` to load.</span>
+<span class="sd">	numeric_only : bool</span>
+<span class="sd">		If ``True`` (default), non-numeric CSV columns are dropped with a</span>
+<span class="sd">		warning.  If ``False``, return an object array preserving string</span>
+<span class="sd">		columns (for callers that need label columns).</span>
+
+<span class="sd">	Returns</span>
+<span class="sd">	-------</span>
+<span class="sd">	numpy.ndarray or None</span>
+<span class="sd">		``None`` when the result is missing, the extraction failed, the</span>
+<span class="sd">		sidecar file is gone, or the path is unsafe.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="n">outcome</span><span class="o">.</span><span class="n">results</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="n">value</span> <span class="o">=</span> <span class="n">outcome</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">result_name</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="c1"># Inline: scalar or list -&gt; ndarray (dual-representation normalisation)</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">is_sidecar</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+	<span class="c1"># Sidecar envelope: resolve path</span>
+	<span class="n">output_dir</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="s1">&#39;output_dir&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">output_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Cannot resolve sidecar &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; for job &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;: &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;outcome has no output_dir&quot;</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="n">rel</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">_SIDECAR_KEY</span><span class="p">]</span>
+	<span class="n">abspath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">rel</span><span class="p">))</span>
+
+	<span class="c1"># Path safety check</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">abspath</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">):</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Sidecar path escape rejected: &#39;</span><span class="si">{</span><span class="n">rel</span><span class="si">}</span><span class="s2">&#39; for job &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="c1"># Existence check</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">abspath</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getsize</span><span class="p">(</span><span class="n">abspath</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Sidecar file missing or empty: &#39;</span><span class="si">{</span><span class="n">abspath</span><span class="si">}</span><span class="s2">&#39; for job &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="c1"># Read CSV</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">abspath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+			<span class="n">header</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+			<span class="n">raw_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Cannot read sidecar CSV &#39;</span><span class="si">{</span><span class="n">abspath</span><span class="si">}</span><span class="s2">&#39; for &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+		<span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="c1"># Header vs claimed columns</span>
+	<span class="n">claimed_columns</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;columns&#39;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">claimed_columns</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">claimed_columns</span> <span class="o">!=</span> <span class="n">header</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;Sidecar columns mismatch for &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; in &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;: &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;claimed </span><span class="si">{</span><span class="n">claimed_columns</span><span class="si">}</span><span class="s2">, file has </span><span class="si">{</span><span class="n">header</span><span class="si">}</span><span class="s2">&quot;</span>
+		<span class="p">)</span>
+
+	<span class="c1"># Shape vs reality</span>
+	<span class="n">claimed_shape</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;shape&#39;</span><span class="p">)</span>
+	<span class="n">actual_rows</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_rows</span><span class="p">)</span>
+	<span class="n">actual_cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">claimed_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">claimed_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">actual_rows</span> <span class="ow">or</span> <span class="n">claimed_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">actual_cols</span><span class="p">:</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">&quot;Sidecar shape mismatch for &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; in &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;: &quot;</span>
+				<span class="sa">f</span><span class="s2">&quot;claimed </span><span class="si">{</span><span class="n">claimed_shape</span><span class="si">}</span><span class="s2">, file has [</span><span class="si">{</span><span class="n">actual_rows</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">actual_cols</span><span class="si">}</span><span class="s2">]&quot;</span>
+			<span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">numeric_only</span><span class="p">:</span>
+		<span class="c1"># Per-column numeric conversion — drop non-numeric columns</span>
+		<span class="n">numeric_cols</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">col_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">col_data</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">raw_rows</span><span class="p">]</span>
+				<span class="n">numeric_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col_data</span><span class="p">)</span>
+			<span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+				<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+					<span class="sa">f</span><span class="s2">&quot;Non-numeric column &#39;</span><span class="si">{</span><span class="n">col_name</span><span class="si">}</span><span class="s2">&#39; in &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;for job &#39;</span><span class="si">{</span><span class="n">outcome</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39; — dropped&quot;</span>
+				<span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">numeric_cols</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">numeric_cols</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (R, C)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">raw_rows</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="iter_fields">
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.iter_fields">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_fields</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">result_name</span><span class="p">,</span> <span class="n">on_missing</span><span class="o">=</span><span class="s1">&#39;skip&#39;</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;Yield ``(job_name, ndarray)`` pairs for a named field across a batch.</span>
+
+<span class="sd">	Outcomes are sorted by :func:`_natural_key` on ``job_name`` so the</span>
+<span class="sd">	iteration order is deterministic and matches the row order of</span>
+<span class="sd">	:func:`degenerate_from_array` (row-order contract).</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	outcomes : list[JobOutcome]</span>
+<span class="sd">		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.</span>
+<span class="sd">	result_name : str</span>
+<span class="sd">		Key in ``outcome.results`` to load.</span>
+<span class="sd">	on_missing : str</span>
+<span class="sd">		How to handle jobs where :func:`load_field` returns ``None``:</span>
+
+<span class="sd">		* ``&#39;skip&#39;`` (default) — omit the job; a single summary warning</span>
+<span class="sd">		  lists all skipped job names at generator exit.</span>
+<span class="sd">		* ``&#39;none&#39;`` — yield ``(job_name, None)`` so the caller can</span>
+<span class="sd">		  align rows with :func:`degenerate_from_array`.</span>
+<span class="sd">		* ``&#39;raise&#39;`` — raise :class:`ValueError` on the first missing field.</span>
+
+<span class="sd">	Yields</span>
+<span class="sd">	------</span>
+<span class="sd">	tuple[str, numpy.ndarray or None]</span>
+<span class="sd">		``(job_name, ndarray)`` pairs.  ``ndarray`` is ``None`` only when</span>
+<span class="sd">		``on_missing=&#39;none&#39;``.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="n">on_missing</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="s1">&#39;raise&#39;</span><span class="p">):</span>
+		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;on_missing must be &#39;skip&#39;, &#39;none&#39;, or &#39;raise&#39;, got &#39;</span><span class="si">{</span><span class="n">on_missing</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+		<span class="p">)</span>
+
+	<span class="n">sorted_outcomes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">_natural_key</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">job_name</span><span class="p">))</span>
+	<span class="n">missing</span> <span class="o">=</span> <span class="p">[]</span>
+
+	<span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">sorted_outcomes</span><span class="p">:</span>
+		<span class="n">arr</span> <span class="o">=</span> <span class="n">load_field</span><span class="p">(</span><span class="n">oc</span><span class="p">,</span> <span class="n">result_name</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">on_missing</span> <span class="o">==</span> <span class="s1">&#39;raise&#39;</span><span class="p">:</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+					<span class="sa">f</span><span class="s2">&quot;Field &#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39; missing for job &#39;</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+				<span class="p">)</span>
+			<span class="k">elif</span> <span class="n">on_missing</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
+				<span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>  <span class="c1"># &#39;none&#39;</span>
+				<span class="k">yield</span> <span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">yield</span> <span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">missing</span> <span class="ow">and</span> <span class="n">on_missing</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">&quot;iter_fields(&#39;</span><span class="si">{</span><span class="n">result_name</span><span class="si">}</span><span class="s2">&#39;): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> job(s) skipped &quot;</span>
+			<span class="sa">f</span><span class="s2">&quot;due to missing field: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span>
+		<span class="p">)</span></div>
 
 
 
@@ -563,10 +741,9 @@
 			<span class="n">v</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">default_value</span><span class="p">)</span>
 			<span class="k">if</span> <span class="n">is_sidecar</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
 				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-					<span class="sa">f</span><span class="s2">&quot;Sidecar envelope found for &#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&#39; in job &#39;</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;Sidecar data (large-field results) cannot be packed into a &quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;matrix. Use resolve_sidecar() to load explicitly, or remove &quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&#39; from output_names.&quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&#39; is a sidecar field. Load it with iter_fields() and &quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;reduce it yourself, then hstack with this matrix (row order &quot;</span>
+					<span class="sa">f</span><span class="s2">&quot;is guaranteed to match).&quot;</span>
 				<span class="p">)</span>
 			<span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 		<span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
@@ -682,7 +859,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=8ee541af"></script>
+</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

@@ -165,6 +165,15 @@ When sentinel markers are absent, the framework falls back to scanning from the
 **end** of stdout for the last complete JSON object (Abaqus banner precedes
 script output, so the last ``{`` is most likely the result).
 
+``ABQflow.hookkit`` (staged into the job's working directory automatically)
+implements this protocol for hook scripts so authors never write sentinel
+markers or argparse plumbing by hand. It is single-file and stdlib-only —
+never imports ``ABQflow``, ``odbAccess``, ``abaqus``, or ``numpy`` — so it
+runs unmodified under the Abaqus Python interpreter (Py2.7 or Py3). It also
+adds a field-output mode (``hookkit.field()``) that spills large result sets
+(>10k rows or >1MB) to a CSV sidecar instead of inlining them in the JSON
+payload, keeping stdout small for bulky field quantities.
+
 Configuration Validation
 ------------------------
 

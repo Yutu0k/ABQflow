@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="ABQflow.core package" href="ABQflow.core.html" />
 
-    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow.helpers package - ABQflow 0.4.0 documentation</title>
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>ABQflow.helpers package - ABQflow 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -332,6 +332,71 @@ Default <code class="docutils literal notranslate"><span class="pre">False</span
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ABQflow.helpers.convert.load_field">
+<span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">load_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcome</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numeric_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#load_field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.load_field" title="Link to this definition">¶</a></dt>
+<dd><p>Load a single named field from a <code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code>.</p>
+<p>Normalises inline values and sidecar CSV envelopes into a uniform
+<code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>.  This is the single-job entry point for consuming
+sidecar results; for batch consumption use <a class="reference internal" href="#ABQflow.helpers.convert.iter_fields" title="ABQflow.helpers.convert.iter_fields"><code class="xref py py-func docutils literal notranslate"><span class="pre">iter_fields()</span></code></a>.</p>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>outcome<span class="classifier">JobOutcome</span></dt><dd><p>Outcome from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
+</dd>
+<dt>result_name<span class="classifier">str</span></dt><dd><p>Key in <code class="docutils literal notranslate"><span class="pre">outcome.results</span></code> to load.</p>
+</dd>
+<dt>numeric_only<span class="classifier">bool</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), non-numeric CSV columns are dropped with a
+warning.  If <code class="docutils literal notranslate"><span class="pre">False</span></code>, return an object array preserving string
+columns (for callers that need label columns).</p>
+</dd>
+</dl>
+</section>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>numpy.ndarray or None</dt><dd><p><code class="docutils literal notranslate"><span class="pre">None</span></code> when the result is missing, the extraction failed, the
+sidecar file is gone, or the path is unsafe.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ABQflow.helpers.convert.iter_fields">
+<span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">iter_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'skip'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#iter_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.iter_fields" title="Link to this definition">¶</a></dt>
+<dd><p>Yield <code class="docutils literal notranslate"><span class="pre">(job_name,</span> <span class="pre">ndarray)</span></code> pairs for a named field across a batch.</p>
+<p>Outcomes are sorted by <code class="xref py py-func docutils literal notranslate"><span class="pre">_natural_key()</span></code> on <code class="docutils literal notranslate"><span class="pre">job_name</span></code> so the
+iteration order is deterministic and matches the row order of
+<a class="reference internal" href="#ABQflow.helpers.convert.degenerate_from_array" title="ABQflow.helpers.convert.degenerate_from_array"><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a> (row-order contract).</p>
+<section id="id5">
+<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
+</dd>
+<dt>result_name<span class="classifier">str</span></dt><dd><p>Key in <code class="docutils literal notranslate"><span class="pre">outcome.results</span></code> to load.</p>
+</dd>
+<dt>on_missing<span class="classifier">str</span></dt><dd><p>How to handle jobs where <a class="reference internal" href="#ABQflow.helpers.convert.load_field" title="ABQflow.helpers.convert.load_field"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_field()</span></code></a> returns <code class="docutils literal notranslate"><span class="pre">None</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'skip'</span></code> (default) — omit the job; a single summary warning
+lists all skipped job names at generator exit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code> — yield <code class="docutils literal notranslate"><span class="pre">(job_name,</span> <span class="pre">None)</span></code> so the caller can
+align rows with <a class="reference internal" href="#ABQflow.helpers.convert.degenerate_from_array" title="ABQflow.helpers.convert.degenerate_from_array"><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'raise'</span></code> — raise <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a> on the first missing field.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="yields">
+<h3>Yields<a class="headerlink" href="#yields" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>tuple[str, numpy.ndarray or None]</dt><dd><p><code class="docutils literal notranslate"><span class="pre">(job_name,</span> <span class="pre">ndarray)</span></code> pairs.  <code class="docutils literal notranslate"><span class="pre">ndarray</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> only when
+<code class="docutils literal notranslate"><span class="pre">on_missing='none'</span></code>.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ABQflow.helpers.convert.sanitize_job_name">
 <span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">sanitize_job_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">80</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#sanitize_job_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.sanitize_job_name" title="Link to this definition">¶</a></dt>
 <dd><p>Clean <em>name</em> so it is a valid Abaqus job name.</p>
@@ -358,8 +423,8 @@ result starts with a letter, and truncates to <em>max_len</em>.</p>
 <dd><p>Create N <code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code> objects from a list (or glob) of existing INP files.</p>
 <p>This is the batch-spec generator for the UC-03 “pre-existing INP batch”
 use case.  Each INP file becomes a spec with <code class="docutils literal notranslate"><span class="pre">kind='existing_inp'</span></code>.</p>
-<section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id6">
+<h3>Parameters<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <dl>
 <dt>inp_files<span class="classifier">list[str] or str</span></dt><dd><p>List of INP paths, or a glob pattern (e.g. <code class="docutils literal notranslate"><span class="pre">'./legacy/*.inp'</span></code>).</p>
 </dd>
@@ -378,15 +443,15 @@ non-preparation fields are copied.  The <code class="docutils literal notranslat
 </dd>
 </dl>
 </section>
-<section id="id4">
-<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Returns<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>list[JobSpec]</dt><dd><p>One spec per INP file, ready for <code class="xref py py-class docutils literal notranslate"><span class="pre">BatchAbaqusProcessor</span></code>.</p>
 </dd>
 </dl>
 </section>
-<section id="id5">
-<h3>Raises<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id8">
+<h3>Raises<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>ValueError</dt><dd><p>If glob expands to zero files, or if sanitised stem names collide.</p>
 </dd>
@@ -413,8 +478,8 @@ non-preparation fields are copied.  The <code class="docutils literal notranslat
 <dd><p>Create N <code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code> objects from an (N, D) parameter array.</p>
 <p>Each row of <em>samples_array</em> becomes a new spec via <a class="reference external" href="https://docs.python.org/3/library/copy.html#copy.deepcopy" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">copy.deepcopy()</span></code></a>
 of <em>base_spec</em>, so every spec owns independent mutable state.</p>
-<section id="id6">
-<h3>Parameters<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<section id="id9">
+<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>samples_array<span class="classifier">ndarray or Tensor</span></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">D)</span></code> parameter matrix.  Torch tensors are converted to
 NumPy internally.</p>
@@ -425,15 +490,15 @@ NumPy internally.</p>
 </dd>
 </dl>
 </section>
-<section id="id7">
-<h3>Returns<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>list[JobSpec]</dt><dd><p>N specs with zero-padded names (e.g. <code class="docutils literal notranslate"><span class="pre">job_0001</span></code>, <code class="docutils literal notranslate"><span class="pre">job_0002</span></code>).</p>
 </dd>
 </dl>
 </section>
-<section id="id8">
-<h3>Raises<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<section id="id11">
+<h3>Raises<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>ValueError</dt><dd><p>If the array column count does not match <code class="docutils literal notranslate"><span class="pre">len(param_names)</span></code>.</p>
 </dd>
@@ -453,8 +518,8 @@ NumPy internally.</p>
 <p>Outcomes are sorted by natural key on <code class="docutils literal notranslate"><span class="pre">job_name</span></code> so rows appear in
 the order the jobs were generated.  Jobs that are not <code class="docutils literal notranslate"><span class="pre">COMPLETED</span></code> are
 filled with <em>default_value</em> and trigger a warning.</p>
-<section id="id9">
-<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<section id="id12">
+<h3>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
 </dd>
@@ -467,8 +532,8 @@ encountered.</p>
 </dd>
 </dl>
 </section>
-<section id="id10">
-<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<section id="id13">
+<h3>Returns<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>np.ndarray</dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(len(outcomes),</span> <span class="pre">len(output_names))</span></code> float array.</p>
 </dd>
@@ -493,15 +558,15 @@ encountered.</p>
 <span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#outcomes_to_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.outcomes_to_list" title="Link to this definition">¶</a></dt>
 <dd><p>Convert a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> objects to a list of plain dicts.</p>
 <p>Convenience for callers that prefer the legacy list-of-dicts shape.</p>
-<section id="id11">
-<h3>Parameters<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<section id="id14">
+<h3>Parameters<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
 </dd>
 </dl>
 </section>
-<section id="id12">
-<h3>Returns<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<section id="id15">
+<h3>Returns<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>list[dict]</dt><dd><p>Each dict contains <code class="docutils literal notranslate"><span class="pre">'job_name'</span></code>, <code class="docutils literal notranslate"><span class="pre">'status'</span></code>, flattened results,
 and optionally <code class="docutils literal notranslate"><span class="pre">'error'</span></code>.</p>
@@ -522,23 +587,23 @@ and optionally <code class="docutils literal notranslate"><span class="pre">'err
 <dt class="sig sig-object py" id="ABQflow.helpers.convert.outcomes_to_dict">
 <span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#outcomes_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.outcomes_to_dict" title="Link to this definition">¶</a></dt>
 <dd><p>Convert a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> objects to a <code class="docutils literal notranslate"><span class="pre">{job_name:</span> <span class="pre">{...}}</span></code> dict.</p>
-<section id="id13">
-<h3>Parameters<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<section id="id16">
+<h3>Parameters<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
 </dd>
 </dl>
 </section>
-<section id="id14">
-<h3>Returns<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
+<section id="id17">
+<h3>Returns<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>dict[str, dict]</dt><dd><p>Each value dict contains <code class="docutils literal notranslate"><span class="pre">'status'</span></code>, flattened results, and
 optionally <code class="docutils literal notranslate"><span class="pre">'error'</span></code>.</p>
 </dd>
 </dl>
 </section>
-<section id="id15">
-<h3>Raises<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
+<section id="id18">
+<h3>Raises<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>ValueError</dt><dd><p>If two outcomes share the same <code class="docutils literal notranslate"><span class="pre">job_name</span></code>.</p>
 </dd>
@@ -620,6 +685,8 @@ optionally <code class="docutils literal notranslate"><span class="pre">'error'<
 <li><a class="reference internal" href="#module-ABQflow.helpers.convert">ABQflow.helpers.convert module</a><ul>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.is_sidecar"><code class="docutils literal notranslate"><span class="pre">is_sidecar()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.resolve_sidecar"><code class="docutils literal notranslate"><span class="pre">resolve_sidecar()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.helpers.convert.load_field"><code class="docutils literal notranslate"><span class="pre">load_field()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.helpers.convert.iter_fields"><code class="docutils literal notranslate"><span class="pre">iter_fields()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.sanitize_job_name"><code class="docutils literal notranslate"><span class="pre">sanitize_job_name()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.generate_from_inp_files"><code class="docutils literal notranslate"><span class="pre">generate_from_inp_files()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
@@ -640,7 +707,7 @@ optionally <code class="docutils literal notranslate"><span class="pre">'error'<
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8ee541af"></script>
+</div><script src="../_static/documentation_options.js?v=11a7d535"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

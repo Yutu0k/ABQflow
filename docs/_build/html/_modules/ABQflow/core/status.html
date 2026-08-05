@@ -4,8 +4,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.status - ABQflow 0.3.0 documentation</title>
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>ABQflow.core.status - ABQflow 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.3.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.3.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -249,7 +249,10 @@
 <span class="sd">or a terminal failure state.  Once a job enters a failure state no further</span>
 <span class="sd">state transitions are allowed.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
 
@@ -278,6 +281,9 @@
 <span class="sd">	SCRIPT_ERROR</span>
 <span class="sd">		Terminal failure — an unhandled exception occurred in a hook or</span>
 <span class="sd">		monolithic script.</span>
+<span class="sd">	SUBROUTINE_COMPILE_FAILED</span>
+<span class="sd">		Terminal failure — ``abaqus make`` (user subroutine compilation)</span>
+<span class="sd">		exited with an error.</span>
 <span class="sd">	UNKNOWN_ERROR</span>
 <span class="sd">		Terminal failure — an exception escaped the worker process.</span>
 <span class="sd">	UNKNOWN</span>
@@ -303,6 +309,7 @@
 	<span class="n">MONOLITHIC_SCRIPT_FAILED</span> <span class="o">=</span> <span class="s2">&quot;MONOLITHIC_SCRIPT_FAILED&quot;</span>
 	<span class="n">JSON_DECODE_ERROR</span> <span class="o">=</span> <span class="s2">&quot;JSON_DECODE_ERROR&quot;</span>
 	<span class="n">SCRIPT_ERROR</span> <span class="o">=</span> <span class="s2">&quot;SCRIPT_ERROR&quot;</span>
+	<span class="n">SUBROUTINE_COMPILE_FAILED</span> <span class="o">=</span> <span class="s2">&quot;SUBROUTINE_COMPILE_FAILED&quot;</span>
 	<span class="n">UNKNOWN_ERROR</span> <span class="o">=</span> <span class="s2">&quot;UNKNOWN_ERROR&quot;</span>
 
 	<span class="n">UNKNOWN</span> <span class="o">=</span> <span class="s2">&quot;UNKNOWN&quot;</span></div>
@@ -318,8 +325,41 @@
 	<span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span>
 	<span class="n">JobStatus</span><span class="o">.</span><span class="n">JSON_DECODE_ERROR</span><span class="p">,</span>
 	<span class="n">JobStatus</span><span class="o">.</span><span class="n">SCRIPT_ERROR</span><span class="p">,</span>
+	<span class="n">JobStatus</span><span class="o">.</span><span class="n">SUBROUTINE_COMPILE_FAILED</span><span class="p">,</span>
 	<span class="n">JobStatus</span><span class="o">.</span><span class="n">UNKNOWN_ERROR</span><span class="p">,</span>
 <span class="p">})</span>
+
+
+<div class="viewcode-block" id="PhaseRecord">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PhaseRecord">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseRecord</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">&quot;&quot;&quot;One phase&#39;s start/end/outcome — the unit of a job&#39;s phase history.</span>
+
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	phase : str</span>
+<span class="sd">		``&#39;compile&#39;`` | ``&#39;preparation&#39;`` | ``&#39;preflight&#39;`` |</span>
+<span class="sd">		``&#39;pre_extraction&#39;`` | ``&#39;simulation&#39;`` | ``&#39;post_extraction&#39;``.</span>
+<span class="sd">	status : str</span>
+<span class="sd">		Phase outcome string (e.g. ``&#39;RUNNING&#39;`` while open, then a</span>
+<span class="sd">		:class:`JobStatus` value or ``&#39;PASSED&#39;``/``&#39;COMPILED&#39;`` once closed).</span>
+<span class="sd">	started_at : float or None</span>
+<span class="sd">		``time.time()`` when the phase was opened.</span>
+<span class="sd">	ended_at : float or None</span>
+<span class="sd">		``time.time()`` when the phase was closed.</span>
+<span class="sd">	duration_s : float or None</span>
+<span class="sd">		``ended_at - started_at``, populated on close.</span>
+<span class="sd">	error : str or None</span>
+<span class="sd">		Error message if the phase failed.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">phase</span><span class="p">:</span> <span class="nb">str</span>
+	<span class="n">status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;RUNNING&#39;</span>
+	<span class="n">started_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">ended_at</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">duration_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
 
 
 <div class="viewcode-block" id="JobStatusManager">
@@ -327,11 +367,16 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">JobStatusManager</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">&quot;&quot;&quot;State machine for a single job with terminal-state protection.</span>
 
-<span class="sd">	The manager tracks one job through its lifecycle.  Calling</span>
-<span class="sd">	:meth:`record_preparation`, :meth:`record_simulation`, or</span>
+<span class="sd">	Calling :meth:`record_preparation`, :meth:`record_simulation`, or</span>
 <span class="sd">	:meth:`record_extraction` advances the state.  Once a terminal failure</span>
 <span class="sd">	state is reached, all subsequent transitions are silently ignored — the</span>
 <span class="sd">	first failure is the one that is kept.</span>
+
+<span class="sd">	The ``mark_*`` methods set the *live* in-progress status (``PREPARING``/</span>
+<span class="sd">	``SIMULATING``/``EXTRACTING``) and open a :class:`PhaseRecord`; the</span>
+<span class="sd">	paired ``record_*`` method closes it.  ``mark_*`` calls are optional —</span>
+<span class="sd">	callers that only care about the final outcome (as before) can skip them</span>
+<span class="sd">	and just call ``record_*`` directly.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -343,11 +388,23 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span><span class="p">:</span> <span class="n">JobStatus</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">CREATED</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_is_successful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_error_message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_phase_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PhaseRecord</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase_record</span><span class="p">:</span> <span class="n">PhaseRecord</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">error_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Read-only access to the first-failure error message.&quot;&quot;&quot;</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error_message</span>
+
+	<span class="nd">@property</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">current_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobStatus</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Read-only access to the *live* status (updated at phase start, not just at the end).&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span>
+
+	<span class="nd">@property</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">phase_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Closed phases so far, as plain dicts (picklable across process boundaries).&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="p">[</span><span class="n">asdict</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phase_history</span><span class="p">]</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_fail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Transition to a terminal failure state (first-failure-wins).</span>
@@ -368,9 +425,102 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">status</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_error_message</span> <span class="o">=</span> <span class="n">msg</span>
 
+	<span class="c1"># ---- phase open/close helpers ----</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_open_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase_record</span> <span class="o">=</span> <span class="n">PhaseRecord</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="n">phase_name</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;RUNNING&#39;</span><span class="p">,</span> <span class="n">started_at</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_close_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_phase_record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="n">rec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_phase_record</span>
+		<span class="n">rec</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status_value</span>
+		<span class="n">rec</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+		<span class="n">rec</span><span class="o">.</span><span class="n">ended_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+		<span class="n">rec</span><span class="o">.</span><span class="n">duration_s</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">ended_at</span> <span class="o">-</span> <span class="n">rec</span><span class="o">.</span><span class="n">started_at</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_phase_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase_record</span> <span class="o">=</span> <span class="kc">None</span>
+
+	<span class="c1"># ---- phase-start markers (IMP: fix dead PREPARING/SIMULATING/EXTRACTING states) ----</span>
+
+<div class="viewcode-block" id="JobStatusManager.mark_compiling">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_compiling">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mark_compiling</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Mark the start of subroutine compilation.&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">&#39;compile&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JobStatusManager.mark_preparing">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_preparing">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mark_preparing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Mark the start of the preparation phase.&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARING</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">&#39;preparation&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JobStatusManager.mark_preflight">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_preflight">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mark_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Mark the start of the preflight check.&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">&#39;preflight&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JobStatusManager.mark_simulating">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_simulating">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mark_simulating</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Mark the start of the solver run.&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATING</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">&#39;simulation&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JobStatusManager.mark_extracting">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_extracting">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">mark_extracting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;extraction&#39;</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Mark the start of an extraction phase.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		label : str</span>
+<span class="sd">			``&#39;pre_extraction&#39;`` or ``&#39;post_extraction&#39;`` — distinguishes</span>
+<span class="sd">			the two extraction phases in :attr:`phase_history`.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTING</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="n">label</span><span class="p">)</span></div>
+
+
+	<span class="c1"># ---- phase-end recorders ----</span>
+
+<div class="viewcode-block" id="JobStatusManager.record_compile">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_compile">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of user-subroutine compilation.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		success : bool</span>
+<span class="sd">			``True`` if ``abaqus make`` (or an equivalent compile step)</span>
+<span class="sd">			succeeded.</span>
+<span class="sd">		error : str or None</span>
+<span class="sd">			Error message on failure; a default is used if omitted.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="s1">&#39;COMPILED&#39;</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">msg</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Subroutine compilation failed.&quot;</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SUBROUTINE_COMPILE_FAILED</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SUBROUTINE_COMPILE_FAILED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="JobStatusManager.record_preparation">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preparation">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_preparation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_preparation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the preparation phase.</span>
 
 <span class="sd">		Parameters</span>
@@ -384,13 +534,16 @@
 			<span class="k">return</span>
 		<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARATION_SUCCESS</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARATION_SUCCESS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 		<span class="k">else</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARATION_FAILED</span><span class="p">,</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Preparation step failed.&quot;</span><span class="p">)</span></div>
+			<span class="n">msg</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Preparation step failed.&quot;</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARATION_FAILED</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREPARATION_FAILED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.record_preflight">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preflight">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the preflight phase (IMP-04).</span>
 
 <span class="sd">		Parameters</span>
@@ -403,12 +556,16 @@
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
 			<span class="k">return</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREFLIGHT_FAILED</span><span class="p">,</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Preflight check failed.&quot;</span><span class="p">)</span></div>
+			<span class="n">msg</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Preflight check failed.&quot;</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREFLIGHT_FAILED</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">PREFLIGHT_FAILED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="s1">&#39;PASSED&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.record_simulation">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_simulation">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">record_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">record_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record the outcome of the Abaqus solver run.</span>
 
 <span class="sd">		Parameters</span>
@@ -422,8 +579,11 @@
 			<span class="k">return</span>
 		<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATION_SUCCESS</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATION_SUCCESS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 		<span class="k">else</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATION_FAILED</span><span class="p">,</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Simulation step failed.&quot;</span><span class="p">)</span></div>
+			<span class="n">msg</span> <span class="o">=</span> <span class="n">error</span> <span class="ow">or</span> <span class="s2">&quot;Simulation step failed.&quot;</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATION_FAILED</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">SIMULATION_FAILED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.record_extraction">
@@ -431,15 +591,26 @@
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">&quot;&quot;&quot;Record extraction results; fails if any task returned ``None``.</span>
 
+<span class="sd">		On success this now sets :attr:`current_status` to</span>
+<span class="sd">		``JobStatus.EXTRACTION_SUCCESS`` (previously a no-op — the final</span>
+<span class="sd">		status reported by :meth:`get_final_status` is unaffected, since</span>
+<span class="sd">		``EXTRACTION_SUCCESS`` is not a terminal state).</span>
+
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
 <span class="sd">		results : dict</span>
 <span class="sd">			``{result_name: value}`` mapping.  Any ``None`` value triggers</span>
 <span class="sd">			``EXTRACTION_FAILED``.</span>
 <span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
+			<span class="k">return</span>
 		<span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTION_FAILED</span><span class="p">,</span>
-					<span class="s2">&quot;One or more extraction tasks failed.&quot;</span><span class="p">)</span></div>
+			<span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;One or more extraction tasks failed.&quot;</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_fail</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTION_FAILED</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTION_FAILED</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTION_SUCCESS</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_close_phase</span><span class="p">(</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">EXTRACTION_SUCCESS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.get_final_status">
@@ -497,7 +668,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=e4caa2eb"></script>
+</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

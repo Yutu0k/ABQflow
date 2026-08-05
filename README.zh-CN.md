@@ -6,7 +6,7 @@
 
 基于策略的批量化运行工作流，支持多类型批量脚本(包括基于修改inp类、基于直接生成cae/inp类)，实现容错、并行执行、资源感知调度等 —— 统一Abaqus CAE的批量仿真工作流
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  ![Version](https://img.shields.io/badge/version-v0.4.0-green.svg?style=flat-square) ![python](https://img.shields.io/badge/python-3.9+-blue.svg)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)  ![Version](https://img.shields.io/badge/version-v0.5.0-green.svg?style=flat-square) ![python](https://img.shields.io/badge/python-3.9+-blue.svg)
 <!-- ↑ version badge：发版时需手动同步（单一真相源：pyproject.toml） -->
 
 [English](../README.md) | 简体中文

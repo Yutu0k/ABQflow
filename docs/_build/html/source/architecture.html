@@ -5,8 +5,8 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="ABQflow" href="modules.html" /><link rel="prev" title="Getting Started" href="getting_started.html" />
 
-    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
-        <title>Architecture - ABQflow 0.4.0 documentation</title>
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>Architecture - ABQflow 0.5.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.4.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.4.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -255,7 +255,7 @@
         <article role="main" id="furo-main-content">
           <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
-<p>This page describes the design rationale and internals of ABQflow (v0.4.0).</p>
+<p>This page describes the design rationale and internals of ABQflow (v0.5.0).</p>
 <section id="design-principles">
 <h2>Design Principles<a class="headerlink" href="#design-principles" title="Link to this heading">¶</a></h2>
 <p><strong>Data + Service = Strategy</strong></p>
@@ -358,8 +358,12 @@ based on what the script needs:</p>
 </section>
 <section id="resource-planning">
 <h2>Resource Planning<a class="headerlink" href="#resource-planning" title="Link to this heading">¶</a></h2>
-<p>The framework automatically caps parallelism to avoid oversubscribing CPU cores
-or Abaqus license tokens.</p>
+<p>The framework automatically caps parallelism to avoid oversubscribing Abaqus
+license tokens, since a job that cannot obtain a license will simply fail to
+start. CPU cores are not hard-capped — small jobs rarely saturate a full
+core, so requesting more parallel jobs than physical cores support (CPU
+oversubscription) is allowed, but it is flagged with a warning so the
+allocation stays visible.</p>
 <p><strong>Abaqus license token formula</strong> (official): a job using <em>n</em> CPU cores consumes</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
@@ -371,10 +375,12 @@ or Abaqus license tokens.</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}P_{cpu}     &amp;= \lfloor (C - R) / c \rfloor \\
 P_{license} &amp;= \lfloor L / T(c) \rfloor \\
-P_{actual}  &amp;= \max(1, \min(P_{req}, P_{cpu}, P_{license}))\end{split}\]</div>
+P_{actual}  &amp;= \max(1, \min(P_{req}, P_{license}))\end{split}\]</div>
 </div>
 <p>where <em>C</em> = physical cores, <em>R</em> = reserved cores (default 1), <em>c</em> = cores per
-job, <em>L</em> = available tokens.</p>
+job, and <em>L</em> = available tokens. <span class="math notranslate nohighlight">\(P_{cpu}\)</span> is computed only to decide
+whether to emit the CPU-oversubscription warning — it no longer bounds
+<span class="math notranslate nohighlight">\(P_{actual}\)</span>.</p>
 <p>Use <a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> to compute this directly.</p>
 </section>
 <section id="fault-tolerance">
@@ -406,6 +412,14 @@ when Abaqus prints banner text or warnings to stdout.</p>
 <p>When sentinel markers are absent, the framework falls back to scanning from the
 <strong>end</strong> of stdout for the last complete JSON object (Abaqus banner precedes
 script output, so the last <code class="docutils literal notranslate"><span class="pre">{</span></code> is most likely the result).</p>
+<p><code class="docutils literal notranslate"><span class="pre">ABQflow.hookkit</span></code> (staged into the job’s working directory automatically)
+implements this protocol for hook scripts so authors never write sentinel
+markers or argparse plumbing by hand. It is single-file and stdlib-only —
+never imports <code class="docutils literal notranslate"><span class="pre">ABQflow</span></code>, <code class="docutils literal notranslate"><span class="pre">odbAccess</span></code>, <code class="docutils literal notranslate"><span class="pre">abaqus</span></code>, or <code class="docutils literal notranslate"><span class="pre">numpy</span></code> — so it
+runs unmodified under the Abaqus Python interpreter (Py2.7 or Py3). It also
+adds a field-output mode (<code class="docutils literal notranslate"><span class="pre">hookkit.field()</span></code>) that spills large result sets
+(&gt;10k rows or &gt;1MB) to a CSV sidecar instead of inlining them in the JSON
+payload, keeping stdout small for bulky field quantities.</p>
 </section>
 <section id="configuration-validation">
 <h2>Configuration Validation<a class="headerlink" href="#configuration-validation" title="Link to this heading">¶</a></h2>
@@ -536,7 +550,7 @@ auto-call them.  The default <code class="docutils literal notranslate"><span cl
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=8ee541af"></script>
+</div><script src="../_static/documentation_options.js?v=11a7d535"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
