@@ -6,21 +6,21 @@ JSON extraction, timeout-safe command execution, solver diagnostics, and a
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 import hashlib
 import json
+import logging
 import os
 import shutil
-import sys
-import time
-import uuid
 import subprocess
-import logging
+import sys
+import uuid
+from dataclasses import dataclass, field
 
-from .context import JobContext
-from .diagnostics import diagnose, apply_truth_table, SolverResult, SolverDiagnostics
-from .spec import SubroutineSpec
 from ..helpers.constant import RESULT_BEGIN, RESULT_END
+from .context import JobContext
+from .diagnostics import SolverDiagnostics, SolverResult, apply_truth_table, diagnose
+from .spec import SubroutineSpec
 
 # ---------------------------------------------------------------------------
 # Path to hookkit.py (staged into job output dir so hooks can import it)

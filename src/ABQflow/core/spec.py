@@ -5,9 +5,10 @@ in ``__post_init__`` so errors are caught before batch execution begins.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
+
 import copy
 import warnings
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -169,7 +170,7 @@ class JobSpec:
 			)
 
 	@classmethod
-	def from_dict(cls, d: dict) -> "JobSpec":
+	def from_dict(cls, d: dict) -> JobSpec:
 		"""Migration bridge: construct a :class:`JobSpec` from a legacy dict.
 
 		Deep-copies the input dict so the returned spec owns all of its

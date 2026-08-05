@@ -4,9 +4,10 @@ Tracks every job through its lifecycle, from ``CREATED`` to ``COMPLETED``
 or a terminal failure state.  Once a job enters a failure state no further
 state transitions are allowed.
 """
+from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 
 
@@ -226,7 +227,7 @@ class JobStatusManager:
 
 	# ---- phase-end recorders ----
 
-	def record_compile(self, success: bool, error: str = None):
+	def record_compile(self, success: bool, error: str | None = None):
 		"""Record the outcome of user-subroutine compilation.
 
 		Parameters
@@ -246,7 +247,7 @@ class JobStatusManager:
 			self._fail(JobStatus.SUBROUTINE_COMPILE_FAILED, msg)
 			self._close_phase(JobStatus.SUBROUTINE_COMPILE_FAILED.value, msg)
 
-	def record_preparation(self, success: bool, error: str = None):
+	def record_preparation(self, success: bool, error: str | None = None):
 		"""Record the outcome of the preparation phase.
 
 		Parameters
@@ -266,7 +267,7 @@ class JobStatusManager:
 			self._fail(JobStatus.PREPARATION_FAILED, msg)
 			self._close_phase(JobStatus.PREPARATION_FAILED.value, msg)
 
-	def record_preflight(self, success: bool, error: str = None):
+	def record_preflight(self, success: bool, error: str | None = None):
 		"""Record the outcome of the preflight phase (IMP-04).
 
 		Parameters
@@ -285,7 +286,7 @@ class JobStatusManager:
 		else:
 			self._close_phase('PASSED')
 
-	def record_simulation(self, success: bool, error: str = None):
+	def record_simulation(self, success: bool, error: str | None = None):
 		"""Record the outcome of the Abaqus solver run.
 
 		Parameters

@@ -11,24 +11,30 @@ JobOutcome
 """
 
 from __future__ import annotations
+
 import copy
 import logging
 import math
 import os
-import psutil
 import shutil
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
+import psutil
+from rich.progress import (
+	BarColumn,
+	Progress,
+	SpinnerColumn,
+	TextColumn,
+	TimeElapsedColumn,
+)
 
 from .context import JobContext
 from .registry import build_workflow
 from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
 from .spec import JobSpec
 from .status import JobStatus
-
 
 # ======================== IMP-05: dry-run data model ========================
 

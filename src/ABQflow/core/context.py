@@ -1,7 +1,7 @@
 """JobContext — frozen data contract that strategies read but cannot mutate."""
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)

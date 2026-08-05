@@ -6,6 +6,7 @@ entire batch-processing machinery.
 """
 
 from __future__ import annotations
+
 import copy
 import csv
 import glob as glob_module
@@ -16,7 +17,6 @@ import warnings
 import numpy as np
 
 from ..core.spec import JobSpec, PreparationSpec
-
 
 # ======================== IMP-06: sidecar CSV contract ========================
 

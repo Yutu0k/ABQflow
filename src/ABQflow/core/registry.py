@@ -7,9 +7,14 @@ framework code.
 
 from .spec import JobSpec
 from .strategies import (
-	JobWorkflowStrategy, ModularWorkflowStrategy, MonolithicWorkflowStrategy,
-	InpModifyStrategy, ModelGenerationStrategy, ExistingInpStrategy,
-	OdbExtractionStrategy, ModelPropertiesExtractionStrategy,
+	ExistingInpStrategy,
+	InpModifyStrategy,
+	JobWorkflowStrategy,
+	ModelGenerationStrategy,
+	ModelPropertiesExtractionStrategy,
+	ModularWorkflowStrategy,
+	MonolithicWorkflowStrategy,
+	OdbExtractionStrategy,
 	SubroutineCompileStrategy,
 )
 

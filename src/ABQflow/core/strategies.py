@@ -6,6 +6,7 @@ three injected arguments at call time: :class:`~abaqus_batch_pack.context.JobCon
 """
 
 from __future__ import annotations
+
 import json
 import logging
 import os
@@ -15,8 +16,8 @@ from dataclasses import asdict
 from typing import List
 
 from .context import JobContext
-from .runner import AbaqusRunner, extract_json
 from .diagnostics import SolverResult
+from .runner import AbaqusRunner, extract_json
 from .spec import HookSpec, SubroutineSpec
 from .status import JobStatus, JobStatusManager
 

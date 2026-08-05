@@ -6,9 +6,10 @@ marker, and harvests actionable error lines from .msg/.dat files.
 """
 
 from __future__ import annotations
+
 import os
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 
 # ---------------------------------------------------------------------------
 # Data models

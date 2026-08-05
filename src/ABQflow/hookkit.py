@@ -25,7 +25,6 @@ Usage (INP / mdb hook)::
 	hookkit.run(extract_one, source_arg='--inp_path')
 """
 
-from __future__ import print_function, division
 
 import argparse
 import io
@@ -72,7 +71,7 @@ def fail(name, reason):
 
 	instead of raising an exception — both produce ``None`` + log.
 	"""
-	log("Task '{0}' failed: {1}".format(name, reason))
+	log(f"Task '{name}' failed: {reason}")
 	return None
 
 
@@ -88,14 +87,14 @@ def emit(results):
 	_EMITTED = True
 	payload = json.dumps(results, default=str, indent=2)
 	sys.__stdout__.write(
-		"{0}\n{1}\n{2}\n".format(RESULT_BEGIN, payload, RESULT_END)
+		f"{RESULT_BEGIN}\n{payload}\n{RESULT_END}\n"
 	)
 	sys.__stdout__.flush()
 
 
 # ======================== context manager ========================
 
-class _Opened(object):
+class _Opened:
 	"""Context manager that calls ``obj.close()`` on exit.
 
 	Py2.7 compatible (no ``@contextlib.contextmanager`` generator).
@@ -162,9 +161,8 @@ def _write_csv(rows, columns, csv_path):
 		os.makedirs(parent)
 
 	with io.open(csv_path, 'w', encoding='utf-8', newline='') as f:
-		f.write(u','.join(str(c) for c in columns) + u'\n')
-		for row in rows:
-			f.write(u','.join(str(v) for v in row) + u'\n')
+		f.write(','.join(str(c) for c in columns) + '\n')
+		f.writelines(','.join(str(v) for v in row) + '\n' for row in rows)
 
 
 def _make_envelope(task, rows, columns, n_rows, n_cols):
@@ -175,17 +173,17 @@ def _make_envelope(task, rows, columns, n_rows, n_cols):
 	result_name = task['result_name']
 	job_name = task.get(_JOB_NAME_KEY, '')
 	if job_name:
-		file_name = '{0}_{1}.csv'.format(job_name, result_name)
+		file_name = f'{job_name}_{result_name}.csv'
 	else:
-		file_name = '{0}.csv'.format(result_name)
-		log("hookkit: --job_name not provided, envelope file named '{0}'".format(file_name))
+		file_name = f'{result_name}.csv'
+		log(f"hookkit: --job_name not provided, envelope file named '{file_name}'")
 
 	csv_path = os.path.join(os.getcwd(), file_name)
 
 	try:
 		_write_csv(rows, columns, csv_path)
 	except Exception as e:
-		log("hookkit: failed to write sidecar CSV '{0}': {1}".format(file_name, e))
+		log(f"hookkit: failed to write sidecar CSV '{file_name}': {e}")
 		return None
 
 	return {
@@ -272,10 +270,10 @@ def run(extract_fn, source_arg='--odb_path'):
 
 	# -- read tasks -----------------------------------------------------
 	try:
-		with io.open(tasks_json_path, 'r', encoding='utf-8') as f:
+		with open(tasks_json_path, 'r', encoding='utf-8') as f:
 			tasks = json.load(f)
 	except Exception as e:
-		log("Fatal: cannot read tasks_json '{0}': {1}".format(tasks_json_path, e))
+		log(f"Fatal: cannot read tasks_json '{tasks_json_path}': {e}")
 		sys.exit(1)
 
 	# -- process each task ----------------------------------------------
@@ -289,7 +287,7 @@ def run(extract_fn, source_arg='--odb_path'):
 			results[name] = value
 		except Exception as e:
 			results[name] = None
-			log("Task '{0}' failed: {1}".format(name, e))
+			log(f"Task '{name}' failed: {e}")
 
 	# -- emit -----------------------------------------------------------
 	emit(results)
