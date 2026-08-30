@@ -17,11 +17,11 @@ import logging
 import math
 import os
 import shutil
+import threading
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
-import psutil
 from rich.progress import (
 	BarColumn,
 	Progress,
@@ -30,11 +30,19 @@ from rich.progress import (
 	TimeElapsedColumn,
 )
 
+from .backends import make_backend
 from .context import JobContext
+from .hosts import HostSpec, assign_hosts, summarise_assignment, total_capacity
 from .registry import build_workflow
 from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
 from .spec import JobSpec
 from .status import JobStatus
+
+# Guards the clear-then-add sequence in _setup_logging.  Under
+# ProcessPoolExecutor each worker had its own logging registry and this was
+# safe by isolation; the remote path uses threads, which share one global
+# registry.  logging's own lock protects its dict, not our two-step update.
+_LOGGING_LOCK = threading.Lock()
 
 # ======================== IMP-05: dry-run data model ========================
 
@@ -95,6 +103,7 @@ class AbaqusCalculation:
 		abaqus_exe: str = 'abaqus',
 		timeout: float | None = None,
 		user_subroutine: str | None = None,
+		host: HostSpec | None = None,
 	):
 
 		self.job_name = job_name
@@ -104,6 +113,12 @@ class AbaqusCalculation:
 		self.abaqus_exe = abaqus_exe
 		self.timeout = timeout
 		self.user_subroutine = user_subroutine
+		# Which machine runs this job.  Deliberately per-calculation rather
+		# than per-batch: cpus_per_job and abaqus_exe are batch-level because
+		# they were never meant to vary per job, whereas the host *is*.
+		# Putting it here is what makes adding machines a change to
+		# assign_hosts alone.
+		self.host = host
 		self.logger: logging.Logger | None = None
 
 		# Build internals
@@ -146,35 +161,48 @@ class AbaqusCalculation:
 		"""
 		if self.logger is None:
 			self.logger = self._setup_logging()
-		self.logger.info(f"======== [AbaqusCalculation] Start Workflow ({phase}): {self.job_name} ========")
-		runner = AbaqusRunner(self.ctx, self.logger, timeout=self.timeout)
+		where = f" on {self.host.name}" if self.host and self.host.is_remote else ""
+		self.logger.info(f"======== [AbaqusCalculation] Start Workflow ({phase}){where}: {self.job_name} ========")
 
-		if phase == 'full':
-			results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
-		else:
-			method = getattr(self.workflow_strategy, f'{phase}_only', None)
-			if method is None:
-				raise NotImplementedError(
-					f"{type(self.workflow_strategy).__name__} does not support "
-					f"phase-separated execution ('{phase}_only' not implemented)."
-				)
-			outcome = method(self.ctx, runner, self.logger)
-			results = outcome[0]  # (results, status_manager) or (results, status_manager, stop)
+		backend = make_backend(self.host, logger=self.logger)
+		try:
+			runner = AbaqusRunner(self.ctx, self.logger, timeout=self.timeout,
+								backend=backend, host=self.host)
+
+			if phase == 'full':
+				results = self.workflow_strategy.execute(self.ctx, runner, self.logger)
+			else:
+				method = getattr(self.workflow_strategy, f'{phase}_only', None)
+				if method is None:
+					raise NotImplementedError(
+						f"{type(self.workflow_strategy).__name__} does not support "
+						f"phase-separated execution ('{phase}_only' not implemented)."
+					)
+				outcome = method(self.ctx, runner, self.logger)
+				results = outcome[0]  # (results, status_manager) or (results, status_manager, stop)
+		finally:
+			backend.close()
 
 		self.logger.info(f"======== [AbaqusCalculation] Workflow Finished ({phase}): {self.job_name} ========")
 		return results
 
 	def _setup_logging(self) -> logging.Logger:
-		logger = logging.getLogger(f"AbaqusCalculation_{self.job_name}")
-		if logger.hasHandlers():
-			logger.handlers.clear()
-		logger.setLevel(logging.INFO)
-		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-		file_handler = logging.FileHandler(self.ctx.exec_log_path, encoding='utf-8')
-		file_handler.setLevel(logging.DEBUG)
-		file_handler.setFormatter(formatter)
-		logger.addHandler(file_handler)
-		return logger
+		# Locked: the remote path runs workers as threads sharing one global
+		# logging registry, and clear-then-add is not atomic. Distinct job
+		# names give distinct loggers so a collision is unlikely, but "one
+		# job's lines land in another job's file" is exactly the sort of bug
+		# that surfaces weeks later.
+		with _LOGGING_LOCK:
+			logger = logging.getLogger(f"AbaqusCalculation_{self.job_name}")
+			if logger.hasHandlers():
+				logger.handlers.clear()
+			logger.setLevel(logging.INFO)
+			formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+			file_handler = logging.FileHandler(self.ctx.exec_log_path, encoding='utf-8')
+			file_handler.setLevel(logging.DEBUG)
+			file_handler.setFormatter(formatter)
+			logger.addHandler(file_handler)
+			return logger
 
 
 # ======================== JobOutcome (fix Q2-1, Q2-4) ========================
@@ -240,9 +268,28 @@ def solver_tokens(n_cpus: int) -> int:
 	return math.ceil(5 * n_cpus ** 0.422)
 
 
+def _physical_cores() -> int:
+	"""Physical core count, falling back when ``psutil`` is unavailable.
+
+	``psutil`` is an optional convenience here, not a hard requirement: the
+	fallback counts *logical* processors, which over-estimates on an SMT
+	machine.  That only ever widens an advisory warning — CPU count is not a
+	hard cap — so erring high is harmless.
+	"""
+	try:
+		import psutil
+		count = psutil.cpu_count(logical=False)
+		if count:
+			return count
+	except Exception:
+		pass
+	return os.cpu_count() or 1
+
+
 def plan_parallelism(requested: int, cpus_per_job: int,
 					license_tokens: int | None = None,
-					reserve_cores: int = 1) -> int:
+					reserve_cores: int = 1,
+					total_cores: int | None = None) -> int:
 	"""Compute the actual number of concurrent jobs given license limits.
 
 	License tokens (if provided) are a hard cap — Abaqus will refuse to start
@@ -261,13 +308,18 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 		Total license tokens available.  ``None`` means unconstrained.
 	reserve_cores : int
 		Cores to reserve for the OS and other processes (default 1).
+	total_cores : int or None
+		Physical cores on the machine that will *execute* the jobs.  ``None``
+		(the default) means this machine, preserving existing behaviour;
+		remote batches pass the target's core count so capacity is reasoned
+		about on the executing host rather than the submitting one.
 
 	Returns
 	-------
 	int
 		Feasible parallelism level (at least 1).
 	"""
-	total = psutil.cpu_count(logical=False)
+	total = total_cores if total_cores is not None else _physical_cores()
 	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
 	p = requested
 	if license_tokens is not None:
@@ -326,6 +378,22 @@ def _worker(calc: AbaqusCalculation, phase: str = 'full') -> JobOutcome:
 						duration_s=time.time() - started_at)
 
 
+def _gated_worker(calc: AbaqusCalculation, phase: str = 'full',
+				gate=None) -> JobOutcome:
+	"""Run *calc* while holding its machine's concurrency slot.
+
+	Thread-pool counterpart of :func:`_worker`.  The semaphore is what caps
+	each machine independently — a host with ``max_concurrent=1`` runs one
+	job at a time no matter how many were assigned to it, while a host with
+	``max_concurrent=2`` runs two.  It is held for the whole job and released
+	even on failure, so a broken machine cannot leak slots and stall the batch.
+	"""
+	if gate is None:
+		return _worker(calc, phase)
+	with gate:
+		return _worker(calc, phase)
+
+
 # ======================== BatchAbaqusProcessor ========================
 
 class BatchAbaqusProcessor:
@@ -358,6 +426,7 @@ class BatchAbaqusProcessor:
 		prompt_fn = input,
 		timeout: float | None = None,
 		preflight_only: bool = False,
+		hosts: list[HostSpec] | None = None,
 	):
 		"""
 		Parameters
@@ -385,9 +454,23 @@ class BatchAbaqusProcessor:
 		preflight_only : bool
 			If ``True``, only run preparation + preflight, skip solver &
 			extraction (IMP-04 batch inspection mode).
+		hosts : list[HostSpec] or None
+			Machines to distribute jobs over.  ``None`` (the default) runs
+			everything locally, exactly as before — the remote code path is
+			unreachable without this argument.
+
+			Jobs are spread by :func:`~ABQflow.core.hosts.assign_hosts` in
+			proportion to each machine's ``weight``; when a machine has no
+			explicit weight, its concurrency capacity is used instead.  How
+			many jobs each machine runs *at once* is a separate knob,
+			``HostSpec.max_concurrent``, enforced during execution — so a
+			batch can send two concurrent jobs to one machine and one to
+			another.
 		"""
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
+		self.hosts = list(hosts) if hosts else None
+		self._assignment: dict[str, HostSpec] = {}
 		self.abaqus_exe = abaqus_exe
 		self.duplicate_mode = duplicate_mode.lower()
 		self._prompt = prompt_fn
@@ -410,6 +493,34 @@ class BatchAbaqusProcessor:
 		self._log_path = os.path.join(self.base_output_dir, 'batch_processor.log')
 		self.logger = self._setup_logging()
 		self.calculations: list[AbaqusCalculation] | None = None
+
+		if self.hosts:
+			self._assignment = assign_hosts(
+				[s.job_name for s in self.specs], self.hosts, self.cpus_per_job)
+			for host_name, jobs in summarise_assignment(self._assignment).items():
+				self.logger.info("Host %s: %d job(s) — %s",
+								host_name, len(jobs), ', '.join(jobs))
+
+	def host_for(self, job_name: str) -> HostSpec | None:
+		"""Machine assigned to *job_name*; ``None`` when running locally."""
+		return self._assignment.get(job_name)
+
+	def assignment(self) -> dict[str, list[str]]:
+		"""``{host_name: [job_name, ...]}`` for the configured pool.
+
+		Useful before running: it shows how the batch will be spread without
+		executing anything.
+		"""
+		return summarise_assignment(self._assignment)
+
+	@staticmethod
+	def _hosts_in(calcs: list[AbaqusCalculation]) -> list[HostSpec]:
+		"""Unique hosts referenced by *calcs*, in first-seen order."""
+		seen: dict[str, HostSpec] = {}
+		for c in calcs:
+			if c.host is not None and c.host.name not in seen:
+				seen[c.host.name] = c.host
+		return list(seen.values())
 
 	def _setup_logging(self) -> logging.Logger:
 		logger = logging.getLogger('BatchAbaqusProcessor')
@@ -682,6 +793,7 @@ class BatchAbaqusProcessor:
 			abaqus_exe=self.abaqus_exe,
 			timeout=self.timeout,
 			user_subroutine=spec.subroutine.source_path if spec.subroutine else None,
+			host=self.host_for(spec.job_name),
 		)
 
 	# ---- prepare: apply decisions, build calculations ----
@@ -715,6 +827,11 @@ class BatchAbaqusProcessor:
 			elif decision not in ('run', None):
 				# decision is a new name
 				self.logger.info(f"  - Renaming: {spec.job_name} -> {decision}")
+				# Carry the host assignment across the rename, or the job
+				# would silently fall back to running locally.
+				assigned = self._assignment.get(spec.job_name)
+				if assigned is not None:
+					self._assignment[decision] = assigned
 				spec = copy.deepcopy(spec)
 				spec.job_name = decision
 
@@ -774,7 +891,29 @@ class BatchAbaqusProcessor:
 			One outcome per executed job.  Failed jobs are included with
 			their error state — they do not halt the batch.
 		"""
-		p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
+		remote = any(c.host is not None and c.host.is_remote for c in calcs)
+
+		if remote:
+			# Per-host semaphores are what let one machine take two jobs while
+			# another takes one: HostSpec.max_concurrent (or the capacity
+			# derived from its cores and tokens) caps each machine
+			# independently, and num_parallel_jobs is only the global ceiling.
+			gates = {
+				h.name: threading.Semaphore(h.capacity(self.cpus_per_job))
+				for h in self._hosts_in(calcs)
+			}
+			capacity = total_capacity(self._hosts_in(calcs), self.cpus_per_job)
+			p = max(1, min(num_parallel_jobs or capacity, capacity, len(calcs)))
+			self.logger.info(
+				"Remote batch: %d job(s) over %d machine(s); global cap %d, "
+				"per-host caps %s",
+				len(calcs), len(gates), p,
+				{h.name: h.capacity(self.cpus_per_job) for h in self._hosts_in(calcs)},
+			)
+		else:
+			gates = {}
+			p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
+
 		outcomes: list[JobOutcome] = []
 
 		progress_columns = [
@@ -786,10 +925,25 @@ class BatchAbaqusProcessor:
 			TimeElapsedColumn(),
 		]
 
+		# Threads for the remote path: its work is upload → launch → sleep →
+		# stat → download, all of which release the GIL, so processes would
+		# buy nothing while making connection reuse impossible — and a
+		# paramiko SSHClient cannot be pickled into a ProcessPoolExecutor
+		# anyway. Local execution keeps processes, unchanged.
+		executor_cls = ThreadPoolExecutor if remote else ProcessPoolExecutor
+		submit_fn = _gated_worker if remote else _worker
+
 		with Progress(*progress_columns) as progress, \
-			ProcessPoolExecutor(max_workers=p) as pool:
+			executor_cls(max_workers=p) as pool:
 			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
-			futures = {pool.submit(_worker, c, phase): c.job_name for c in calcs}
+			if remote:
+				futures = {
+					pool.submit(submit_fn, c, phase,
+								gates.get(c.host.name) if c.host else None): c.job_name
+					for c in calcs
+				}
+			else:
+				futures = {pool.submit(submit_fn, c, phase): c.job_name for c in calcs}
 
 			for fut in as_completed(futures):
 				try:

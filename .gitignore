@@ -6,6 +6,7 @@
 
 reference/
 prompt/
+experiments/
 
 __pycache__/
 *.pyc
