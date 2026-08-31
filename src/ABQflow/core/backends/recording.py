@@ -12,9 +12,11 @@ dry-run is useful to users for the same reason ``record_only`` is.
 from __future__ import annotations
 
 import fnmatch
+import json
 import os
 from dataclasses import replace
 
+from ...helpers.constant import RESULT_BEGIN, RESULT_END
 from ..context import JobContext
 from ..runner import CommandRecord
 from .base import ExecResult, ExecutionBackend, JobHandle
@@ -41,12 +43,14 @@ class RecordingBackend(ExecutionBackend):
 
 	def __init__(self, work_root: str | None = None,
 				poll_sequence: list[int | None] | None = None,
-				name: str = 'recording'):
+				name: str = 'recording',
+				hook_results: dict | None = None):
 		self.name = name
 		self.work_root = work_root
 		self.command_log: list[CommandRecord] = []
 		self.files: dict[str, bytes] = {}
 		self.fetched: list[tuple[str, str]] = []
+		self.hook_results = {} if hook_results is None else dict(hook_results)
 		self._poll_sequence = list(poll_sequence) if poll_sequence else [0]
 		self._poll_index = 0
 
@@ -60,8 +64,16 @@ class RecordingBackend(ExecutionBackend):
 	# ---- execution ----
 
 	def run(self, cmd: list[str], cwd: str, timeout: float | None = None) -> ExecResult:
+		"""Record *cmd* and answer with a well-formed hook payload.
+
+		Emitting the sentinel block rather than empty output is what lets this
+		backend drive :meth:`AbaqusRunner.run_hook` end to end — argument
+		mapping, interpreter selection, sidecar fetch ordering — without a
+		network.  Set ``hook_results`` to script the values it returns.
+		"""
 		self.command_log.append(CommandRecord('run', list(cmd), cwd))
-		return ExecResult(0, '', '')
+		payload = f"{RESULT_BEGIN}\n{json.dumps(self.hook_results)}\n{RESULT_END}\n"
+		return ExecResult(0, payload, '')
 
 	def submit_detached(self, cmd: list[str], cwd: str, job_name: str,
 						timeout: float | None = None) -> JobHandle:

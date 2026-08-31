@@ -28,6 +28,24 @@ import math
 from dataclasses import dataclass, field
 
 
+def physical_cores() -> int:
+	"""Physical core count of *this* machine, with a safe fallback.
+
+	``psutil`` is preferred; without it the count is of *logical* processors,
+	which over-estimates on an SMT machine.  Core count is only ever advisory
+	(licence tokens are the hard cap), so erring high is harmless.
+	"""
+	try:
+		import psutil
+		count = psutil.cpu_count(logical=False)
+		if count:
+			return count
+	except Exception:
+		pass
+	import os
+	return os.cpu_count() or 1
+
+
 def solver_tokens(n_cpus: int) -> int:
 	"""Estimate Abaqus license tokens needed for *n_cpus* cores.
 
@@ -61,11 +79,16 @@ class HostSpec:
 	port : int
 		SSH port.
 	abaqus_exe : str
-		**Absolute** path to ``abaqus.bat`` on this machine.  A bare
-		``'abaqus'`` frequently fails under a non-interactive SSH session,
-		which inherits machine- and user-level environment but not whatever a
-		login shell profile adds — and installers often put Abaqus on the
-		installing user's PATH only.
+		**Absolute** path to ``abaqus.bat`` on this machine.  Empty means
+		"inherit the batch default", which is what a local host normally
+		wants; a remote host must set it, and the constructor refuses one
+		that does not.
+
+		A bare ``'abaqus'`` frequently fails under a non-interactive SSH
+		session, which inherits machine- and user-level environment but not
+		whatever a login shell profile adds — and installers often put Abaqus
+		on the installing user's PATH only.  Failing at construction beats
+		discovering it after the batch has been dispatched.
 	work_root : str
 		Directory under which per-job working directories are created.
 	cpus_per_job : int or None
@@ -118,7 +141,7 @@ class HostSpec:
 	password: str | None = None
 	key_filename: str | None = None
 	port: int = 22
-	abaqus_exe: str = 'abaqus'
+	abaqus_exe: str = ''
 	work_root: str = ''
 	cpus_per_job: int | None = None
 	cpus_total: int | None = None
@@ -154,6 +177,32 @@ class HostSpec:
 				f"HostSpec {self.name!r} is remote but has no work_root — "
 				"per-job directories have nowhere to go"
 			)
+		if self.is_remote and not self.abaqus_exe:
+			raise ValueError(
+				f"HostSpec {self.name!r} is remote but has no abaqus_exe. "
+				"Give the absolute path to abaqus.bat on that machine: a "
+				"non-interactive SSH session does not inherit the installing "
+				"user's PATH, so a bare 'abaqus' usually fails there."
+			)
+
+	@classmethod
+	def local(cls, name: str = 'local', **kwargs) -> HostSpec:
+		"""This machine, as a pool member.
+
+		Mixing it with remote hosts lets a batch use the submitting machine's
+		spare capacity alongside the others::
+
+			hosts = [
+				HostSpec.local(max_concurrent=1),   # keep this machine usable
+				HostSpec(name='node01', hostname='NODE01', ...),
+			]
+
+		Everything a local host runs goes through :class:`LocalBackend`, so
+		it behaves exactly as a host-less batch does — no staging, no fetch,
+		no SSH.  ``cpus_total`` is measured if not given.
+		"""
+		kwargs.pop('hostname', None)
+		return cls(name=name, hostname=None, **kwargs)
 
 	@property
 	def is_remote(self) -> bool:
@@ -173,6 +222,14 @@ class HostSpec:
 		"""``cpus=`` for jobs on this machine, falling back to the batch value."""
 		return self.cpus_per_job if self.cpus_per_job else batch_default
 
+	def resolved_abaqus_exe(self, batch_default: str) -> str:
+		"""Abaqus command for this machine, falling back to the batch value.
+
+		A remote host always has its own (the constructor insists on it); a
+		local host normally inherits whatever the batch was configured with.
+		"""
+		return self.abaqus_exe or batch_default
+
 	def capacity(self, batch_cpus_per_job: int = 1) -> int:
 		"""How many jobs may run here at once.
 
@@ -188,9 +245,17 @@ class HostSpec:
 			return self.max_concurrent
 
 		cpus = self.resolved_cpus(batch_cpus_per_job)
+
+		# For this machine the core count is knowable, so an unset cpus_total
+		# is measured rather than assumed — otherwise the local host would
+		# fall back to a capacity of 1 and be starved next to the remotes.
+		total = self.cpus_total
+		if total is None and not self.is_remote:
+			total = physical_cores()
+
 		by_cores = 1
-		if self.cpus_total:
-			by_cores = max(1, (self.cpus_total - self.reserve_cores) // max(1, cpus))
+		if total:
+			by_cores = max(1, (total - self.reserve_cores) // max(1, cpus))
 
 		if self.license_tokens is None:
 			return by_cores

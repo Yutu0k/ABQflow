@@ -27,9 +27,10 @@ from ABQflow.core.hosts import (
 
 
 def _remote(name, **kw):
-	"""A valid remote host; work_root is mandatory for those."""
+	"""A valid remote host; work_root and abaqus_exe are mandatory for those."""
 	kw.setdefault('hostname', f'{name}.example')
 	kw.setdefault('work_root', r'D:\abqwork')
+	kw.setdefault('abaqus_exe', r'C:\SIMULIA\Commands\abaqus.bat')
 	return HostSpec(name=name, **kw)
 
 
@@ -124,7 +125,30 @@ def test_weight_and_max_concurrent_are_independent():
 
 def test_remote_host_requires_work_root():
 	with pytest.raises(ValueError, match='work_root'):
-		HostSpec(name='a', hostname='a.example')
+		HostSpec(name='a', hostname='a.example',
+				abaqus_exe=r'C:\SIMULIA\Commands\abaqus.bat')
+
+
+def test_remote_host_requires_an_explicit_abaqus_exe():
+	"""Caught at construction, not after the batch has been dispatched.
+
+	A bare 'abaqus' usually fails under a non-interactive SSH session, so
+	silently defaulting to it would trade a clear config error for an opaque
+	runtime one.
+	"""
+	with pytest.raises(ValueError, match='abaqus_exe'):
+		HostSpec(name='a', hostname='a.example', work_root=r'D:\w')
+
+
+def test_local_host_inherits_the_batch_abaqus_exe():
+	host = HostSpec.local()
+	assert host.abaqus_exe == ''
+	assert host.resolved_abaqus_exe(r'C:\local\abaqus.bat') == r'C:\local\abaqus.bat'
+
+
+def test_local_host_can_override_the_batch_abaqus_exe():
+	host = HostSpec.local(abaqus_exe=r'D:\other\abaqus.bat')
+	assert host.resolved_abaqus_exe(r'C:\local\abaqus.bat') == r'D:\other\abaqus.bat'
 
 
 def test_local_host_needs_no_work_root():
@@ -214,6 +238,94 @@ def test_rejects_duplicate_host_names():
 def test_total_capacity_sums_hosts():
 	hosts = [_remote('a', max_concurrent=2), _remote('b', max_concurrent=1)]
 	assert total_capacity(hosts) == 3
+
+
+# ============================================================
+# mixed local + remote pools
+# ============================================================
+
+def test_local_host_is_not_remote():
+	assert HostSpec.local().is_remote is False
+
+
+def test_local_host_needs_no_connection_fields():
+	"""It runs here, so there is nothing to connect to or stage into."""
+	host = HostSpec.local(max_concurrent=2)
+	assert host.hostname is None and host.work_root == ''
+	assert host.capacity() == 2
+
+
+def test_local_host_measures_its_own_cores_when_unset():
+	"""Without this a local host would fall back to capacity 1 and be
+	starved next to the remotes it shares a pool with."""
+	from ABQflow.core.hosts import physical_cores
+
+	host = HostSpec.local(cpus_per_job=1)
+	expected = max(1, physical_cores() - 1)
+	assert host.capacity() == expected
+	assert host.capacity() > 1 or physical_cores() <= 2
+
+
+def test_local_host_honours_an_explicit_cpus_total():
+	assert HostSpec.local(cpus_total=8, cpus_per_job=2).capacity() == (8 - 1) // 2
+
+
+def test_local_classmethod_ignores_a_hostname_argument():
+	"""HostSpec.local() must never accidentally become remote."""
+	assert HostSpec.local(hostname='somewhere').is_remote is False
+
+
+def test_mixed_pool_assigns_to_both():
+	local = HostSpec.local(max_concurrent=1)
+	remote = _remote('node01', max_concurrent=4)
+	grouped = summarise_assignment(
+		assign_hosts([f'j{i}' for i in range(10)], [local, remote]))
+	assert set(grouped) == {'local', 'node01'}
+	assert len(grouped['node01']) > len(grouped['local'])
+
+
+def test_mixed_pool_respects_an_explicit_local_weight():
+	"""Keeping this machine mostly free is a weight, not a concurrency cap."""
+	local = HostSpec.local(max_concurrent=2, weight=0.5)
+	remote = _remote('node01', max_concurrent=2, weight=10.0)
+	grouped = summarise_assignment(
+		assign_hosts([f'j{i:02d}' for i in range(21)], [local, remote]))
+	assert len(grouped['local']) == 1
+	assert len(grouped['node01']) == 20
+
+
+def test_mixed_pool_total_capacity_includes_the_local_machine():
+	hosts = [HostSpec.local(max_concurrent=1), _remote('node01', max_concurrent=3)]
+	assert total_capacity(hosts) == 4
+
+
+def test_local_host_in_a_pool_gets_a_local_backend():
+	from ABQflow.core.backends import LocalBackend, make_backend
+
+	backend = make_backend(HostSpec.local(name='mybox'))
+	assert isinstance(backend, LocalBackend)
+	assert backend.is_remote is False, "a local host must not stage or fetch"
+	assert backend.name == 'mybox'
+
+
+def test_local_host_cpus_override_reaches_the_context():
+	"""A mixed pool may want a different job width on this machine."""
+	from ABQflow.core.backends import make_backend
+	from ABQflow.core.context import JobContext
+
+	backend = make_backend(HostSpec.local(cpus_per_job=6))
+	mapped = backend.map_context(
+		JobContext(job_name='j', output_dir='out', cpus=2))
+	assert mapped.cpus == 6
+	assert mapped.output_dir == 'out', "a local host runs in place"
+
+
+def test_plain_local_backend_still_returns_the_same_context():
+	from ABQflow.core.backends import LocalBackend
+	from ABQflow.core.context import JobContext
+
+	ctx = JobContext(job_name='j', output_dir='out', cpus=2)
+	assert LocalBackend().map_context(ctx) is ctx
 
 
 def test_job_dir_is_under_work_root():

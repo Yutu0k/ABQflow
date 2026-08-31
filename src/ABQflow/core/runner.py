@@ -135,6 +135,7 @@ class AbaqusRunner:
 			backend = make_backend(host, logger=logger)
 		self.host = host
 		self.backend = backend
+		self._local_backend = None
 
 		# Context as seen by the executing machine.  Identical to ``ctx`` for
 		# LocalBackend; rewritten to the remote job directory (and that
@@ -162,10 +163,28 @@ class AbaqusRunner:
 		return self.backend.exists(mapped)
 
 	def _remote_path(self, local_path: str) -> str:
-		"""Map a path under the local job dir onto the executing machine."""
-		if not self.is_remote:
+		"""Map a path under the local job dir onto the executing machine.
+
+		Paths outside the job directory are returned unchanged: they are not
+		ours to rewrite, and guessing would be worse than leaving them alone.
+		"""
+		if not self.is_remote or not local_path:
 			return local_path
 		return local_path.replace(self.ctx.output_dir, self.exec_ctx.output_dir)
+
+	@property
+	def local_backend(self):
+		"""A backend that always runs on **this** machine.
+
+		Preparation happens locally by design — the INP is built here and then
+		shipped — so preparation commands must not be routed to the remote
+		backend, whose ``abaqus_exe`` and paths belong to a different machine.
+		"""
+		if self._local_backend is None:
+			from .backends import LocalBackend
+			self._local_backend = (self.backend if not self.is_remote
+								else LocalBackend())
+		return self._local_backend
 
 	def stage_inputs(self) -> bool | None:
 		"""Upload everything the solver needs onto the executing machine.
@@ -824,10 +843,20 @@ class AbaqusRunner:
 				self.backend.put(script_path, exec_script)
 				self.backend.put(tmp, exec_tasks)
 
-			cmd = self.build_script_command(exec_script, needs_cae_kernel,
-											self.exec_ctx.abaqus_exe, self._has_abqpy)
+			# abqpy is only consulted for local execution: whether *this*
+			# machine has it says nothing about the remote one, whose hooks
+			# must go through its own `abaqus python` / `abaqus cae`.
+			cmd = self.build_script_command(
+				exec_script, needs_cae_kernel, self.exec_ctx.abaqus_exe,
+				self._has_abqpy and not self.is_remote)
+
+			# common_args carry artifact paths (--odb_path, --inp_path). They
+			# arrive as *local* paths, and a hook running on another machine
+			# cannot open those — it fails per task, hookkit turns each into
+			# None, and the job reports EXTRACTION_FAILED with nothing in the
+			# log to say why. Map them onto the executing machine.
 			for k, v in common_args.items():
-				cmd += [k, str(v)]
+				cmd += [k, self._remote_path(str(v))]
 			cmd += ['--job_name', self.ctx.job_name]
 			cmd += ['--tasks_json', exec_tasks]
 
@@ -836,6 +865,21 @@ class AbaqusRunner:
 				return {t['result_name']: None for t in tasks}
 
 			results = extract_json(proc.stdout)
+
+			# A hook that fails per task still exits 0 and still emits valid
+			# sentinel JSON — hookkit turns each failure into None and a
+			# stderr line. Without surfacing that stderr, an all-None result
+			# leaves nothing in the log to explain itself, which is exactly
+			# how a wrong --odb_path looked like an unexplained
+			# EXTRACTION_FAILED.
+			failed = [name for name, value in results.items() if value is None]
+			if failed:
+				stderr = (getattr(proc, 'stderr', '') or '').strip()
+				self.logger.warning(
+					"Hook '%s' returned None for %s. Hook stderr:\n%s",
+					os.path.basename(script_path), ', '.join(failed),
+					stderr[-2000:] if stderr else '<empty>',
+				)
 
 			# Fetch sidecar CSVs BEFORE validating them.  _validate_envelope
 			# checks the file exists, so validating first would turn every
@@ -857,7 +901,8 @@ class AbaqusRunner:
 				# os.remove(tmp)
 				pass
 
-	def _run(self, cmd: list[str], cwd: str | None = None, stage: str = 'hook'):
+	def _run(self, cmd: list[str], cwd: str | None = None, stage: str = 'hook',
+			on_local: bool | None = None):
 		"""Execute *cmd* via ``subprocess.run``, capturing all output.
 
 		This is the single subprocess entry point every strategy should use
@@ -884,7 +929,14 @@ class AbaqusRunner:
 		subprocess.CompletedProcess or None
 			Completed process on success, ``None`` on timeout or non-zero exit.
 		"""
-		work_dir = cwd or self.exec_ctx.output_dir
+		# Preparation runs on this machine by design: the INP is generated
+		# here and then shipped, so a preparation command must not be routed
+		# to a remote backend — its abaqus_exe and paths belong elsewhere.
+		if on_local is None:
+			on_local = (stage == 'preparation')
+		backend = self.local_backend if on_local else self.backend
+		work_dir = cwd or (self.ctx.output_dir if on_local
+						else self.exec_ctx.output_dir)
 
 		if self.record_only:
 			self.command_log.append(CommandRecord(stage, cmd, work_dir))
@@ -897,7 +949,7 @@ class AbaqusRunner:
 				stdout = '{}'
 			return _FakeProc()
 
-		res = self.backend.run(cmd, work_dir, timeout=self.timeout)
+		res = backend.run(cmd, work_dir, timeout=self.timeout)
 
 		if res.returncode is None:
 			self.logger.error(f"Timeout ({self.timeout}s): {' '.join(cmd)}\n{res.stderr}")

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import threading
 import time
 
@@ -142,7 +143,7 @@ def test_stage_inputs_is_a_noop_locally(ctx, logger):
 # ============================================================
 
 def test_fetch_results_pulls_small_files_and_leaves_the_odb(ctx, logger, tmp_path):
-	host = HostSpec(name='n1', hostname='h', work_root=r'D:\w')
+	host = HostSpec(name='n1', hostname='h', work_root=r'D:\w', abaqus_exe=r'C:\abq\abaqus.bat')
 	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
 	runner = AbaqusRunner(ctx, logger, backend=backend, host=host)
 
@@ -155,7 +156,7 @@ def test_fetch_results_pulls_small_files_and_leaves_the_odb(ctx, logger, tmp_pat
 
 
 def test_fetch_odb_when_the_host_asks_for_it(ctx, logger, tmp_path):
-	host = HostSpec(name='n1', hostname='h', work_root=r'D:\w', fetch_odb=True)
+	host = HostSpec(name='n1', hostname='h', work_root=r'D:\w', abaqus_exe=r'C:\abq\abaqus.bat', fetch_odb=True)
 	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
 	runner = AbaqusRunner(ctx, logger, backend=backend, host=host)
 	backend.put_text('x', f'{runner.exec_ctx.output_dir}\\j1.odb')
@@ -200,7 +201,7 @@ def test_full_staging_round_trip_on_a_real_filesystem(ctx, logger, tmp_path):
 	This is where path-joining and fetch-glob bugs actually surface.
 	"""
 	stage_root = tmp_path / 'stage'
-	host = HostSpec(name='fake', hostname='h', work_root=str(stage_root))
+	host = HostSpec(name='fake', hostname='h', work_root=str(stage_root), abaqus_exe=r'C:\abq\abaqus.bat')
 	backend = LocalBackend(work_root=str(stage_root))
 	runner = AbaqusRunner(ctx, logger, backend=backend, host=host)
 
@@ -225,6 +226,112 @@ def test_full_staging_round_trip_on_a_real_filesystem(ctx, logger, tmp_path):
 	# The unchanged diagnostics module reads the staged-back files.
 	from ABQflow.core.diagnostics import diagnose
 	assert diagnose('j1', ctx.output_dir).sta_verdict == 'COMPLETED'
+
+
+# ============================================================
+# hook argument mapping and interpreter choice
+# ============================================================
+
+def test_hook_common_args_are_mapped_to_the_executing_machine(ctx, logger, tmp_path):
+	"""``--odb_path`` must name the artifact where the hook can actually see it.
+
+	Passing the local path made the remote hook fail to open the ODB.  hookkit
+	turns each task failure into ``None`` and still exits 0, so the job
+	reported EXTRACTION_FAILED with nothing in the log explaining it.
+	"""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	script = tmp_path / 'hook.py'
+	script.write_text('print("x")\n')
+	runner.run_hook(str(script), [{'result_name': 'r'}],
+					{'--odb_path': ctx.odb_path}, needs_cae_kernel=False)
+
+	cmd = backend.commands('hook')[0] if backend.commands('hook') else backend.commands('run')[0]
+	odb_arg = cmd[cmd.index('--odb_path') + 1]
+	assert odb_arg.startswith(runner.exec_ctx.output_dir)
+	assert not odb_arg.startswith(ctx.output_dir)
+
+
+def test_hook_args_outside_the_job_dir_are_left_alone(ctx, logger, tmp_path):
+	"""Only paths we own get rewritten; anything else is not ours to guess at."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner._remote_path(r'D:\shared\reference.csv') == r'D:\shared\reference.csv'
+
+
+def test_remote_hooks_never_use_a_bare_python(ctx, logger, tmp_path):
+	"""abqpy on *this* machine says nothing about the remote one.
+
+	If the local environment had abqpy, build_script_command would otherwise
+	pick ``python <script>`` — which on the far machine is the system Python,
+	with no odbAccess.
+	"""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	runner._has_abqpy = True                      # pretend it is installed here
+
+	script = tmp_path / 'hook.py'
+	script.write_text('print("x")\n')
+	runner.run_hook(str(script), [{'result_name': 'r'}],
+					{'--odb_path': ctx.odb_path}, needs_cae_kernel=False)
+
+	cmd = (backend.commands('hook') or backend.commands('run'))[0]
+	assert cmd[0] == runner.exec_ctx.abaqus_exe
+	assert cmd[1] == 'python', "must go through the remote machine's abaqus python"
+
+
+def test_cae_kernel_hook_uses_the_remote_abaqus_cae(ctx, logger, tmp_path):
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	script = tmp_path / 'hook.py'
+	script.write_text('print("x")\n')
+	runner.run_hook(str(script), [{'result_name': 'r'}],
+					{'--inp_path': ctx.inp_path}, needs_cae_kernel=True)
+
+	cmd = (backend.commands('hook') or backend.commands('run'))[0]
+	assert cmd[0] == runner.exec_ctx.abaqus_exe
+	assert cmd[1] == 'cae' and cmd[2].startswith('noGUI=')
+
+
+# ============================================================
+# preparation stays on this machine
+# ============================================================
+
+def test_preparation_commands_run_locally(ctx, logger, tmp_path):
+	"""INP generation happens here, then the finished deck is shipped.
+
+	Routing a preparation command to the remote backend would run this
+	machine's abaqus_exe path over there, where it does not exist.
+	"""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	runner._run([sys.executable, '-c', 'pass'], stage='preparation')
+	assert backend.command_log == [], "preparation must not touch the remote backend"
+
+
+def test_hook_commands_still_run_remotely(ctx, logger, tmp_path):
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	runner._run(['abaqus', 'python', 'x.py'], stage='hook')
+	assert len(backend.command_log) == 1
+
+
+def test_on_local_can_be_forced_either_way(ctx, logger, tmp_path):
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	runner._run(['abaqus', 'x'], stage='preparation', on_local=False)
+	assert len(backend.command_log) == 1, "explicit on_local=False must win"
+
+
+def test_local_runner_has_no_separate_local_backend(ctx, logger):
+	"""Running locally, the two are the same object — no extra indirection."""
+	runner = AbaqusRunner(ctx, logger)
+	assert runner.local_backend is runner.backend
 
 
 # ============================================================

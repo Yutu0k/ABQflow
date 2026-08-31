@@ -32,7 +32,13 @@ from rich.progress import (
 
 from .backends import make_backend
 from .context import JobContext
-from .hosts import HostSpec, assign_hosts, summarise_assignment, total_capacity
+from .hosts import (
+	HostSpec,
+	assign_hosts,
+	physical_cores,
+	summarise_assignment,
+	total_capacity,
+)
 from .registry import build_workflow
 from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
 from .spec import JobSpec
@@ -161,7 +167,7 @@ class AbaqusCalculation:
 		"""
 		if self.logger is None:
 			self.logger = self._setup_logging()
-		where = f" on {self.host.name}" if self.host and self.host.is_remote else ""
+		where = f" on {self.host.name}" if self.host else ""
 		self.logger.info(f"======== [AbaqusCalculation] Start Workflow ({phase}){where}: {self.job_name} ========")
 
 		backend = make_backend(self.host, logger=self.logger)
@@ -268,24 +274,6 @@ def solver_tokens(n_cpus: int) -> int:
 	return math.ceil(5 * n_cpus ** 0.422)
 
 
-def _physical_cores() -> int:
-	"""Physical core count, falling back when ``psutil`` is unavailable.
-
-	``psutil`` is an optional convenience here, not a hard requirement: the
-	fallback counts *logical* processors, which over-estimates on an SMT
-	machine.  That only ever widens an advisory warning — CPU count is not a
-	hard cap — so erring high is harmless.
-	"""
-	try:
-		import psutil
-		count = psutil.cpu_count(logical=False)
-		if count:
-			return count
-	except Exception:
-		pass
-	return os.cpu_count() or 1
-
-
 def plan_parallelism(requested: int, cpus_per_job: int,
 					license_tokens: int | None = None,
 					reserve_cores: int = 1,
@@ -319,7 +307,7 @@ def plan_parallelism(requested: int, cpus_per_job: int,
 	int
 		Feasible parallelism level (at least 1).
 	"""
-	total = total_cores if total_cores is not None else _physical_cores()
+	total = total_cores if total_cores is not None else physical_cores()
 	p_cpu = max(1, (total - reserve_cores) // cpus_per_job)
 	p = requested
 	if license_tokens is not None:
@@ -891,24 +879,29 @@ class BatchAbaqusProcessor:
 			One outcome per executed job.  Failed jobs are included with
 			their error state — they do not halt the batch.
 		"""
-		remote = any(c.host is not None and c.host.is_remote for c in calcs)
+		# A pool is in play as soon as any job names a host — including a
+		# purely local one.  The pool scheduler is what enforces per-host
+		# concurrency, so it must run for a mixed local+remote batch too.
+		pool_hosts = self._hosts_in(calcs)
+		pooled = bool(pool_hosts)
 
-		if remote:
+		if pooled:
 			# Per-host semaphores are what let one machine take two jobs while
 			# another takes one: HostSpec.max_concurrent (or the capacity
 			# derived from its cores and tokens) caps each machine
 			# independently, and num_parallel_jobs is only the global ceiling.
 			gates = {
 				h.name: threading.Semaphore(h.capacity(self.cpus_per_job))
-				for h in self._hosts_in(calcs)
+				for h in pool_hosts
 			}
-			capacity = total_capacity(self._hosts_in(calcs), self.cpus_per_job)
+			capacity = total_capacity(pool_hosts, self.cpus_per_job)
 			p = max(1, min(num_parallel_jobs or capacity, capacity, len(calcs)))
+			n_remote = sum(1 for h in pool_hosts if h.is_remote)
 			self.logger.info(
-				"Remote batch: %d job(s) over %d machine(s); global cap %d, "
-				"per-host caps %s",
-				len(calcs), len(gates), p,
-				{h.name: h.capacity(self.cpus_per_job) for h in self._hosts_in(calcs)},
+				"Pooled batch: %d job(s) over %d machine(s) (%d remote, %d local); "
+				"global cap %d, per-host caps %s",
+				len(calcs), len(pool_hosts), n_remote, len(pool_hosts) - n_remote, p,
+				{h.name: h.capacity(self.cpus_per_job) for h in pool_hosts},
 			)
 		else:
 			gates = {}
@@ -925,18 +918,21 @@ class BatchAbaqusProcessor:
 			TimeElapsedColumn(),
 		]
 
-		# Threads for the remote path: its work is upload → launch → sleep →
-		# stat → download, all of which release the GIL, so processes would
-		# buy nothing while making connection reuse impossible — and a
-		# paramiko SSHClient cannot be pickled into a ProcessPoolExecutor
-		# anyway. Local execution keeps processes, unchanged.
-		executor_cls = ThreadPoolExecutor if remote else ProcessPoolExecutor
-		submit_fn = _gated_worker if remote else _worker
+		# Threads for a pooled batch.  Remote work is upload → launch → sleep
+		# → stat → download and local work is Popen.wait(); both release the
+		# GIL for their whole duration, so the solver processes run in
+		# parallel regardless.  Processes would buy nothing here, would make
+		# SSH connection reuse impossible, and cannot carry a paramiko client
+		# across the boundary at all — while the semaphores that enforce
+		# per-host limits only work inside one process.  A host-less batch
+		# keeps ProcessPoolExecutor, unchanged.
+		executor_cls = ThreadPoolExecutor if pooled else ProcessPoolExecutor
+		submit_fn = _gated_worker if pooled else _worker
 
 		with Progress(*progress_columns) as progress, \
 			executor_cls(max_workers=p) as pool:
 			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
-			if remote:
+			if pooled:
 				futures = {
 					pool.submit(submit_fn, c, phase,
 								gates.get(c.host.name) if c.host else None): c.job_name

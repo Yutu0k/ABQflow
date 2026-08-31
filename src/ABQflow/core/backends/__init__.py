@@ -35,8 +35,11 @@ def make_backend(host=None, logger=None) -> ExecutionBackend:
 	logger : logging.Logger or None
 		Forwarded to remote backends for connection logging.
 	"""
-	if host is None or not getattr(host, 'hostname', None):
+	if host is None:
 		return LocalBackend()
+	if not getattr(host, 'hostname', None):
+		# A local HostSpec: still a pool member, but everything runs here.
+		return LocalBackend(host=host)
 
 	from .ssh import SshBackend       # lazy: pulls in paramiko
 	return SshBackend(host, logger=logger)

@@ -39,8 +39,11 @@ class LocalBackend(ExecutionBackend):
 	name = 'local'
 	is_remote = False
 
-	def __init__(self, work_root: str | None = None):
+	def __init__(self, work_root: str | None = None, host=None):
 		self.work_root = work_root
+		self.host = host
+		if host is not None and getattr(host, 'name', None):
+			self.name = host.name
 		# ``is_remote`` means "commands run against a different directory tree,
 		# so inputs must be staged there and results fetched back" — not
 		# literally "another machine".  A LocalBackend with a work_root needs
@@ -52,14 +55,30 @@ class LocalBackend(ExecutionBackend):
 	# ---- context mapping ----
 
 	def map_context(self, ctx: JobContext) -> JobContext:
-		if not self.work_root:
+		"""Apply this host's overrides; otherwise hand *ctx* straight back.
+
+		A plain ``LocalBackend()`` returns the identical object, so a
+		host-less batch is byte-for-byte the behaviour it always had.  A
+		local :class:`HostSpec` may still override ``cpus_per_job``, which is
+		what lets a mixed pool give this machine a different job width from
+		the remote ones.
+		"""
+		cpus, exe = ctx.cpus, ctx.abaqus_exe
+		if self.host is not None:
+			cpus = self.host.resolved_cpus(ctx.cpus)
+			exe = self.host.resolved_abaqus_exe(ctx.abaqus_exe)
+		if not self.work_root and cpus == ctx.cpus and exe == ctx.abaqus_exe:
 			return ctx
+
 		from dataclasses import replace
-		return replace(ctx, output_dir=os.path.join(self.work_root, ctx.job_name))
+		output_dir = (os.path.join(self.work_root, ctx.job_name)
+					if self.work_root else ctx.output_dir)
+		return replace(ctx, output_dir=output_dir, cpus=cpus, abaqus_exe=exe)
 
 	# ---- synchronous execution ----
 
 	def run(self, cmd: list[str], cwd: str, timeout: float | None = None) -> ExecResult:
+		cmd = [resolve_local_exe(cmd[0]), *cmd[1:]] if cmd else cmd
 		try:
 			proc = subprocess.run(cmd, cwd=cwd, capture_output=True,
 								text=True, timeout=timeout)
@@ -67,7 +86,7 @@ class LocalBackend(ExecutionBackend):
 		except subprocess.TimeoutExpired:
 			return ExecResult(None, '', f'timeout after {timeout}s')
 		except Exception as e:
-			return ExecResult(None, '', f'{type(e).__name__}: {e}')
+			return ExecResult(None, '', _launch_error(cmd, e))
 
 	# ---- detached execution ----
 
@@ -83,6 +102,7 @@ class LocalBackend(ExecutionBackend):
 		"""
 		self.makedirs(cwd)
 		self.clear_sentinels(cwd, job_name)
+		cmd = [resolve_local_exe(cmd[0]), *cmd[1:]] if cmd else cmd
 
 		popts: dict = {'cwd': cwd,
 					'stdout': subprocess.DEVNULL,
@@ -96,7 +116,7 @@ class LocalBackend(ExecutionBackend):
 			proc = subprocess.Popen(cmd, **popts)
 		except Exception as e:
 			return JobHandle(job_name, cwd, None, 'local',
-							launch_rc=1, launch_output=f'{type(e).__name__}: {e}')
+							launch_rc=1, launch_output=_launch_error(cmd, e))
 
 		self._procs[job_name] = proc
 		return JobHandle(job_name, cwd, proc.pid, 'local', launch_rc=0)
@@ -244,6 +264,40 @@ class LocalBackend(ExecutionBackend):
 
 	def close(self) -> None:
 		self._procs.clear()
+
+
+def resolve_local_exe(exe: str) -> str:
+	"""Absolute path for *exe* on this machine, honouring ``PATHEXT``.
+
+	``subprocess`` launches through ``CreateProcess``, which searches ``PATH``
+	but **not** ``PATHEXT`` — it only ever appends ``.exe``.  So a bare
+	``'abaqus'`` fails with ``FileNotFoundError: [WinError 2]`` even on a
+	machine where ``abaqus.bat`` is properly on ``PATH`` and
+	:func:`shutil.which` finds it.  The error names no file, which makes it
+	needlessly hard to place.
+
+	Resolving up front removes the trap.  Anything that already looks like a
+	path is returned untouched, and an unresolvable name is returned as-is so
+	the caller can report it verbatim.
+	"""
+	if not exe:
+		return exe
+	if os.path.isabs(exe) or os.sep in exe or (os.altsep and os.altsep in exe):
+		return exe
+	return shutil.which(exe) or exe
+
+
+def _launch_error(cmd: list[str], exc: Exception) -> str:
+	"""Error text that names the executable the OS could not find."""
+	if isinstance(exc, FileNotFoundError):
+		return (
+			f"executable not found: {cmd[0]!r}. "
+			"Give an absolute path to abaqus.bat — either "
+			"BatchAbaqusProcessor(abaqus_exe=...) or HostSpec(abaqus_exe=...). "
+			"A bare name cannot be launched on Windows even when it is on "
+			"PATH, because CreateProcess does not consult PATHEXT."
+		)
+	return f"{type(exc).__name__}: {exc}"
 
 
 def _parse_rc(text: str | None) -> int | None:
