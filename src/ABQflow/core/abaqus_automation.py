@@ -482,6 +482,7 @@ class BatchAbaqusProcessor:
 		self.logger = self._setup_logging()
 		self.calculations: list[AbaqusCalculation] | None = None
 
+		# Assign jobs to hosts if any are provided.
 		if self.hosts:
 			self._assignment = assign_hosts(
 				[s.job_name for s in self.specs], self.hosts, self.cpus_per_job)
