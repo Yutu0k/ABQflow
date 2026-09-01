@@ -1,6 +1,8 @@
 # pixi environments
 .pixi
 
+*.env
+
 .vscode/
 *.code-workspace
 
