@@ -1,3 +1,23 @@
+# 0.5.1
+
+## Added
+
+- [x] Submit jobs to remote Windows machines over SSH/SFTP (See `./examples/08_RemoteSubmission`)
+- [x] Allow the submitting machine to join the pool via `HostSpec.local()`, so a batch can mix local and remote hosts
+- [x] Add `paramiko` as an optional `[remote]` extra
+- [x] Add detached remote launch with file-based polling in `core/remote_launch.py` — solver survives SSH disconnects instead of dying with the channel
+
+
+## Fixed
+
+- [x] Supports `hookkit.py` under Python 2.7 (`abaqus python` on Abaqus 2022 and earlier)
+- [x] Fix INP files being read with the platform default encoding, which fails on a Chinese-locale Windows when the file is UTF-8
+- [x] Fix bare `abaqus_exe` names failing to launch on Windows — `CreateProcess` ignores `PATHEXT`, so `abaqus.bat` is now resolved before launch and an unresolvable name reports which file and how to configure it
+- [x] Fix `OdbExtractionStrategy` checking for the ODB on the local filesystem, which made every remote extraction return all-`None`
+- [x] Fix artifact paths in hook `common_args` not being mapped to the executing machine
+- [x] Fix `*INCLUDE` directives rewritten to local absolute paths, which cannot resolve on another machine; targets are now uploaded once per machine into a content-addressed shared directory instead of once per job
+- [x] Add a lock around `AbaqusCalculation._setup_logging`, which was only safe under process isolation
+
 # 0.5.0
 
 ## Added
