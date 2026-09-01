@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.strategies - ABQflow 0.5.0 documentation</title>
+        <title>ABQflow.core.strategies - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,9 +200,13 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../source/ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -243,15 +247,16 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for ABQflow.core.strategies</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Job workflow strategies — the ABC hierarchy and all concrete implementations.</span>
+<span></span><span class="sd">"""Job workflow strategies — the ABC hierarchy and all concrete implementations.</span>
 
 <span class="sd">Strategies are stateless (configuration only in ``__init__``) and depend on</span>
 <span class="sd">three injected arguments at call time: :class:`~abaqus_batch_pack.context.JobContext`,</span>
 <span class="sd">:class:`~abaqus_batch_pack.runner.AbaqusRunner`, and ``logging.Logger``.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">codecs</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -267,17 +272,52 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobStatusManager</span>
 
 <span class="c1"># Regex for {{placeholder}} in INP files (B8)</span>
-<span class="n">_PLACEHOLDER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\{\{(\w+)\}\}&quot;</span><span class="p">)</span>
+<span class="n">_PLACEHOLDER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\{\{(\w+)\}\}"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="read_inp_text">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.read_inp_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_inp_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Read an INP file without depending on the machine's locale.</span>
+
+<span class="sd">	Python's text mode defaults to the system encoding — GBK on a Chinese</span>
+<span class="sd">	Windows, cp1252 elsewhere — so a plain ``open(path)`` raises on any deck</span>
+<span class="sd">	those codecs reject.  A UTF-8 byte-order mark is enough to trigger it,</span>
+<span class="sd">	which makes decks exported by many editors unreadable on exactly the</span>
+<span class="sd">	machines this package targets.</span>
+
+<span class="sd">	Decoding order: UTF-8 (BOM stripped if present), then latin-1, which</span>
+<span class="sd">	never fails and preserves the bytes.  Abaqus keywords are ASCII either</span>
+<span class="sd">	way, so the fallback only affects comments and free-text fields.</span>
+<span class="sd">	"""</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+		<span class="n">raw</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+	<span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">codecs</span><span class="o">.</span><span class="n">BOM_UTF8</span><span class="p">):</span>
+		<span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">codecs</span><span class="o">.</span><span class="n">BOM_UTF8</span><span class="p">):]</span>
+	<span class="k">try</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'latin-1'</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_inp_text">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.write_inp_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_inp_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Write INP text as UTF-8, leaving line endings exactly as given."""</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></div>
+
 
 <span class="c1"># Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting</span>
-<span class="n">_INCLUDE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="n">_INCLUDE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
 
 
 <span class="c1"># ======================== Preparation Strategies ========================</span>
 <div class="viewcode-block" id="PreparationStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for preparation: produce an INP file at ``ctx.inp_path``.</span>
+<span class="w">	</span><span class="sd">"""Interface for preparation: produce an INP file at ``ctx.inp_path``.</span>
 
 <span class="sd">	Subclasses</span>
 <span class="sd">	----------</span>
@@ -285,14 +325,14 @@
 <span class="sd">		Template-based INP generation (``{{placeholder}}`` substitution).</span>
 <span class="sd">	ModelGenerationStrategy</span>
 <span class="sd">		Run an external script that produces the INP (requires CAE kernel).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 <div class="viewcode-block" id="PreparationStrategy.prepare">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationStrategy.prepare">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Produce the INP file.</span>
+<span class="w">		</span><span class="sd">"""Produce the INP file.</span>
 
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
@@ -307,7 +347,7 @@
 <span class="sd">		-------</span>
 <span class="sd">		bool</span>
 <span class="sd">			``True`` if the INP was produced, ``False`` otherwise.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="o">...</span></div>
 </div>
 
@@ -316,7 +356,7 @@
 <div class="viewcode-block" id="InpModifyStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Replace ``{{placeholder}}`` tokens in a base INP template file.</span>
+<span class="w">	</span><span class="sd">"""Replace ``{{placeholder}}`` tokens in a base INP template file.</span>
 
 <span class="sd">	Performs coverage validation: if the INP references a placeholder that</span>
 <span class="sd">	is missing from *data_params*, preparation fails.  If *data_params*</span>
@@ -328,7 +368,7 @@
 <span class="sd">		Path to the template INP file containing ``{{key}}`` placeholders.</span>
 <span class="sd">	data_params : dict</span>
 <span class="sd">		Mapping of placeholder names to substitution values.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_inp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span> <span class="o">=</span> <span class="n">base_inp_path</span>
@@ -338,29 +378,27 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify]: Based on INP file &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [InpModify]: Based on INP file '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-				<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+			<span class="n">content</span> <span class="o">=</span> <span class="n">read_inp_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="p">)</span>
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [InpModify] failed reading INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [InpModify] failed reading INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="c1"># B8: detect missing/unused placeholders</span>
 		<span class="n">found</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
 		<span class="n">given</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 		<span class="k">if</span> <span class="n">missing</span> <span class="o">:=</span> <span class="n">found</span> <span class="o">-</span> <span class="n">given</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP placeholders missing parameters: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INP placeholders missing parameters: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 		<span class="k">if</span> <span class="n">unused</span> <span class="o">:=</span> <span class="n">given</span> <span class="o">-</span> <span class="n">found</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameters not used in INP: </span><span class="si">{</span><span class="n">unused</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameters not used in INP: </span><span class="si">{</span><span class="n">unused</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 		<span class="n">content</span> <span class="o">=</span> <span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
 			<span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]),</span> <span class="n">content</span><span class="p">)</span>
 
-		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-			<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully created INP file: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="n">write_inp_text</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully created INP file: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 		<span class="k">return</span> <span class="kc">True</span></div>
 </div>
 
@@ -369,7 +407,7 @@
 <div class="viewcode-block" id="ModelGenerationStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelGenerationStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelGenerationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Run a model-generation script (requires CAE kernel / ``mdb`` access).</span>
+<span class="w">	</span><span class="sd">"""Run a model-generation script (requires CAE kernel / ``mdb`` access).</span>
 
 <span class="sd">	The script is launched via ``abaqus cae noGUI=&lt;script&gt;`` and is expected</span>
 <span class="sd">	to produce an INP file at ``ctx.inp_path``.  Common arguments</span>
@@ -381,7 +419,7 @@
 <span class="sd">		Path to the model-generation script.</span>
 <span class="sd">	script_params : dict</span>
 <span class="sd">		Key-value pairs forwarded as ``--key value`` arguments.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">script_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span> <span class="o">=</span> <span class="n">model_script_path</span>
@@ -391,21 +429,21 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelGenerationStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub Strategy [ModelGeneration]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub Strategy [ModelGeneration]: Run script '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 		<span class="c1"># Model generation needs CAE kernel (mdb) → needs_cae_kernel=True (B6 fix)</span>
 		<span class="n">cmd</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_base_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
-		<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">job_name</span><span class="p">])</span>
+			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">'--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
+		<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">'--job_name'</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">job_name</span><span class="p">])</span>
 
 		<span class="c1"># Route through runner._run so timeout, error logging, and</span>
 		<span class="c1"># record_only dry-run all apply — no strategy calls subprocess directly.</span>
-		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;preparation&#39;</span><span class="p">)</span>
+		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">'preparation'</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">return</span> <span class="kc">False</span>
 		<span class="k">if</span> <span class="n">runner</span><span class="o">.</span><span class="n">record_only</span><span class="p">:</span>
 			<span class="k">return</span> <span class="kc">True</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully generated model.&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Successfully generated model."</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span></div>
 </div>
 
@@ -414,11 +452,11 @@
 <div class="viewcode-block" id="ExistingInpStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExistingInpStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExistingInpStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Use a pre-existing INP file directly — no generation or modification.</span>
+<span class="w">	</span><span class="sd">"""Use a pre-existing INP file directly — no generation or modification.</span>
 
-<span class="sd">	This strategy satisfies the preparation contract (&quot;ensure an INP at</span>
-<span class="sd">	``ctx.inp_path``&quot;) by copying an already-complete INP file.  It is the</span>
-<span class="sd">	entry point for the UC-03 &quot;pre-existing INP batch&quot; use case.</span>
+<span class="sd">	This strategy satisfies the preparation contract ("ensure an INP at</span>
+<span class="sd">	``ctx.inp_path``") by copying an already-complete INP file.  It is the</span>
+<span class="sd">	entry point for the UC-03 "pre-existing INP batch" use case.</span>
 
 <span class="sd">	Key features beyond a plain file copy:</span>
 
@@ -426,7 +464,7 @@
 <span class="sd">	  rewrites relative paths to absolute paths so Abaqus can find referenced</span>
 <span class="sd">	  files regardless of the working directory.</span>
 <span class="sd">	* **Template detection**: rejects INPs that still contain ``{{...}}``</span>
-<span class="sd">	  placeholders, steering the user toward ``kind=&#39;inp_based&#39;`` instead.</span>
+<span class="sd">	  placeholders, steering the user toward ``kind='inp_based'`` instead.</span>
 <span class="sd">	* **STEP presence check**: confirms the file contains at least one</span>
 <span class="sd">	  ``*STEP`` keyword.</span>
 
@@ -435,16 +473,16 @@
 <span class="sd">	source_inp_path : str</span>
 <span class="sd">		Absolute or relative path to the existing INP file.</span>
 <span class="sd">	staging_mode : str</span>
-<span class="sd">		``&#39;copy&#39;`` (default) — copy the INP (with resolved paths) to output_dir.</span>
+<span class="sd">		``'copy'`` (default) — copy the INP (with resolved paths) to output_dir.</span>
 <span class="sd">	resolve_includes : bool</span>
 <span class="sd">		If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use</span>
-<span class="sd">		absolute paths resolved against the source INP&#39;s directory.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">		absolute paths resolved against the source INP's directory.</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
 		<span class="n">source_inp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-		<span class="n">staging_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;copy&#39;</span><span class="p">,</span>
+		<span class="n">staging_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'copy'</span><span class="p">,</span>
 		<span class="n">resolve_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 	<span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span> <span class="o">=</span> <span class="n">source_inp_path</span>
@@ -455,30 +493,29 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExistingInpStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sub strategy [ExistingInp]: Using pre-existing INP &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [ExistingInp]: Using pre-existing INP '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 
 		<span class="c1"># 1. Existence &amp; readability check</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source INP not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source INP not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="c1"># 2. Read content</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-				<span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+			<span class="n">content</span> <span class="o">=</span> <span class="n">read_inp_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">)</span>
 		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read source INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to read source INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="c1"># 3. Lightweight content checks</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\*STEP&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;INP contains no *STEP — not a valid Abaqus input file&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\*STEP'</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"INP contains no *STEP — not a valid Abaqus input file"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="k">if</span> <span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-				<span class="s2">&quot;INP contains {{placeholder}} markers — this looks like a template, &quot;</span>
-				<span class="s2">&quot;not a finished INP. Use kind=&#39;inp_based&#39; with params instead.&quot;</span>
+				<span class="s2">"INP contains {{placeholder}} markers — this looks like a template, "</span>
+				<span class="s2">"not a finished INP. Use kind='inp_based' with params instead."</span>
 			<span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
@@ -492,27 +529,26 @@
 				<span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source_dir</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">))</span>
 				<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">abs_path</span><span class="p">):</span>
 					<span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">abs_path</span><span class="p">)</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Resolved INCLUDE: </span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-				<span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">&quot;</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Resolved INCLUDE: </span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+				<span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">"</span>
 
 			<span class="k">try</span><span class="p">:</span>
 				<span class="n">content</span> <span class="o">=</span> <span class="n">_INCLUDE_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">_resolve_include</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
 			<span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INCLUDE file not found: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INCLUDE file not found: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 				<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="c1"># 5. Write the (possibly rewritten) INP to ctx.inp_path</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span> <span class="o">==</span> <span class="s1">&#39;copy&#39;</span><span class="p">:</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span> <span class="o">==</span> <span class="s1">'copy'</span><span class="p">:</span>
 			<span class="k">try</span><span class="p">:</span>
-				<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-					<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Wrote INP to </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+				<span class="n">write_inp_text</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Wrote INP to </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to write INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to write INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 				<span class="k">return</span> <span class="kc">False</span>
 		<span class="k">else</span><span class="p">:</span>
 			<span class="c1"># ponytail: link/in_place deferred (S5), copy covers all MVP needs</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported staging_mode: &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span><span class="si">}</span><span class="s2">&#39;. Only &#39;copy&#39; is implemented.&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported staging_mode: '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span><span class="si">}</span><span class="s2">'. Only 'copy' is implemented."</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
 		<span class="k">return</span> <span class="kc">True</span></div>
@@ -525,7 +561,7 @@
 <div class="viewcode-block" id="SubroutineCompileStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineCompileStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubroutineCompileStrategy</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Compiles a user subroutine via ``abaqus make`` before preparation.</span>
+<span class="w">	</span><span class="sd">"""Compiles a user subroutine via ``abaqus make`` before preparation.</span>
 
 <span class="sd">	Not part of the :class:`PreparationStrategy`/:class:`ExtractionStrategy`</span>
 <span class="sd">	ABC hierarchies — compilation is its own concern with a single</span>
@@ -538,10 +574,10 @@
 <span class="sd">	subroutine : SubroutineSpec</span>
 <span class="sd">		Subroutine to compile.</span>
 <span class="sd">	cache : bool</span>
-<span class="sd">		If ``True`` (default), skip recompilation when the source file&#39;s</span>
+<span class="sd">		If ``True`` (default), skip recompilation when the source file's</span>
 <span class="sd">		content hash matches the last successful compile (see</span>
 <span class="sd">		:meth:`~ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile`).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subroutine</span><span class="p">:</span> <span class="n">SubroutineSpec</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span> <span class="o">=</span> <span class="n">subroutine</span>
@@ -551,33 +587,33 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineCompileStrategy.compile">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Compile the subroutine, or skip if precompiled/cached.</span>
+<span class="w">		</span><span class="sd">"""Compile the subroutine, or skip if precompiled/cached.</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
 <span class="sd">		tuple[bool, str]</span>
 <span class="sd">			``(success, message)`` — *message* is empty on success (or a</span>
-<span class="sd">			skip note), or the compiler&#39;s raw stdout+stderr on failure. No</span>
+<span class="sd">			skip note), or the compiler's raw stdout+stderr on failure. No</span>
 <span class="sd">			regex parsing of compiler errors is performed (see</span>
 <span class="sd">			:meth:`~ABQflow.core.runner.AbaqusRunner.run_compile`).</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">precompiled</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: precompiled, skipping compile.&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: precompiled, skipping compile."</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">''</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">runner</span><span class="o">.</span><span class="n">subroutine_needs_recompile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: unchanged, skipping recompile.&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">]: unchanged, skipping recompile."</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">''</span>
 
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Compiling subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">] (solver=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">solver</span><span class="si">}</span><span class="s2">)...&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Compiling subroutine [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">] (solver=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">solver</span><span class="si">}</span><span class="s2">)..."</span><span class="p">)</span>
 		<span class="n">ok</span><span class="p">,</span> <span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_compile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">)</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
-			<span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stdout</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+			<span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stdout</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">stderr</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">runner</span><span class="o">.</span><span class="n">record_only</span><span class="p">:</span>
 			<span class="n">runner</span><span class="o">.</span><span class="n">_record_compile_hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subroutine</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Subroutine compiled successfully.&quot;</span><span class="p">)</span>
-		<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;&#39;</span></div>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Subroutine compiled successfully."</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">''</span></div>
 </div>
 
 
@@ -586,7 +622,7 @@
 <div class="viewcode-block" id="ExtractionStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExtractionStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for extraction: read results from model or ODB files.</span>
+<span class="w">	</span><span class="sd">"""Interface for extraction: read results from model or ODB files.</span>
 
 <span class="sd">	Subclasses</span>
 <span class="sd">	----------</span>
@@ -594,14 +630,14 @@
 <span class="sd">		Post-simulation extraction from ODB (requires ``odbAccess``).</span>
 <span class="sd">	ModelPropertiesExtractionStrategy</span>
 <span class="sd">		Pre-simulation extraction from INP (requires ``mdb`` / CAE kernel).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 <div class="viewcode-block" id="ExtractionStrategy.extract">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExtractionStrategy.extract">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Extract results.</span>
+<span class="w">		</span><span class="sd">"""Extract results.</span>
 
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
@@ -616,7 +652,7 @@
 <span class="sd">		-------</span>
 <span class="sd">		dict</span>
 <span class="sd">			``{result_name: value, ...}``.  Failed tasks map to ``None``.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="o">...</span></div>
 </div>
 
@@ -625,7 +661,7 @@
 <div class="viewcode-block" id="OdbExtractionStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.OdbExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OdbExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract results from the ODB file via hook scripts.</span>
+<span class="w">	</span><span class="sd">"""Extract results from the ODB file via hook scripts.</span>
 
 <span class="sd">	Runs in the ``odbAccess`` environment (``abaqus python``), NOT the CAE</span>
 <span class="sd">	kernel.  Each hook script receives ``--odb_path`` as a common argument</span>
@@ -635,7 +671,7 @@
 <span class="sd">	----------</span>
 <span class="sd">	hooks : list[HookSpec]</span>
 <span class="sd">		List of hook descriptors, each with ``script_path`` and ``tasks``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
@@ -644,25 +680,28 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.OdbExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [OdbExtract]: Start extracting from ODB...&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Sub strategy [OdbExtract]: Start extracting from ODB..."</span><span class="p">)</span>
 
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ODB file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="c1"># Ask the runner, not the local filesystem: with a remote backend the</span>
+		<span class="c1"># .odb only ever exists on the executing machine, and a plain local</span>
+		<span class="c1"># check would make every remote extraction silently return all-None.</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">runner</span><span class="o">.</span><span class="n">artifact_exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ODB file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
 				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
-					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">'result_name'</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
 
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
 			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">script_path</span>
 			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run ODB hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  -&gt; Run ODB hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)"</span><span class="p">)</span>
 			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
 				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
 				<span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
-				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">},</span>
+				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">'--odb_path'</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">},</span>
 				<span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>   <span class="c1"># odbAccess, not mdb</span>
 			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">all_results</span></div>
@@ -673,7 +712,7 @@
 <div class="viewcode-block" id="ModelPropertiesExtractionStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelPropertiesExtractionStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelPropertiesExtractionStrategy</span><span class="p">(</span><span class="n">ExtractionStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Extract material/property data from the INP *before* simulation.</span>
+<span class="w">	</span><span class="sd">"""Extract material/property data from the INP *before* simulation.</span>
 
 <span class="sd">	Runs in the CAE kernel environment (``abaqus cae noGUI``) because it</span>
 <span class="sd">	needs ``mdb`` access.  Each hook script receives ``--inp_path`` as a</span>
@@ -683,7 +722,7 @@
 <span class="sd">	----------</span>
 <span class="sd">	hooks : list[HookSpec]</span>
 <span class="sd">		List of hook descriptors, each with ``script_path`` and ``tasks``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hooks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">hooks</span>
@@ -692,25 +731,25 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModelPropertiesExtractionStrategy.extract">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sub strategy [ModelPropsExtract]: Start extracting from INP...&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Sub strategy [ModelPropsExtract]: Start extracting from INP..."</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INP file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INP file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
 				<span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
-					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+					<span class="n">all_results</span><span class="p">[</span><span class="n">task</span><span class="p">[</span><span class="s1">'result_name'</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="k">return</span> <span class="n">all_results</span>
 
 		<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
 			<span class="n">script_path</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">script_path</span>
 			<span class="n">tasks</span> <span class="o">=</span> <span class="n">hook</span><span class="o">.</span><span class="n">tasks</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  -&gt; Run model property hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  -&gt; Run model property hook script: </span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tasks)"</span><span class="p">)</span>
 			<span class="n">results</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_hook</span><span class="p">(</span>
 				<span class="n">script_path</span><span class="o">=</span><span class="n">script_path</span><span class="p">,</span>
 				<span class="n">tasks</span><span class="o">=</span><span class="n">tasks</span><span class="p">,</span>
-				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">},</span>
+				<span class="n">common_args</span><span class="o">=</span><span class="p">{</span><span class="s1">'--inp_path'</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">},</span>
 				<span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    <span class="c1"># needs mdb</span>
 			<span class="n">all_results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">all_results</span></div>
@@ -723,7 +762,7 @@
 <div class="viewcode-block" id="JobWorkflowStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobWorkflowStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Interface for a complete job workflow.</span>
+<span class="w">	</span><span class="sd">"""Interface for a complete job workflow.</span>
 
 <span class="sd">	Subclasses</span>
 <span class="sd">	----------</span>
@@ -743,16 +782,16 @@
 <span class="sd">	:class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` can invoke a</span>
 <span class="sd">	single phase (see its ``execute(phase=...)`` parameter). This is not</span>
 <span class="sd">	required by the ABC — :class:`MonolithicWorkflowStrategy` and</span>
-<span class="sd">	user-defined strategies that don&#39;t implement it simply raise</span>
+<span class="sd">	user-defined strategies that don't implement it simply raise</span>
 <span class="sd">	``NotImplementedError`` when a phase-only call is attempted.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 <div class="viewcode-block" id="JobWorkflowStrategy.execute">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobWorkflowStrategy.execute">[docs]</a>
 	<span class="nd">@abstractmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the full workflow and return a result dict.</span>
+<span class="w">		</span><span class="sd">"""Run the full workflow and return a result dict.</span>
 
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
@@ -766,9 +805,9 @@
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
 <span class="sd">		dict</span>
-<span class="sd">			Must contain at least a ``&#39;status&#39;`` key (a :class:`JobStatus`</span>
+<span class="sd">			Must contain at least a ``'status'`` key (a :class:`JobStatus`</span>
 <span class="sd">			or its string value).  May include extracted results.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="o">...</span></div>
 </div>
 
@@ -777,12 +816,12 @@
 <div class="viewcode-block" id="MonolithicWorkflowStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.MonolithicWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MonolithicWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Single-script workflow: one script does everything.</span>
+<span class="w">	</span><span class="sd">"""Single-script workflow: one script does everything.</span>
 
 <span class="sd">	The script is launched via the CAE kernel (``abaqus cae noGUI``) and</span>
 <span class="sd">	must print its JSON results wrapped in the sentinel markers</span>
 <span class="sd">	``===ABQ_RESULT_BEGIN===`` / ``===ABQ_RESULT_END===``.  The result dict</span>
-<span class="sd">	is expected to contain at least a ``&#39;status&#39;`` key.</span>
+<span class="sd">	is expected to contain at least a ``'status'`` key.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -790,7 +829,7 @@
 <span class="sd">		Path to the monolithic script.</span>
 <span class="sd">	params : dict</span>
 <span class="sd">		Key-value parameters forwarded as ``--key value`` CLI arguments.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">script_path</span> <span class="o">=</span> <span class="n">script_path</span>
@@ -800,28 +839,28 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.MonolithicWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Workflow [MonolithicWorkflow]: Run script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
-		<span class="c1"># B5/B6 fix: monolithic scripts use CAE kernel (mdb), not &#39;abaqus python&#39;</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Workflow [MonolithicWorkflow]: Run script '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+		<span class="c1"># B5/B6 fix: monolithic scripts use CAE kernel (mdb), not 'abaqus python'</span>
 		<span class="n">cmd</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_base_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
+			<span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">'--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
 
 		<span class="c1"># Route through runner._run so timeout, error logging, and</span>
 		<span class="c1"># record_only dry-run all apply — no strategy calls subprocess directly.</span>
-		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;monolithic&#39;</span><span class="p">)</span>  <span class="c1"># B9: error already logged by runner</span>
+		<span class="n">proc</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">'monolithic'</span><span class="p">)</span>  <span class="c1"># B9: error already logged by runner</span>
 		<span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span>
-					<span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Monolithic script &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">&#39; failed to run (see log for details).&quot;</span><span class="p">}</span>
+			<span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">MONOLITHIC_SCRIPT_FAILED</span><span class="p">,</span>
+					<span class="s1">'error'</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Monolithic script '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s2">' failed to run (see log for details)."</span><span class="p">}</span>
 
 		<span class="k">try</span><span class="p">:</span>
 			<span class="n">results</span> <span class="o">=</span> <span class="n">extract_json</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>  <span class="c1"># B7: sentinel-based extraction</span>
 		<span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to decode JSON from script output. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-			<span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status&#39;</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">JSON_DECODE_ERROR</span><span class="p">,</span> <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unable to decode JSON from script output. Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">JSON_DECODE_ERROR</span><span class="p">,</span> <span class="s1">'error'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
 
-		<span class="k">if</span> <span class="s1">&#39;status&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Monolithic script run successfully.&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">'status'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Monolithic script run successfully."</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">results</span></div>
 </div>
 
@@ -830,7 +869,7 @@
 <div class="viewcode-block" id="ModularWorkflowStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModularWorkflowStrategy</span><span class="p">(</span><span class="n">JobWorkflowStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Multi-phase pipeline: [compile], preparation, [preflight], pre-extraction, simulation, post-extraction.</span>
+<span class="w">	</span><span class="sd">"""Multi-phase pipeline: [compile], preparation, [preflight], pre-extraction, simulation, post-extraction.</span>
 
 <span class="sd">	Uses a :class:`JobStatusManager` internally to track the job through</span>
 <span class="sd">	each phase.  If any phase fails the pipeline stops and returns the</span>
@@ -839,7 +878,7 @@
 <span class="sd">	``execute()`` composes three independently callable phase methods —</span>
 <span class="sd">	:meth:`prepare_only`, :meth:`simulate_only`, :meth:`extract_only` — so</span>
 <span class="sd">	that :class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` (and</span>
-<span class="sd">	:class:`~ABQflow.core.abaqus_automation.BatchAbaqusProcessor`&#39;s</span>
+<span class="sd">	:class:`~ABQflow.core.abaqus_automation.BatchAbaqusProcessor`'s</span>
 <span class="sd">	``run_preparation``/``run_simulation``/``run_extraction``) can invoke a</span>
 <span class="sd">	single phase without running the rest of the pipeline. The external</span>
 <span class="sd">	contract of ``execute()`` — return-dict shape and terminal-status</span>
@@ -850,14 +889,14 @@
 <span class="sd">	preparation_strategy : PreparationStrategy</span>
 <span class="sd">		Strategy that produces the INP file.</span>
 <span class="sd">	preflight_mode : str or None</span>
-<span class="sd">		``&#39;syntaxcheck&#39;``, ``&#39;datacheck&#39;``, or ``None`` (IMP-04).</span>
+<span class="sd">		``'syntaxcheck'``, ``'datacheck'``, or ``None`` (IMP-04).</span>
 <span class="sd">	pre_extraction_strategies : list[ExtractionStrategy]</span>
 <span class="sd">		Strategies run before the solver (e.g. property extraction from INP).</span>
 <span class="sd">	post_extraction_strategies : list[ExtractionStrategy]</span>
 <span class="sd">		Strategies run after the solver (e.g. result extraction from ODB).</span>
 <span class="sd">	compile_strategy : SubroutineCompileStrategy or None</span>
 <span class="sd">		Optional user-subroutine compile step, run before preparation.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
@@ -879,10 +918,10 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.prepare_only">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
 					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 1: optional subroutine compile, preparation, optional preflight.</span>
+<span class="w">		</span><span class="sd">"""Phase 1: optional subroutine compile, preparation, optional preflight.</span>
 
-<span class="sd">		Standalone entry point for &quot;produce an INP (and compiled</span>
-<span class="sd">		subroutine) only&quot;. Does not run pre-extraction, the solver, or</span>
+<span class="sd">		Standalone entry point for "produce an INP (and compiled</span>
+<span class="sd">		subroutine) only". Does not run pre-extraction, the solver, or</span>
 <span class="sd">		post-extraction — those live in :meth:`simulate_only` /</span>
 <span class="sd">		:meth:`extract_only`.</span>
 
@@ -890,10 +929,10 @@
 <span class="sd">		-------</span>
 <span class="sd">		tuple[dict, JobStatusManager]</span>
 <span class="sd">			``(results, status_manager)`` — *results* has at least</span>
-<span class="sd">			``&#39;status&#39;`` and ``&#39;_phase_history&#39;``; the manager is returned</span>
+<span class="sd">			``'status'`` and ``'_phase_history'``; the manager is returned</span>
 <span class="sd">			so :meth:`execute` can thread it into the next phase.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: prepare_only phase...&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Workflow Strategy [ModularWorkflow]: prepare_only phase..."</span><span class="p">)</span>
 		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
 		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -903,37 +942,37 @@
 			<span class="n">ok</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compile_strategy</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_compile</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="n">ok</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">ok</span> <span class="k">else</span> <span class="n">msg</span><span class="p">)</span>
 			<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 				<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
 
 		<span class="c1"># 1. Preparation</span>
 		<span class="n">sm</span><span class="o">.</span><span class="n">mark_preparing</span><span class="p">()</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation_strategy</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
 		<span class="n">sm</span><span class="o">.</span><span class="n">record_preparation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 		<span class="c1"># 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: checking INP...&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: checking INP..."</span><span class="p">)</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">mark_preflight</span><span class="p">()</span>
 			<span class="n">passed</span><span class="p">,</span> <span class="n">pf_errors</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_preflight</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="p">)</span>
 			<span class="k">if</span> <span class="ow">not</span> <span class="n">passed</span><span class="p">:</span>
 				<span class="n">sm</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span>
 					<span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-					<span class="n">error</span><span class="o">=</span><span class="n">pf_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">pf_errors</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">] failed&quot;</span><span class="p">,</span>
+					<span class="n">error</span><span class="o">=</span><span class="n">pf_errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">pf_errors</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">] failed"</span><span class="p">,</span>
 				<span class="p">)</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 				<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_preflight</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: passed&quot;</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Preflight [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_mode</span><span class="si">}</span><span class="s2">]: passed"</span><span class="p">)</span>
 
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span></div>
 
 
@@ -941,7 +980,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.simulate_only">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">simulate_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
 					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 2: pre-extraction hooks, then the solver run.</span>
+<span class="w">		</span><span class="sd">"""Phase 2: pre-extraction hooks, then the solver run.</span>
 
 <span class="sd">		Assumes ``ctx.inp_path`` already exists (produced by a prior</span>
 <span class="sd">		:meth:`prepare_only` call — possibly in an earlier process/session,</span>
@@ -956,23 +995,23 @@
 <span class="sd">			``(results, status_manager, stop)`` — *stop* is ``True`` when</span>
 <span class="sd">			the caller (e.g. :meth:`execute`) should not proceed to</span>
 <span class="sd">			:meth:`extract_only` (INP missing or solver failed).</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: simulate_only phase...&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Workflow Strategy [ModularWorkflow]: simulate_only phase..."</span><span class="p">)</span>
 		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
 		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span>
 				<span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-				<span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;INP not found: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2"> (run preparation first)&quot;</span><span class="p">,</span>
+				<span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">"INP not found: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2"> (run preparation first)"</span><span class="p">,</span>
 			<span class="p">)</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">True</span>
 
 		<span class="c1"># 3. Pre-extraction</span>
 		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_extraction_strategies</span><span class="p">:</span>
-			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">&#39;pre_extraction&#39;</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">'pre_extraction'</span><span class="p">)</span>
 			<span class="n">pre_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
 			<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pre_ext_results</span><span class="p">)</span>
@@ -983,16 +1022,16 @@
 		<span class="c1"># Attach diagnostics on failure and on the rc≠0+COMPLETED edge case</span>
 		<span class="k">if</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span> <span class="ow">or</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-				<span class="n">results</span><span class="p">[</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">)</span>
+				<span class="n">results</span><span class="p">[</span><span class="s1">'diagnostics'</span><span class="p">]</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="n">solver_result</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">)</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">solver_result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">solver_result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-			<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+			<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 			<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">True</span>
 		<span class="n">sm</span><span class="o">.</span><span class="n">record_simulation</span><span class="p">(</span><span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span><span class="p">,</span> <span class="kc">False</span></div>
 
 
@@ -1000,7 +1039,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.extract_only">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">extract_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">,</span>
 					<span class="n">status_manager</span><span class="p">:</span> <span class="n">JobStatusManager</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">JobStatusManager</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Phase 3: post-extraction hooks only.</span>
+<span class="w">		</span><span class="sd">"""Phase 3: post-extraction hooks only.</span>
 
 <span class="sd">		Assumes ``ctx.odb_path`` already exists. No existence guard is</span>
 <span class="sd">		needed — :class:`OdbExtractionStrategy` already reports every task</span>
@@ -1011,20 +1050,20 @@
 <span class="sd">		-------</span>
 <span class="sd">		tuple[dict, JobStatusManager]</span>
 <span class="sd">			``(results, status_manager)``.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: extract_only phase...&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Workflow Strategy [ModularWorkflow]: extract_only phase..."</span><span class="p">)</span>
 		<span class="n">sm</span> <span class="o">=</span> <span class="n">status_manager</span> <span class="ow">or</span> <span class="n">JobStatusManager</span><span class="p">()</span>
 		<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
 
 		<span class="c1"># 5. Post-extraction</span>
 		<span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_extraction_strategies</span><span class="p">:</span>
-			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">&#39;post_extraction&#39;</span><span class="p">)</span>
+			<span class="n">sm</span><span class="o">.</span><span class="n">mark_extracting</span><span class="p">(</span><span class="s1">'post_extraction'</span><span class="p">)</span>
 			<span class="n">post_ext_results</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 			<span class="n">sm</span><span class="o">.</span><span class="n">record_extraction</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
 			<span class="n">results</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">post_ext_results</span><span class="p">)</span>
 
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
-		<span class="n">results</span><span class="p">[</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span>
+		<span class="n">results</span><span class="p">[</span><span class="s1">'_phase_history'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">phase_history</span>
 		<span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">sm</span></div>
 
 
@@ -1032,14 +1071,14 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ModularWorkflowStrategy.execute">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the full modular workflow by composing the three phase methods.</span>
+<span class="w">		</span><span class="sd">"""Run the full modular workflow by composing the three phase methods.</span>
 
-<span class="sd">		Returns a dict with at least a ``&#39;status&#39;`` key plus any results</span>
+<span class="sd">		Returns a dict with at least a ``'status'`` key plus any results</span>
 <span class="sd">		from pre- and post-extraction hooks.  Failing early means later</span>
 <span class="sd">		phases are skipped — return-dict shape and terminal-status</span>
 <span class="sd">		semantics are unchanged from before the phase-separation refactor.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Workflow Strategy [ModularWorkflow]: Starting Modular Workflow...&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Workflow Strategy [ModularWorkflow]: Starting Modular Workflow..."</span><span class="p">)</span>
 
 		<span class="n">results</span><span class="p">,</span> <span class="n">sm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_only</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">sm</span><span class="o">.</span><span class="n">get_final_status</span><span class="p">()</span> <span class="o">!=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">:</span>
@@ -1097,7 +1136,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../../../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

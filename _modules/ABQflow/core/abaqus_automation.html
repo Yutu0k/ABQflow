@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.abaqus_automation - ABQflow 0.5.0 documentation</title>
+        <title>ABQflow.core.abaqus_automation - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,9 +200,13 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../source/ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -243,7 +247,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for ABQflow.core.abaqus_automation</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Abaqus batch processing — orchestrator, resource planner, and public helpers.</span>
+<span></span><span class="sd">"""Abaqus batch processing — orchestrator, resource planner, and public helpers.</span>
 
 <span class="sd">Key classes</span>
 <span class="sd">-----------</span>
@@ -253,7 +257,7 @@
 <span class="sd">	Three-phase lifecycle: ``plan`` / ``prepare`` / ``run_batch``.</span>
 <span class="sd">JobOutcome</span>
 <span class="sd">	Unified result envelope for a single job.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -262,11 +266,11 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">ThreadPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.progress</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 	<span class="n">BarColumn</span><span class="p">,</span>
 	<span class="n">Progress</span><span class="p">,</span>
@@ -275,11 +279,25 @@
 	<span class="n">TimeElapsedColumn</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_backend</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.hosts</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+	<span class="n">HostSpec</span><span class="p">,</span>
+	<span class="n">assign_hosts</span><span class="p">,</span>
+	<span class="n">physical_cores</span><span class="p">,</span>
+	<span class="n">summarise_assignment</span><span class="p">,</span>
+	<span class="n">total_capacity</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_workflow</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">CommandRecord</span><span class="p">,</span> <span class="n">_check_abqpy_installed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span>
+
+<span class="c1"># Guards the clear-then-add sequence in _setup_logging.  Under</span>
+<span class="c1"># ProcessPoolExecutor each worker had its own logging registry and this was</span>
+<span class="c1"># safe by isolation; the remote path uses threads, which share one global</span>
+<span class="c1"># registry.  logging's own lock protects its dict, not our two-step update.</span>
+<span class="n">_LOGGING_LOCK</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
 
 <span class="c1"># ======================== IMP-05: dry-run data model ========================</span>
 
@@ -287,7 +305,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobPlan">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobPlan</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Dry-run output for a single job — commands, paths, and resource summary.</span>
+<span class="w">	</span><span class="sd">"""Dry-run output for a single job — commands, paths, and resource summary.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -299,7 +317,7 @@
 <span class="sd">		Expected file paths (``inp``, ``odb``, ``output_dir``).</span>
 <span class="sd">	resource_summary : dict</span>
 <span class="sd">		Planned CPUs, token estimate, and parallelism info.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">commands</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 	<span class="n">paths</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -312,7 +330,7 @@
 <div class="viewcode-block" id="AbaqusCalculation">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusCalculation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbaqusCalculation</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.</span>
+<span class="w">	</span><span class="sd">"""Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy.</span>
 
 <span class="sd">	No side effects in ``__init__`` (only creates the output directory and</span>
 <span class="sd">	builds the immutable JobContext).  The logger is created lazily on the</span>
@@ -334,7 +352,7 @@
 <span class="sd">		Per-subprocess timeout in seconds.</span>
 <span class="sd">	ctx : JobContext</span>
 <span class="sd">		Immutable context built from the constructor arguments.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
@@ -342,9 +360,10 @@
 		<span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 		<span class="n">workflow_strategy</span><span class="p">,</span>
 		<span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-		<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;abaqus&#39;</span><span class="p">,</span>
+		<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'abaqus'</span><span class="p">,</span>
 		<span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 		<span class="n">user_subroutine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+		<span class="n">host</span><span class="p">:</span> <span class="n">HostSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="p">):</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">job_name</span>
@@ -354,6 +373,12 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span> <span class="o">=</span> <span class="n">abaqus_exe</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">user_subroutine</span> <span class="o">=</span> <span class="n">user_subroutine</span>
+		<span class="c1"># Which machine runs this job.  Deliberately per-calculation rather</span>
+		<span class="c1"># than per-batch: cpus_per_job and abaqus_exe are batch-level because</span>
+		<span class="c1"># they were never meant to vary per job, whereas the host *is*.</span>
+		<span class="c1"># Putting it here is what makes adding machines a change to</span>
+		<span class="c1"># assign_hosts alone.</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 		<span class="c1"># Build internals</span>
@@ -368,66 +393,79 @@
 
 <div class="viewcode-block" id="AbaqusCalculation.execute">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusCalculation.execute">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;full&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run the workflow (or a single phase of it) and return the result dict.</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'full'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Run the workflow (or a single phase of it) and return the result dict.</span>
 
 <span class="sd">		Creates the logger and the :class:`AbaqusRunner` on first call, then</span>
-<span class="sd">		delegates to ``self.workflow_strategy.execute()`` (``phase=&#39;full&#39;``)</span>
+<span class="sd">		delegates to ``self.workflow_strategy.execute()`` (``phase='full'``)</span>
 <span class="sd">		or to the matching ``&lt;phase&gt;_only`` method on the strategy.</span>
 
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
 <span class="sd">		phase : str</span>
-<span class="sd">			``&#39;full&#39;`` (default) runs the complete workflow. ``&#39;prepare&#39;``,</span>
-<span class="sd">			``&#39;simulate&#39;``, or ``&#39;extract&#39;`` run only that phase via the</span>
-<span class="sd">			strategy&#39;s ``prepare_only``/``simulate_only``/``extract_only``</span>
-<span class="sd">			method (see :class:`~ABQflow.core.strategies.JobWorkflowStrategy`&#39;s</span>
+<span class="sd">			``'full'`` (default) runs the complete workflow. ``'prepare'``,</span>
+<span class="sd">			``'simulate'``, or ``'extract'`` run only that phase via the</span>
+<span class="sd">			strategy's ``prepare_only``/``simulate_only``/``extract_only``</span>
+<span class="sd">			method (see :class:`~ABQflow.core.strategies.JobWorkflowStrategy`'s</span>
 <span class="sd">			optional phase-separated protocol).</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
 <span class="sd">		dict</span>
-<span class="sd">			Must contain at least ``&#39;status&#39;``.  May include extracted values.</span>
+<span class="sd">			Must contain at least ``'status'``.  May include extracted values.</span>
 
 <span class="sd">		Raises</span>
 <span class="sd">		------</span>
 <span class="sd">		NotImplementedError</span>
-<span class="sd">			If ``phase != &#39;full&#39;`` and ``self.workflow_strategy`` does not</span>
+<span class="sd">			If ``phase != 'full'`` and ``self.workflow_strategy`` does not</span>
 <span class="sd">			implement the corresponding ``&lt;phase&gt;_only`` method (e.g.</span>
 <span class="sd">			:class:`~ABQflow.core.strategies.MonolithicWorkflowStrategy`).</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Start Workflow (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
-		<span class="n">runner</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+		<span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="k">else</span> <span class="s2">""</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"======== [AbaqusCalculation] Start Workflow (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">)</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========"</span><span class="p">)</span>
 
-		<span class="k">if</span> <span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
-			<span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s1">_only&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-			<span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-				<span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-					<span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not support &quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;phase-separated execution (&#39;</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">_only&#39; not implemented).&quot;</span>
-				<span class="p">)</span>
-			<span class="n">outcome</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
-			<span class="n">results</span> <span class="o">=</span> <span class="n">outcome</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># (results, status_manager) or (results, status_manager, stop)</span>
+		<span class="n">backend</span> <span class="o">=</span> <span class="n">make_backend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">runner</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+								<span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span>
 
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;======== [AbaqusCalculation] Workflow Finished (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========&quot;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">phase</span> <span class="o">==</span> <span class="s1">'full'</span><span class="p">:</span>
+				<span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s1">_only'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+				<span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+					<span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+						<span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow_strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> does not support "</span>
+						<span class="sa">f</span><span class="s2">"phase-separated execution ('</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">_only' not implemented)."</span>
+					<span class="p">)</span>
+				<span class="n">outcome</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="p">,</span> <span class="n">runner</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">)</span>
+				<span class="n">results</span> <span class="o">=</span> <span class="n">outcome</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># (results, status_manager) or (results, status_manager, stop)</span>
+		<span class="k">finally</span><span class="p">:</span>
+			<span class="n">backend</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"======== [AbaqusCalculation] Workflow Finished (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> ========"</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">results</span></div>
 
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_setup_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
-		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AbaqusCalculation_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">():</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-		<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-		<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">exec_log_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
-		<span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
-		<span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
-		<span class="k">return</span> <span class="n">logger</span></div>
+		<span class="c1"># Locked: the remote path runs workers as threads sharing one global</span>
+		<span class="c1"># logging registry, and clear-then-add is not atomic. Distinct job</span>
+		<span class="c1"># names give distinct loggers so a collision is unlikely, but "one</span>
+		<span class="c1"># job's lines land in another job's file" is exactly the sort of bug</span>
+		<span class="c1"># that surfaces weeks later.</span>
+		<span class="k">with</span> <span class="n">_LOGGING_LOCK</span><span class="p">:</span>
+			<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AbaqusCalculation_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">():</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+			<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">'</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">'</span><span class="p">)</span>
+			<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">exec_log_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
+			<span class="n">file_handler</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+			<span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">logger</span></div>
 
 
 
@@ -437,7 +475,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobOutcome">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Unified result envelope returned from every job, pass or fail.</span>
+<span class="w">	</span><span class="sd">"""Unified result envelope returned from every job, pass or fail.</span>
 
 <span class="sd">	Status is normalised to a plain string (``JobStatus.value``) so it</span>
 <span class="sd">	serialises cleanly across process boundaries.</span>
@@ -447,7 +485,7 @@
 <span class="sd">	job_name : str</span>
 <span class="sd">		Name of the job.</span>
 <span class="sd">	status : str</span>
-<span class="sd">		String status, e.g. ``&quot;COMPLETED&quot;`` or ``&quot;SIMULATION_FAILED&quot;``.</span>
+<span class="sd">		String status, e.g. ``"COMPLETED"`` or ``"SIMULATION_FAILED"``.</span>
 <span class="sd">	results : dict or None</span>
 <span class="sd">		Extracted result values, or ``None`` if the job did not reach</span>
 <span class="sd">		extraction.</span>
@@ -460,11 +498,11 @@
 <span class="sd">	phases : list[dict] or None</span>
 <span class="sd">		Phase-by-phase history (name/status/duration/error) collected from</span>
 <span class="sd">		:class:`~ABQflow.core.status.JobStatusManager`. ``None`` for</span>
-<span class="sd">		strategies that don&#39;t populate it (e.g. monolithic workflows).</span>
+<span class="sd">		strategies that don't populate it (e.g. monolithic workflows).</span>
 <span class="sd">	duration_s : float or None</span>
 <span class="sd">		Wall-clock seconds spent in :meth:`AbaqusCalculation.execute` for</span>
 <span class="sd">		this job.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -481,7 +519,7 @@
 <div class="viewcode-block" id="solver_tokens">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.solver_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solver_tokens</span><span class="p">(</span><span class="n">n_cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
+<span class="w">	</span><span class="sd">"""Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
 
 <span class="sd">	Formula: ``token(n) = ceil(5 * n^0.422)``, an empirical approximation</span>
 <span class="sd">	of Abaqus licensing behaviour.</span>
@@ -495,7 +533,7 @@
 <span class="sd">	-------</span>
 <span class="sd">	int</span>
 <span class="sd">		Estimated token count.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">n_cpus</span> <span class="o">**</span> <span class="mf">0.422</span><span class="p">)</span></div>
 
 
@@ -504,8 +542,9 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.plan_parallelism">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">plan_parallelism</span><span class="p">(</span><span class="n">requested</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 					<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-					<span class="n">reserve_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Compute the actual number of concurrent jobs given license limits.</span>
+					<span class="n">reserve_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+					<span class="n">total_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Compute the actual number of concurrent jobs given license limits.</span>
 
 <span class="sd">	License tokens (if provided) are a hard cap — Abaqus will refuse to start</span>
 <span class="sd">	a job it cannot license.  CPU cores are informational only: requesting</span>
@@ -523,35 +562,40 @@
 <span class="sd">		Total license tokens available.  ``None`` means unconstrained.</span>
 <span class="sd">	reserve_cores : int</span>
 <span class="sd">		Cores to reserve for the OS and other processes (default 1).</span>
+<span class="sd">	total_cores : int or None</span>
+<span class="sd">		Physical cores on the machine that will *execute* the jobs.  ``None``</span>
+<span class="sd">		(the default) means this machine, preserving existing behaviour;</span>
+<span class="sd">		remote batches pass the target's core count so capacity is reasoned</span>
+<span class="sd">		about on the executing host rather than the submitting one.</span>
 
 <span class="sd">	Returns</span>
 <span class="sd">	-------</span>
 <span class="sd">	int</span>
 <span class="sd">		Feasible parallelism level (at least 1).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">total</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="sd">	"""</span>
+	<span class="n">total</span> <span class="o">=</span> <span class="n">total_cores</span> <span class="k">if</span> <span class="n">total_cores</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">physical_cores</span><span class="p">()</span>
 	<span class="n">p_cpu</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="n">reserve_cores</span><span class="p">)</span> <span class="o">//</span> <span class="n">cpus_per_job</span><span class="p">)</span>
 	<span class="n">p</span> <span class="o">=</span> <span class="n">requested</span>
 	<span class="k">if</span> <span class="n">license_tokens</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="n">p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">license_tokens</span> <span class="o">//</span> <span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)))</span>
 	<span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
 	<span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="n">p_cpu</span><span class="p">:</span>
-		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-			<span class="sa">f</span><span class="s2">&quot;Parallelism </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> oversubscribes available CPU cores &quot;</span>
-			<span class="sa">f</span><span class="s2">&quot;(fits </span><span class="si">{</span><span class="n">p_cpu</span><span class="si">}</span><span class="s2"> jobs x </span><span class="si">{</span><span class="n">cpus_per_job</span><span class="si">}</span><span class="s2"> cores in </span><span class="si">{</span><span class="n">total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">reserve_cores</span><span class="si">}</span><span class="s2"> &quot;</span>
-			<span class="sa">f</span><span class="s2">&quot;usable physical cores); proceeding anyway.&quot;</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'BatchAbaqusProcessor'</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">"Parallelism </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> oversubscribes available CPU cores "</span>
+			<span class="sa">f</span><span class="s2">"(fits </span><span class="si">{</span><span class="n">p_cpu</span><span class="si">}</span><span class="s2"> jobs x </span><span class="si">{</span><span class="n">cpus_per_job</span><span class="si">}</span><span class="s2"> cores in </span><span class="si">{</span><span class="n">total</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">reserve_cores</span><span class="si">}</span><span class="s2"> "</span>
+			<span class="sa">f</span><span class="s2">"usable physical cores); proceeding anyway."</span><span class="p">)</span>
 	<span class="k">if</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">requested</span><span class="p">:</span>
-		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-			<span class="sa">f</span><span class="s2">&quot;Parallelism reduced from </span><span class="si">{</span><span class="n">requested</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> by the license token limit &quot;</span>
-			<span class="sa">f</span><span class="s2">&quot;(tokens per job </span><span class="si">{</span><span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)</span><span class="si">}</span><span class="s2">, available tokens </span><span class="si">{</span><span class="n">license_tokens</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+		<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'BatchAbaqusProcessor'</span><span class="p">)</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">"Parallelism reduced from </span><span class="si">{</span><span class="n">requested</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2"> by the license token limit "</span>
+			<span class="sa">f</span><span class="s2">"(tokens per job </span><span class="si">{</span><span class="n">solver_tokens</span><span class="p">(</span><span class="n">cpus_per_job</span><span class="p">)</span><span class="si">}</span><span class="s2">, available tokens </span><span class="si">{</span><span class="n">license_tokens</span><span class="si">}</span><span class="s2">)."</span><span class="p">)</span>
 	<span class="k">return</span> <span class="n">p</span></div>
 
 
 
 <span class="c1"># ======================== Worker (fix B18, fix Q2-1) ========================</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_worker</span><span class="p">(</span><span class="n">calc</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;full&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobOutcome</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Top-level entry point for :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_worker</span><span class="p">(</span><span class="n">calc</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'full'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobOutcome</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Top-level entry point for :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
 
 <span class="sd">	All exceptions are caught and wrapped in a :class:`JobOutcome` — they</span>
 <span class="sd">	never propagate to the pool, so one failed job cannot crash the batch.</span>
@@ -561,8 +605,8 @@
 <span class="sd">	calc : AbaqusCalculation</span>
 <span class="sd">		Fully configured calculation to run.</span>
 <span class="sd">	phase : str</span>
-<span class="sd">		Forwarded to :meth:`AbaqusCalculation.execute` — ``&#39;full&#39;``,</span>
-<span class="sd">		``&#39;prepare&#39;``, ``&#39;simulate&#39;``, or ``&#39;extract&#39;``.</span>
+<span class="sd">		Forwarded to :meth:`AbaqusCalculation.execute` — ``'full'``,</span>
+<span class="sd">		``'prepare'``, ``'simulate'``, or ``'extract'``.</span>
 
 <span class="sd">	Returns</span>
 <span class="sd">	-------</span>
@@ -570,23 +614,39 @@
 <span class="sd">		Result envelope (status is always a plain string). ``phases`` and</span>
 <span class="sd">		``duration_s`` are populated so the main process can log a</span>
 <span class="sd">		phase-by-phase summary (see :meth:`BatchAbaqusProcessor._log_job_summary`).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">started_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 	<span class="k">try</span><span class="p">:</span>
 		<span class="n">results</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">)</span>
-		<span class="n">raw</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">)</span>
+		<span class="n">raw</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'status'</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">)</span>
 		<span class="n">status</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">JobStatus</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
 		<span class="c1"># IMP-02: promote solver diagnostics from results to top-level field</span>
-		<span class="n">diag</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;diagnostics&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-		<span class="n">phases</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_phase_history&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+		<span class="n">diag</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'diagnostics'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+		<span class="n">phases</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">'_phase_history'</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">JobOutcome</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span>
 						<span class="n">diagnostics</span><span class="o">=</span><span class="n">diag</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
 						<span class="n">phases</span><span class="o">=</span><span class="n">phases</span><span class="p">,</span> <span class="n">duration_s</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">started_at</span><span class="p">)</span>
 	<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 		<span class="k">return</span> <span class="n">JobOutcome</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">UNKNOWN_ERROR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-						<span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+						<span class="n">error</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
 						<span class="n">output_dir</span><span class="o">=</span><span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span>
 						<span class="n">duration_s</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">started_at</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gated_worker</span><span class="p">(</span><span class="n">calc</span><span class="p">:</span> <span class="n">AbaqusCalculation</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'full'</span><span class="p">,</span>
+				<span class="n">gate</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobOutcome</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Run *calc* while holding its machine's concurrency slot.</span>
+
+<span class="sd">	Thread-pool counterpart of :func:`_worker`.  The semaphore is what caps</span>
+<span class="sd">	each machine independently — a host with ``max_concurrent=1`` runs one</span>
+<span class="sd">	job at a time no matter how many were assigned to it, while a host with</span>
+<span class="sd">	``max_concurrent=2`` runs two.  It is held for the whole job and released</span>
+<span class="sd">	even on failure, so a broken machine cannot leak slots and stall the batch.</span>
+<span class="sd">	"""</span>
+	<span class="k">if</span> <span class="n">gate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">_worker</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span>
+	<span class="k">with</span> <span class="n">gate</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">_worker</span><span class="p">(</span><span class="n">calc</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span>
 
 
 <span class="c1"># ======================== BatchAbaqusProcessor ========================</span>
@@ -594,7 +654,7 @@
 <div class="viewcode-block" id="BatchAbaqusProcessor">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BatchAbaqusProcessor</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Orchestrate a batch of Abaqus jobs through a three-phase lifecycle.</span>
+<span class="w">	</span><span class="sd">"""Orchestrate a batch of Abaqus jobs through a three-phase lifecycle.</span>
 
 <span class="sd">	1. :meth:`plan` — inspect for directory conflicts, compute decisions.</span>
 <span class="sd">	   Pure computation; no side effects.</span>
@@ -611,7 +671,7 @@
 <span class="sd">		Built calculations (populated by :meth:`prepare`).</span>
 <span class="sd">	logger : logging.Logger</span>
 <span class="sd">		Logger writing to ``batch_processor.log`` in the output directory.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.__init__">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.__init__">[docs]</a>
@@ -620,13 +680,14 @@
 		<span class="n">batch_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">],</span>
 		<span class="n">base_output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 		<span class="n">cpus_per_job</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-		<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;abaqus&#39;</span><span class="p">,</span>
-		<span class="n">duplicate_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fail&#39;</span><span class="p">,</span>                <span class="c1"># B12: &#39;fail&#39; default, not &#39;interactive&#39;</span>
+		<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'abaqus'</span><span class="p">,</span>
+		<span class="n">duplicate_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'fail'</span><span class="p">,</span>                <span class="c1"># B12: 'fail' default, not 'interactive'</span>
 		<span class="n">prompt_fn</span> <span class="o">=</span> <span class="nb">input</span><span class="p">,</span>
 		<span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 		<span class="n">preflight_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+		<span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">		</span><span class="sd">"""</span>
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
 <span class="sd">		batch_data : list[dict] or list[JobSpec]</span>
@@ -637,14 +698,14 @@
 <span class="sd">		cpus_per_job : int</span>
 <span class="sd">			Number of CPUs to request for each Abaqus job.</span>
 <span class="sd">		abaqus_exe : str</span>
-<span class="sd">			**Absolute** path to the Abaqus executable (default ``&#39;abaqus&#39;``).</span>
+<span class="sd">			**Absolute** path to the Abaqus executable (default ``'abaqus'``).</span>
 <span class="sd">		duplicate_mode : str</span>
-<span class="sd">			How to handle existing job directories (default ``&#39;fail&#39;``):</span>
+<span class="sd">			How to handle existing job directories (default ``'fail'``):</span>
 
-<span class="sd">			* ``&#39;fail&#39;`` — raise :class:`FileExistsError` on any conflict.</span>
-<span class="sd">			* ``&#39;skip&#39;`` — skip jobs whose directory already exists.</span>
-<span class="sd">			* ``&#39;overwrite&#39;`` — delete the existing directory and re-run.</span>
-<span class="sd">			* ``&#39;interactive&#39;`` — prompt the user for each conflict.</span>
+<span class="sd">			* ``'fail'`` — raise :class:`FileExistsError` on any conflict.</span>
+<span class="sd">			* ``'skip'`` — skip jobs whose directory already exists.</span>
+<span class="sd">			* ``'overwrite'`` — delete the existing directory and re-run.</span>
+<span class="sd">			* ``'interactive'`` — prompt the user for each conflict.</span>
 <span class="sd">		prompt_fn : callable</span>
 <span class="sd">			Function for interactive prompts (default :func:`input`).</span>
 <span class="sd">		timeout : float or None</span>
@@ -652,9 +713,23 @@
 <span class="sd">		preflight_only : bool</span>
 <span class="sd">			If ``True``, only run preparation + preflight, skip solver &amp;</span>
 <span class="sd">			extraction (IMP-04 batch inspection mode).</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		hosts : list[HostSpec] or None</span>
+<span class="sd">			Machines to distribute jobs over.  ``None`` (the default) runs</span>
+<span class="sd">			everything locally, exactly as before — the remote code path is</span>
+<span class="sd">			unreachable without this argument.</span>
+
+<span class="sd">			Jobs are spread by :func:`~ABQflow.core.hosts.assign_hosts` in</span>
+<span class="sd">			proportion to each machine's ``weight``; when a machine has no</span>
+<span class="sd">			explicit weight, its concurrency capacity is used instead.  How</span>
+<span class="sd">			many jobs each machine runs *at once* is a separate knob,</span>
+<span class="sd">			``HostSpec.max_concurrent``, enforced during execution — so a</span>
+<span class="sd">			batch can send two concurrent jobs to one machine and one to</span>
+<span class="sd">			another.</span>
+<span class="sd">		"""</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span> <span class="o">=</span> <span class="n">base_output_dir</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="o">=</span> <span class="n">cpus_per_job</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">hosts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="k">if</span> <span class="n">hosts</span> <span class="k">else</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span> <span class="o">=</span> <span class="n">abaqus_exe</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">=</span> <span class="n">duplicate_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_prompt</span> <span class="o">=</span> <span class="n">prompt_fn</span>
@@ -671,25 +746,60 @@
 		<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">]</span>
 		<span class="n">dup</span> <span class="o">=</span> <span class="p">{</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
 		<span class="k">if</span> <span class="n">dup</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate job_name in batch: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dup</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate job_name in batch: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dup</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 		<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="s1">&#39;batch_processor.log&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="s1">'batch_processor.log'</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_logging</span><span class="p">()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AbaqusCalculation</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+		<span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AbaqusCalculation</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
+		<span class="c1"># Assign jobs to hosts if any are provided.</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span> <span class="o">=</span> <span class="n">assign_hosts</span><span class="p">(</span>
+				<span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">)</span>
+			<span class="k">for</span> <span class="n">host_name</span><span class="p">,</span> <span class="n">jobs</span> <span class="ow">in</span> <span class="n">summarise_assignment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Host </span><span class="si">%s</span><span class="s2">: </span><span class="si">%d</span><span class="s2"> job(s) — </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+								<span class="n">host_name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jobs</span><span class="p">),</span> <span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">jobs</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="BatchAbaqusProcessor.host_for">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.host_for">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">host_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HostSpec</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Machine assigned to *job_name*; ``None`` when running locally."""</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">job_name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BatchAbaqusProcessor.assignment">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.assignment">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">		</span><span class="sd">"""``{host_name: [job_name, ...]}`` for the configured pool.</span>
+
+<span class="sd">		Useful before running: it shows how the batch will be spread without</span>
+<span class="sd">		executing anything.</span>
+<span class="sd">		"""</span>
+		<span class="k">return</span> <span class="n">summarise_assignment</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="p">)</span></div>
+
+
+	<span class="nd">@staticmethod</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">_hosts_in</span><span class="p">(</span><span class="n">calcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AbaqusCalculation</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">"""Unique hosts referenced by *calcs*, in first-seen order."""</span>
+		<span class="n">seen</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calcs</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">host</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+				<span class="n">seen</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">host</span>
+		<span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">seen</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_setup_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">:</span>
-		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;BatchAbaqusProcessor&#39;</span><span class="p">)</span>
+		<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">'BatchAbaqusProcessor'</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">hasHandlers</span><span class="p">():</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-		<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
-		<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+		<span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">'</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">'</span><span class="p">)</span>
+		<span class="n">file_handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">'a'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
 		<span class="n">file_handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">file_handler</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;======== Batch Processor Start ========&quot;</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"======== Batch Processor Start ========"</span><span class="p">)</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">logger</span>
 
 
@@ -697,15 +807,15 @@
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.dry_run">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.dry_run">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">dry_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;plan&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobPlan</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Inspect what the batch would do without executing it.</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">dry_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'plan'</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobPlan</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">"""Inspect what the batch would do without executing it.</span>
 
 <span class="sd">		Two levels (see IMP-05):</span>
 
-<span class="sd">		``&#39;plan&#39;`` (default)</span>
+<span class="sd">		``'plan'`` (default)</span>
 <span class="sd">			**Zero side effects.**  Inspects each spec and builds a command</span>
 <span class="sd">			plan without touching the filesystem.</span>
-<span class="sd">		``&#39;stage&#39;``</span>
+<span class="sd">		``'stage'``</span>
 <span class="sd">			Runs the real preparation phase, but substitutes a</span>
 <span class="sd">			``record_only`` runner so solver and hook commands are</span>
 <span class="sd">			logged, not executed.  **Has filesystem side effects**</span>
@@ -714,31 +824,31 @@
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
 <span class="sd">		level : str</span>
-<span class="sd">			``&#39;plan&#39;`` (L1, default) or ``&#39;stage&#39;`` (L2).</span>
+<span class="sd">			``'plan'`` (L1, default) or ``'stage'`` (L2).</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
 <span class="sd">		list[JobPlan]</span>
 <span class="sd">			One plan per job.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;plan&#39;</span><span class="p">:</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">'plan'</span><span class="p">:</span>
 			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_run_plan</span><span class="p">()</span>
-		<span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;stage&#39;</span><span class="p">:</span>
+		<span class="k">elif</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">'stage'</span><span class="p">:</span>
 			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_run_stage</span><span class="p">()</span>
 		<span class="k">else</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown dry_run level: &#39;</span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2">&#39;. Use &#39;plan&#39; or &#39;stage&#39;.&quot;</span><span class="p">)</span></div>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown dry_run level: '</span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s2">'. Use 'plan' or 'stage'."</span><span class="p">)</span></div>
 
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_dry_run_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobPlan</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;L1: zero-side-effect command plan from specs only.</span>
+<span class="w">		</span><span class="sd">"""L1: zero-side-effect command plan from specs only.</span>
 
-<span class="sd">		Reuses :class:`AbaqusRunner`&#39;s pure command-builder static methods</span>
+<span class="sd">		Reuses :class:`AbaqusRunner`'s pure command-builder static methods</span>
 <span class="sd">		(``build_preflight_command`` / ``build_solver_command`` /</span>
 <span class="sd">		``build_script_command``) instead of re-deriving the Abaqus CLI</span>
 <span class="sd">		syntax here — the two paths would otherwise silently drift apart.</span>
 <span class="sd">		Constructing a :class:`JobContext` has no side effects (no directory</span>
 <span class="sd">		is created), so L1 stays a pure read of the specs.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">has_abqpy</span> <span class="o">=</span> <span class="n">_check_abqpy_installed</span><span class="p">()</span>
 		<span class="n">plans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobPlan</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
@@ -749,18 +859,18 @@
 							<span class="n">user_subroutine</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
 
 			<span class="c1"># Subroutine compile command (modular only)</span>
-			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;modular&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">precompiled</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'modular'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">precompiled</span><span class="p">:</span>
 				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span>
-					<span class="s1">&#39;compile&#39;</span><span class="p">,</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_make_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="p">),</span> <span class="n">out_dir</span><span class="p">))</span>
+					<span class="s1">'compile'</span><span class="p">,</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_make_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="p">),</span> <span class="n">out_dir</span><span class="p">))</span>
 
 			<span class="c1"># Preflight command</span>
 			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">preflight</span><span class="p">:</span>
 				<span class="n">pf_cmd</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_preflight_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">preflight</span><span class="p">)</span>
-				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">&#39;preflight&#39;</span><span class="p">,</span> <span class="n">pf_cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">'preflight'</span><span class="p">,</span> <span class="n">pf_cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
 
 			<span class="c1"># Solver command (modular only; monolithic handles its own)</span>
-			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;modular&#39;</span><span class="p">:</span>
-				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">&#39;solver&#39;</span><span class="p">,</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_solver_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">),</span> <span class="n">out_dir</span><span class="p">))</span>
+			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'modular'</span><span class="p">:</span>
+				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">'solver'</span><span class="p">,</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_solver_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">),</span> <span class="n">out_dir</span><span class="p">))</span>
 
 			<span class="c1"># Hook commands — pre-extraction needs the CAE kernel (mdb), like</span>
 			<span class="c1"># ModelPropertiesExtractionStrategy; post-extraction only needs</span>
@@ -769,48 +879,48 @@
 				<span class="n">cmd</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_script_command</span><span class="p">(</span>
 					<span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 					<span class="n">abaqus_exe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="n">has_abqpy</span><span class="o">=</span><span class="n">has_abqpy</span><span class="p">)</span>
-				<span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;generated-at-runtime&gt;&#39;</span><span class="p">]</span>
-				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;hook:</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+				<span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">'--job_name'</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">'--tasks_json'</span><span class="p">,</span> <span class="s1">'&lt;generated-at-runtime&gt;'</span><span class="p">]</span>
+				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="sa">f</span><span class="s1">'hook:</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
 			<span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">post_extraction</span> <span class="ow">or</span> <span class="p">[]:</span>
 				<span class="n">cmd</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_script_command</span><span class="p">(</span>
 					<span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 					<span class="n">abaqus_exe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="n">has_abqpy</span><span class="o">=</span><span class="n">has_abqpy</span><span class="p">)</span>
-				<span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--job_name&#39;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;--tasks_json&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;generated-at-runtime&gt;&#39;</span><span class="p">]</span>
-				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;hook:</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+				<span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">'--job_name'</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">'--tasks_json'</span><span class="p">,</span> <span class="s1">'&lt;generated-at-runtime&gt;'</span><span class="p">]</span>
+				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="sa">f</span><span class="s1">'hook:</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">script_path</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
 
 			<span class="c1"># Monolithic workflow</span>
-			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="ow">and</span> <span class="n">spec</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">:</span>
 				<span class="n">cmd</span> <span class="o">=</span> <span class="n">AbaqusRunner</span><span class="o">.</span><span class="n">build_script_command</span><span class="p">(</span>
 					<span class="n">spec</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 					<span class="n">abaqus_exe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="n">has_abqpy</span><span class="o">=</span><span class="n">has_abqpy</span><span class="p">)</span>
-				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">&#39;monolithic&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+				<span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">'monolithic'</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
 
 			<span class="n">tokens_per</span> <span class="o">=</span> <span class="n">solver_tokens</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">)</span>
 			<span class="n">plans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">JobPlan</span><span class="p">(</span>
 				<span class="n">job_name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span>
 				<span class="n">commands</span><span class="o">=</span><span class="n">cmds</span><span class="p">,</span>
-				<span class="n">paths</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inp&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;odb&#39;</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">,</span> <span class="s1">&#39;output_dir&#39;</span><span class="p">:</span> <span class="n">out_dir</span><span class="p">},</span>
+				<span class="n">paths</span><span class="o">=</span><span class="p">{</span><span class="s1">'inp'</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">'odb'</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">,</span> <span class="s1">'output_dir'</span><span class="p">:</span> <span class="n">out_dir</span><span class="p">},</span>
 				<span class="n">resource_summary</span><span class="o">=</span><span class="p">{</span>
-					<span class="s1">&#39;cpus_per_job&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span>
-					<span class="s1">&#39;tokens_per_job&#39;</span><span class="p">:</span> <span class="n">tokens_per</span><span class="p">,</span>
-					<span class="s1">&#39;timeout&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+					<span class="s1">'cpus_per_job'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span>
+					<span class="s1">'tokens_per_job'</span><span class="p">:</span> <span class="n">tokens_per</span><span class="p">,</span>
+					<span class="s1">'timeout'</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
 				<span class="p">},</span>
 			<span class="p">))</span>
 		<span class="k">return</span> <span class="n">plans</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_dry_run_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobPlan</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;L2: real preparation + record_only for solver/hooks.&quot;&quot;&quot;</span>
+<span class="w">		</span><span class="sd">"""L2: real preparation + record_only for solver/hooks."""</span>
 		<span class="c1"># Reuse prepare() for real staging, but with record_only runner</span>
 		<span class="n">decisions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">()</span>
 		<span class="n">calcs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AbaqusCalculation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
-			<span class="n">decision</span> <span class="o">=</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">)</span>
-			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
+			<span class="n">decision</span> <span class="o">=</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">'run'</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">'skip'</span><span class="p">:</span>
 				<span class="k">continue</span>
-			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">'overwrite'</span><span class="p">:</span>
 				<span class="n">dirpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">)</span>
 				<span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			<span class="k">elif</span> <span class="n">decision</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+			<span class="k">elif</span> <span class="n">decision</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'run'</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
 				<span class="n">spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 				<span class="n">spec</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">decision</span>
 
@@ -825,11 +935,11 @@
 			<span class="n">plans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">JobPlan</span><span class="p">(</span>
 				<span class="n">job_name</span><span class="o">=</span><span class="n">calc</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span>
 				<span class="n">commands</span><span class="o">=</span><span class="n">runner</span><span class="o">.</span><span class="n">command_log</span><span class="p">,</span>
-				<span class="n">paths</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;inp&#39;</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">&#39;odb&#39;</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">,</span>
-					<span class="s1">&#39;output_dir&#39;</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">output_dir</span><span class="p">},</span>
+				<span class="n">paths</span><span class="o">=</span><span class="p">{</span><span class="s1">'inp'</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="s1">'odb'</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">odb_path</span><span class="p">,</span>
+					<span class="s1">'output_dir'</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">output_dir</span><span class="p">},</span>
 				<span class="n">resource_summary</span><span class="o">=</span><span class="p">{</span>
-					<span class="s1">&#39;cpus_per_job&#39;</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span>
-					<span class="s1">&#39;tokens_per_job&#39;</span><span class="p">:</span> <span class="n">solver_tokens</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">),</span>
+					<span class="s1">'cpus_per_job'</span><span class="p">:</span> <span class="n">calc</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span>
+					<span class="s1">'tokens_per_job'</span><span class="p">:</span> <span class="n">solver_tokens</span><span class="p">(</span><span class="n">calc</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">),</span>
 				<span class="p">},</span>
 			<span class="p">))</span>
 		<span class="k">return</span> <span class="n">plans</span>
@@ -839,11 +949,11 @@
 <div class="viewcode-block" id="BatchAbaqusProcessor.plan">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.plan">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Inspect output directory for existing job subdirectories.</span>
+<span class="w">		</span><span class="sd">"""Inspect output directory for existing job subdirectories.</span>
 
 <span class="sd">		Pure read-only check — no directories are created, deleted, or</span>
-<span class="sd">		renamed.  The decision for each job is one of: ``&#39;run&#39;``,</span>
-<span class="sd">		``&#39;skip&#39;``, ``&#39;overwrite&#39;``, or a new name string (rename).</span>
+<span class="sd">		renamed.  The decision for each job is one of: ``'run'``,</span>
+<span class="sd">		``'skip'``, ``'overwrite'``, or a new name string (rename).</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
@@ -853,36 +963,36 @@
 <span class="sd">		Raises</span>
 <span class="sd">		------</span>
 <span class="sd">		FileExistsError</span>
-<span class="sd">			If ``duplicate_mode=&#39;fail&#39;`` and any job directory already exists.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">			If ``duplicate_mode='fail'`` and any job directory already exists.</span>
+<span class="sd">		"""</span>
 		<span class="n">decisions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 		<span class="n">conflicts</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span>
 					<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">))]</span>
 
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">conflicts</span><span class="p">:</span>
-			<span class="k">return</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">:</span> <span class="s1">&#39;run&#39;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">}</span>
+			<span class="k">return</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">:</span> <span class="s1">'run'</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">}</span>
 
 		<span class="n">conflict_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">]</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Existing job dirs: </span><span class="si">{</span><span class="n">conflict_names</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Existing job dirs: </span><span class="si">{</span><span class="n">conflict_names</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">&#39;fail&#39;</span><span class="p">:</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">'fail'</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">&quot;Mode[fail] — existing jobs: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conflict_names</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
+				<span class="sa">f</span><span class="s2">"Mode[fail] — existing jobs: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conflict_names</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">'skip'</span><span class="p">:</span>
 			<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">:</span>
-				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;skip&#39;</span>
-		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">:</span>
+				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'skip'</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">'overwrite'</span><span class="p">:</span>
 			<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">:</span>
-				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;overwrite&#39;</span>
-		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">&#39;interactive&#39;</span><span class="p">:</span>
+				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'overwrite'</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span> <span class="o">==</span> <span class="s1">'interactive'</span><span class="p">:</span>
 			<span class="n">decisions</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interactive_resolve</span><span class="p">(</span><span class="n">conflicts</span><span class="p">))</span>
 		<span class="k">else</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown duplicate_mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown duplicate_mode: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duplicate_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 		<span class="c1"># Non-conflicting jobs → run</span>
 		<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
 			<span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">job_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">decisions</span><span class="p">:</span>
-				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;run&#39;</span>
+				<span class="n">decisions</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'run'</span>
 		<span class="k">return</span> <span class="n">decisions</span></div>
 
 
@@ -892,42 +1002,42 @@
 		<span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">:</span>
 			<span class="n">name</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span>
 			<span class="k">if</span> <span class="n">overwrite_all</span><span class="p">:</span>
-				<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;overwrite&#39;</span>
+				<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'overwrite'</span>
 				<span class="k">continue</span>
 			<span class="k">if</span> <span class="n">skip_all</span><span class="p">:</span>
-				<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;skip&#39;</span>
+				<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'skip'</span>
 				<span class="k">continue</span>
 
 			<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 				<span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prompt</span><span class="p">(</span>
-					<span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Job &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; exists:</span><span class="se">\n</span><span class="s2">&quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;  [o]verwrite  [s]kip  [r]ename  [O]verwrite All  [S]kip All  [A]bort</span><span class="se">\n</span><span class="s2">&quot;</span>
-					<span class="sa">f</span><span class="s2">&quot;  &gt;&gt;&gt; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-				<span class="k">if</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">&#39;o&#39;</span><span class="p">:</span>
-					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;overwrite&#39;</span>
+					<span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2"> Job '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' exists:</span><span class="se">\n</span><span class="s2">"</span>
+					<span class="sa">f</span><span class="s2">"  [o]verwrite  [s]kip  [r]ename  [O]verwrite All  [S]kip All  [A]bort</span><span class="se">\n</span><span class="s2">"</span>
+					<span class="sa">f</span><span class="s2">"  &gt;&gt;&gt; "</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+				<span class="k">if</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">'o'</span><span class="p">:</span>
+					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'overwrite'</span>
 					<span class="k">break</span>
-				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span>
-					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;skip&#39;</span>
+				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">'s'</span><span class="p">:</span>
+					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'skip'</span>
 					<span class="k">break</span>
-				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span>
+				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">'r'</span><span class="p">:</span>
 					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_available_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 					<span class="k">break</span>
-				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">&#39;O&#39;</span><span class="p">:</span>
+				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">'O'</span><span class="p">:</span>
 					<span class="n">overwrite_all</span> <span class="o">=</span> <span class="kc">True</span>
-					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;overwrite&#39;</span>
+					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'overwrite'</span>
 					<span class="k">break</span>
-				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span>
+				<span class="k">elif</span> <span class="n">resp</span> <span class="o">==</span> <span class="s1">'S'</span><span class="p">:</span>
 					<span class="n">skip_all</span> <span class="o">=</span> <span class="kc">True</span>
-					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;skip&#39;</span>
+					<span class="n">decisions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'skip'</span>
 					<span class="k">break</span>
-				<span class="k">elif</span> <span class="n">resp</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
-					<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;User aborted batch processing.&quot;</span><span class="p">)</span>
+				<span class="k">elif</span> <span class="n">resp</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">'a'</span><span class="p">:</span>
+					<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"User aborted batch processing."</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">decisions</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">_find_available_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 		<span class="n">v</span> <span class="o">=</span> <span class="mi">2</span>
 		<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-			<span class="n">n</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">original</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+			<span class="n">n</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">original</span><span class="si">}</span><span class="s2">_v</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span>
 			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">n</span><span class="p">)):</span>
 				<span class="k">return</span> <span class="n">n</span>
 			<span class="n">v</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -936,7 +1046,7 @@
 
 	<span class="c1"># ---- shared calculation builder (used by prepare(), dry-run, and the phase-only methods) ----</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">_build_calc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">JobSpec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AbaqusCalculation</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Build an :class:`AbaqusCalculation` directly from *spec*.</span>
+<span class="w">		</span><span class="sd">"""Build an :class:`AbaqusCalculation` directly from *spec*.</span>
 
 <span class="sd">		No conflict resolution (no overwrite/rename/skip, no interactive</span>
 <span class="sd">		prompt) — ``output_dir`` is always deterministically derived from</span>
@@ -946,7 +1056,7 @@
 <span class="sd">		be called standalone (even in a fresh process/session): the caller</span>
 <span class="sd">		just needs to reconstruct a :class:`BatchAbaqusProcessor` with the</span>
 <span class="sd">		same ``batch_data``/``base_output_dir`` used before.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">workflow</span> <span class="o">=</span> <span class="n">build_workflow</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">preflight_only</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight_only</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">AbaqusCalculation</span><span class="p">(</span>
 			<span class="n">job_name</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span>
@@ -956,16 +1066,17 @@
 			<span class="n">abaqus_exe</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span><span class="p">,</span>
 			<span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
 			<span class="n">user_subroutine</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span><span class="o">.</span><span class="n">source_path</span> <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">subroutine</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+			<span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host_for</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">),</span>
 		<span class="p">)</span>
 
 	<span class="c1"># ---- prepare: apply decisions, build calculations ----</span>
 <div class="viewcode-block" id="BatchAbaqusProcessor.prepare">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.BatchAbaqusProcessor.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decisions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Apply plan decisions and build the :class:`AbaqusCalculation` list.</span>
+<span class="w">		</span><span class="sd">"""Apply plan decisions and build the :class:`AbaqusCalculation` list.</span>
 
-<span class="sd">		Side effects: directories may be deleted (``&#39;overwrite&#39;``) or</span>
-<span class="sd">		specs may be renamed (``&#39;rename&#39;``).  Results are stored in</span>
+<span class="sd">		Side effects: directories may be deleted (``'overwrite'``) or</span>
+<span class="sd">		specs may be renamed (``'rename'``).  Results are stored in</span>
 <span class="sd">		``self.calculations``.</span>
 
 <span class="sd">		Parameters</span>
@@ -973,36 +1084,41 @@
 <span class="sd">		decisions : dict[str, str] or None</span>
 <span class="sd">			Decision map from :meth:`plan`.  If ``None``, :meth:`plan` is</span>
 <span class="sd">			called first.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="k">if</span> <span class="n">decisions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="n">decisions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">()</span>
 
 		<span class="n">calcs</span> <span class="o">=</span> <span class="p">[]</span>
 		<span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">:</span>
-			<span class="n">decision</span> <span class="o">=</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">)</span>
+			<span class="n">decision</span> <span class="o">=</span> <span class="n">decisions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">,</span> <span class="s1">'run'</span><span class="p">)</span>
 
-			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;skip&#39;</span><span class="p">:</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Skipping: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">'skip'</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Skipping: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 				<span class="k">continue</span>
-			<span class="k">elif</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">:</span>
+			<span class="k">elif</span> <span class="n">decision</span> <span class="o">==</span> <span class="s1">'overwrite'</span><span class="p">:</span>
 				<span class="n">dirpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_output_dir</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">)</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Overwriting: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Overwriting: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 				<span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-			<span class="k">elif</span> <span class="n">decision</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+			<span class="k">elif</span> <span class="n">decision</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'run'</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
 				<span class="c1"># decision is a new name</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - Renaming: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">decision</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - Renaming: </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">decision</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+				<span class="c1"># Carry the host assignment across the rename, or the job</span>
+				<span class="c1"># would silently fall back to running locally.</span>
+				<span class="n">assigned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">job_name</span><span class="p">)</span>
+				<span class="k">if</span> <span class="n">assigned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">_assignment</span><span class="p">[</span><span class="n">decision</span><span class="p">]</span> <span class="o">=</span> <span class="n">assigned</span>
 				<span class="n">spec</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
 				<span class="n">spec</span><span class="o">.</span><span class="n">job_name</span> <span class="o">=</span> <span class="n">decision</span>
 
 			<span class="n">calcs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_calc</span><span class="p">(</span><span class="n">spec</span><span class="p">))</span>
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">calculations</span> <span class="o">=</span> <span class="n">calcs</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prepared </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">)</span><span class="si">}</span><span class="s2"> jobs.&quot;</span><span class="p">)</span></div>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Prepared </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">)</span><span class="si">}</span><span class="s2"> jobs."</span><span class="p">)</span></div>
 
 
 	<span class="c1"># ---- batch log summary (lightweight aggregation) ----</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">_log_job_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oc</span><span class="p">:</span> <span class="n">JobOutcome</span><span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Write a phase-by-phase summary of *oc* to ``batch_processor.log``.</span>
+<span class="w">		</span><span class="sd">"""Write a phase-by-phase summary of *oc* to ``batch_processor.log``.</span>
 
 <span class="sd">		Called once per completed job, right after its</span>
 <span class="sd">		:class:`~concurrent.futures.ProcessPoolExecutor` future resolves —</span>
@@ -1010,13 +1126,13 @@
 <span class="sd">		makes preparation/simulation/extraction activity show up in the</span>
 <span class="sd">		batch-level log, which previously stopped recording after</span>
 <span class="sd">		:meth:`prepare`.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;---- </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">duration_s</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s) ----&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"---- </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">duration_s</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s) ----"</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">phases</span> <span class="ow">or</span> <span class="p">[]):</span>
-			<span class="n">err</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; — </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    [</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;duration_s&#39;</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s)</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="n">err</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">" — </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'error'</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    [</span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'phase'</span><span class="p">]</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'duration_s'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="mi">0</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s)</span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">error</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">oc</span><span class="o">.</span><span class="n">phases</span><span class="p">:</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    error: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    error: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 	<span class="c1"># ---- shared ProcessPoolExecutor driver ----</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">_execute_pool</span><span class="p">(</span>
@@ -1026,7 +1142,7 @@
 		<span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 		<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run *calcs* through :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
+<span class="w">		</span><span class="sd">"""Run *calcs* through :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
 
 <span class="sd">		Shared by :meth:`run_batch` and the phase-only methods</span>
 <span class="sd">		(:meth:`run_preparation`/:meth:`run_simulation`/:meth:`run_extraction`)</span>
@@ -1039,7 +1155,7 @@
 <span class="sd">			Calculations to execute.</span>
 <span class="sd">		phase : str</span>
 <span class="sd">			Forwarded to :func:`_worker` / :meth:`AbaqusCalculation.execute`</span>
-<span class="sd">			— ``&#39;full&#39;``, ``&#39;prepare&#39;``, ``&#39;simulate&#39;``, or ``&#39;extract&#39;``.</span>
+<span class="sd">			— ``'full'``, ``'prepare'``, ``'simulate'``, or ``'extract'``.</span>
 <span class="sd">		num_parallel_jobs : int</span>
 <span class="sd">			Desired maximum concurrent jobs.</span>
 <span class="sd">		license_tokens : int or None</span>
@@ -1050,23 +1166,68 @@
 <span class="sd">		list[JobOutcome]</span>
 <span class="sd">			One outcome per executed job.  Failed jobs are included with</span>
 <span class="sd">			their error state — they do not halt the batch.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="n">p</span> <span class="o">=</span> <span class="n">plan_parallelism</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="c1"># A pool is in play as soon as any job names a host — including a</span>
+		<span class="c1"># purely local one.  The pool scheduler is what enforces per-host</span>
+		<span class="c1"># concurrency, so it must run for a mixed local+remote batch too.</span>
+		<span class="n">pool_hosts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hosts_in</span><span class="p">(</span><span class="n">calcs</span><span class="p">)</span>
+		<span class="n">pooled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">pool_hosts</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">pooled</span><span class="p">:</span>
+			<span class="c1"># Per-host semaphores are what let one machine take two jobs while</span>
+			<span class="c1"># another takes one: HostSpec.max_concurrent (or the capacity</span>
+			<span class="c1"># derived from its cores and tokens) caps each machine</span>
+			<span class="c1"># independently, and num_parallel_jobs is only the global ceiling.</span>
+			<span class="n">gates</span> <span class="o">=</span> <span class="p">{</span>
+				<span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Semaphore</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">))</span>
+				<span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">pool_hosts</span>
+			<span class="p">}</span>
+			<span class="n">capacity</span> <span class="o">=</span> <span class="n">total_capacity</span><span class="p">(</span><span class="n">pool_hosts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">)</span>
+			<span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">num_parallel_jobs</span> <span class="ow">or</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">)))</span>
+			<span class="n">n_remote</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">pool_hosts</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_remote</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+				<span class="s2">"Pooled batch: </span><span class="si">%d</span><span class="s2"> job(s) over </span><span class="si">%d</span><span class="s2"> machine(s) (</span><span class="si">%d</span><span class="s2"> remote, </span><span class="si">%d</span><span class="s2"> local); "</span>
+				<span class="s2">"global cap </span><span class="si">%d</span><span class="s2">, per-host caps </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+				<span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool_hosts</span><span class="p">),</span> <span class="n">n_remote</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pool_hosts</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_remote</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span>
+				<span class="p">{</span><span class="n">h</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">pool_hosts</span><span class="p">},</span>
+			<span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">gates</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">p</span> <span class="o">=</span> <span class="n">plan_parallelism</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span>
+
 		<span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 		<span class="n">progress_columns</span> <span class="o">=</span> <span class="p">[</span>
 			<span class="n">SpinnerColumn</span><span class="p">(),</span>
-			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;[progress.description]</span><span class="si">{task.description}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">),</span>
+			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">"[progress.description]</span><span class="si">{task.description}</span><span class="s2">"</span><span class="p">,</span> <span class="n">justify</span><span class="o">=</span><span class="s2">"right"</span><span class="p">),</span>
 			<span class="n">BarColumn</span><span class="p">(),</span>
-			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;[progress.percentage]</span><span class="si">{task.percentage:&gt;3.0f}</span><span class="s2">%&quot;</span><span class="p">),</span>
-			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">&quot;(</span><span class="si">{task.completed}</span><span class="s2"> of </span><span class="si">{task.total}</span><span class="s2">)&quot;</span><span class="p">),</span>
+			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">"[progress.percentage]</span><span class="si">{task.percentage:&gt;3.0f}</span><span class="s2">%"</span><span class="p">),</span>
+			<span class="n">TextColumn</span><span class="p">(</span><span class="s2">"(</span><span class="si">{task.completed}</span><span class="s2"> of </span><span class="si">{task.total}</span><span class="s2">)"</span><span class="p">),</span>
 			<span class="n">TimeElapsedColumn</span><span class="p">(),</span>
 		<span class="p">]</span>
 
+		<span class="c1"># Threads for a pooled batch.  Remote work is upload → launch → sleep</span>
+		<span class="c1"># → stat → download and local work is Popen.wait(); both release the</span>
+		<span class="c1"># GIL for their whole duration, so the solver processes run in</span>
+		<span class="c1"># parallel regardless.  Processes would buy nothing here, would make</span>
+		<span class="c1"># SSH connection reuse impossible, and cannot carry a paramiko client</span>
+		<span class="c1"># across the boundary at all — while the semaphores that enforce</span>
+		<span class="c1"># per-host limits only work inside one process.  A host-less batch</span>
+		<span class="c1"># keeps ProcessPoolExecutor, unchanged.</span>
+		<span class="n">executor_cls</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span> <span class="k">if</span> <span class="n">pooled</span> <span class="k">else</span> <span class="n">ProcessPoolExecutor</span>
+		<span class="n">submit_fn</span> <span class="o">=</span> <span class="n">_gated_worker</span> <span class="k">if</span> <span class="n">pooled</span> <span class="k">else</span> <span class="n">_worker</span>
+
 		<span class="k">with</span> <span class="n">Progress</span><span class="p">(</span><span class="o">*</span><span class="n">progress_columns</span><span class="p">)</span> <span class="k">as</span> <span class="n">progress</span><span class="p">,</span> \
-			<span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">p</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-			<span class="n">task</span> <span class="o">=</span> <span class="n">progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[bold blue]Running (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">)...&quot;</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">))</span>
-			<span class="n">futures</span> <span class="o">=</span> <span class="p">{</span><span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_worker</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span> <span class="n">c</span><span class="o">.</span><span class="n">job_name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calcs</span><span class="p">}</span>
+			<span class="n">executor_cls</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">p</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+			<span class="n">task</span> <span class="o">=</span> <span class="n">progress</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[bold blue]Running (</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">)..."</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">calcs</span><span class="p">))</span>
+			<span class="k">if</span> <span class="n">pooled</span><span class="p">:</span>
+				<span class="n">futures</span> <span class="o">=</span> <span class="p">{</span>
+					<span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">submit_fn</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span>
+								<span class="n">gates</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">host</span> <span class="k">else</span> <span class="kc">None</span><span class="p">):</span> <span class="n">c</span><span class="o">.</span><span class="n">job_name</span>
+					<span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calcs</span>
+				<span class="p">}</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">futures</span> <span class="o">=</span> <span class="p">{</span><span class="n">pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">submit_fn</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span> <span class="n">c</span><span class="o">.</span><span class="n">job_name</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">calcs</span><span class="p">}</span>
 
 			<span class="k">for</span> <span class="n">fut</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
 				<span class="k">try</span><span class="p">:</span>
@@ -1076,9 +1237,9 @@
 									<span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
 				<span class="n">outcomes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oc</span><span class="p">)</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">_log_job_summary</span><span class="p">(</span><span class="n">oc</span><span class="p">)</span>
-				<span class="n">icon</span> <span class="o">=</span> <span class="s2">&quot;✅&quot;</span> <span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;COMPLETED&quot;</span> <span class="k">else</span> <span class="s2">&quot;❌&quot;</span>
+				<span class="n">icon</span> <span class="o">=</span> <span class="s2">"✅"</span> <span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"COMPLETED"</span> <span class="k">else</span> <span class="s2">"❌"</span>
 				<span class="n">progress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">advance</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-								<span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+								<span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">icon</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
 
 		<span class="k">return</span> <span class="n">outcomes</span>
 
@@ -1090,7 +1251,7 @@
 		<span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 		<span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Execute all prepared calculations via :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
+<span class="w">		</span><span class="sd">"""Execute all prepared calculations via :class:`~concurrent.futures.ProcessPoolExecutor`.</span>
 
 <span class="sd">		If :meth:`prepare` has not been called yet it is invoked with a</span>
 <span class="sd">		fresh call to :meth:`plan`.</span>
@@ -1107,10 +1268,10 @@
 <span class="sd">		list[JobOutcome]</span>
 <span class="sd">			One outcome per executed job.  Failed jobs are included with</span>
 <span class="sd">			their error state — they do not halt the batch.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plan</span><span class="p">())</span>
-		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calculations</span><span class="p">,</span> <span class="s1">'full'</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
 
 
 	<span class="c1"># ---- phase-separated batch methods ----</span>
@@ -1119,14 +1280,14 @@
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_preparation</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run only the preparation phase (produce INPs, and compile a</span>
+<span class="w">		</span><span class="sd">"""Run only the preparation phase (produce INPs, and compile a</span>
 <span class="sd">		subroutine if configured) for every spec in ``self.specs``.</span>
 
 <span class="sd">		Builds :class:`AbaqusCalculation`\\ s directly from ``self.specs``</span>
 <span class="sd">		(see :meth:`_build_calc`) rather than through :meth:`plan`/</span>
-<span class="sd">		:meth:`prepare`&#39;s duplicate-directory handling — call :meth:`plan`/</span>
+<span class="sd">		:meth:`prepare`'s duplicate-directory handling — call :meth:`plan`/</span>
 <span class="sd">		:meth:`prepare` first if you need overwrite/rename/skip semantics.</span>
-<span class="sd">		Only ``workflow=&#39;modular&#39;`` specs are supported; a ``monolithic``</span>
+<span class="sd">		Only ``workflow='modular'`` specs are supported; a ``monolithic``</span>
 <span class="sd">		spec raises :class:`NotImplementedError` (it has no separable</span>
 <span class="sd">		preparation phase).</span>
 
@@ -1141,9 +1302,9 @@
 <span class="sd">		-------</span>
 <span class="sd">		list[JobOutcome]</span>
 <span class="sd">			One outcome per job.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">calcs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_calc</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">]</span>
-		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">&#39;prepare&#39;</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">'prepare'</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_simulation">
@@ -1151,13 +1312,13 @@
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_simulation</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run only the solver phase (pre-extraction + solve) for every spec.</span>
+<span class="w">		</span><span class="sd">"""Run only the solver phase (pre-extraction + solve) for every spec.</span>
 
 <span class="sd">		Assumes ``ctx.inp_path`` already exists for every job (e.g. from a</span>
 <span class="sd">		prior :meth:`run_preparation` call — possibly in an earlier</span>
 <span class="sd">		process/session; reconstruct the :class:`BatchAbaqusProcessor` with</span>
 <span class="sd">		the same ``batch_data``/``base_output_dir`` to resume). Only</span>
-<span class="sd">		``workflow=&#39;modular&#39;`` specs are supported.</span>
+<span class="sd">		``workflow='modular'`` specs are supported.</span>
 
 <span class="sd">		Parameters</span>
 <span class="sd">		----------</span>
@@ -1170,9 +1331,9 @@
 <span class="sd">		-------</span>
 <span class="sd">		list[JobOutcome]</span>
 <span class="sd">			One outcome per job.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">calcs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_calc</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">]</span>
-		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">&#39;simulate&#39;</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">'simulate'</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BatchAbaqusProcessor.run_extraction">
@@ -1180,10 +1341,10 @@
 	<span class="k">def</span><span class="w"> </span><span class="nf">run_extraction</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobOutcome</span><span class="p">]:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Run only the post-extraction phase for every spec.</span>
+<span class="w">		</span><span class="sd">"""Run only the post-extraction phase for every spec.</span>
 
 <span class="sd">		Assumes ``ctx.odb_path`` already exists for every job (e.g. from a</span>
-<span class="sd">		prior :meth:`run_simulation` call). Only ``workflow=&#39;modular&#39;``</span>
+<span class="sd">		prior :meth:`run_simulation` call). Only ``workflow='modular'``</span>
 <span class="sd">		specs are supported.</span>
 
 <span class="sd">		Parameters</span>
@@ -1197,9 +1358,9 @@
 <span class="sd">		-------</span>
 <span class="sd">		list[JobOutcome]</span>
 <span class="sd">			One outcome per job.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">calcs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_calc</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specs</span><span class="p">]</span>
-		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">&#39;extract&#39;</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_pool</span><span class="p">(</span><span class="n">calcs</span><span class="p">,</span> <span class="s1">'extract'</span><span class="p">,</span> <span class="n">num_parallel_jobs</span><span class="p">,</span> <span class="n">license_tokens</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
@@ -1241,7 +1402,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../../../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

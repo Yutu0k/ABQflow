@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.diagnostics - ABQflow 0.5.0 documentation</title>
+        <title>ABQflow.core.diagnostics - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,9 +200,13 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../source/ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -243,12 +247,12 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for ABQflow.core.diagnostics</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Solver diagnostics — .sta verdict, .msg/.dat error harvesting, truth table.</span>
+<span></span><span class="sd">"""Solver diagnostics — .sta verdict, .msg/.dat error harvesting, truth table.</span>
 
 <span class="sd">IMP-01 + IMP-02: Provides authoritative job success/failure determination by</span>
-<span class="sd">cross-referencing the subprocess return code with the .sta file&#39;s completion</span>
+<span class="sd">cross-referencing the subprocess return code with the .sta file's completion</span>
 <span class="sd">marker, and harvests actionable error lines from .msg/.dat files.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -261,16 +265,16 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="SolverDiagnostics">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.SolverDiagnostics">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SolverDiagnostics">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverDiagnostics</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Diagnostic snapshot harvested after a solver run.</span>
+<span class="w">	</span><span class="sd">"""Diagnostic snapshot harvested after a solver run.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	sta_verdict : str</span>
 <span class="sd">		Raw verdict from .sta parsing:</span>
-<span class="sd">		``&#39;COMPLETED&#39;`` | ``&#39;NOT_COMPLETED&#39;`` | ``&#39;ABORTED&#39;`` | ``&#39;INDETERMINATE&#39;``.</span>
+<span class="sd">		``'COMPLETED'`` | ``'NOT_COMPLETED'`` | ``'ABORTED'`` | ``'INDETERMINATE'``.</span>
 <span class="sd">	errors : list[str]</span>
 <span class="sd">		Deduplicated, truncated error lines (at most *k_errors* entries).</span>
 <span class="sd">	error_total : int</span>
@@ -280,18 +284,18 @@
 <span class="sd">	increments : int</span>
 <span class="sd">		Completed increment count from .sta (best-effort).</span>
 <span class="sd">	source_files : dict[str, str]</span>
-<span class="sd">		Map of kind (``&#39;sta&#39;``, ``&#39;msg&#39;``, ``&#39;dat&#39;``, ``&#39;log&#39;``) to absolute path</span>
+<span class="sd">		Map of kind (``'sta'``, ``'msg'``, ``'dat'``, ``'log'``) to absolute path</span>
 <span class="sd">		for every file that was actually read.</span>
 <span class="sd">	solver_type : str</span>
-<span class="sd">		``&#39;standard&#39;`` | ``&#39;explicit&#39;`` | ``&#39;unknown&#39;``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">sta_verdict</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;INDETERMINATE&#39;</span>
+<span class="sd">		``'standard'`` | ``'explicit'`` | ``'unknown'``.</span>
+<span class="sd">	"""</span>
+	<span class="n">sta_verdict</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'INDETERMINATE'</span>
 	<span class="n">errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="n">error_total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 	<span class="n">warning_total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 	<span class="n">increments</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
 	<span class="n">source_files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="n">solver_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+	<span class="n">solver_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'unknown'</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -302,14 +306,14 @@
 
 
 <div class="viewcode-block" id="SolverResult">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.SolverResult">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SolverResult">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverResult</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Returned by :meth:`AbaqusRunner.run_solver`.</span>
+<span class="w">	</span><span class="sd">"""Returned by :meth:`AbaqusRunner.run_solver`.</span>
 
 <span class="sd">	Wraps the raw diagnostics with the combined truth-table success</span>
 <span class="sd">	determination so callers get a single authoritative answer.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">success</span><span class="p">:</span> <span class="nb">bool</span>
 	<span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="n">diagnostics</span><span class="p">:</span> <span class="n">SolverDiagnostics</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
@@ -321,28 +325,28 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <span class="c1"># Standard solver completion markers (searched from end of file backwards)</span>
-<span class="n">_STA_STANDARD_COMPLETED</span> <span class="o">=</span> <span class="s1">&#39;THE ANALYSIS HAS COMPLETED SUCCESSFULLY&#39;</span>
-<span class="n">_STA_STANDARD_NOT_COMPLETED</span> <span class="o">=</span> <span class="s1">&#39;THE ANALYSIS HAS NOT BEEN COMPLETED&#39;</span>
+<span class="n">_STA_STANDARD_COMPLETED</span> <span class="o">=</span> <span class="s1">'THE ANALYSIS HAS COMPLETED SUCCESSFULLY'</span>
+<span class="n">_STA_STANDARD_NOT_COMPLETED</span> <span class="o">=</span> <span class="s1">'THE ANALYSIS HAS NOT BEEN COMPLETED'</span>
 
 <span class="c1"># Solver-type detection strings in .sta header</span>
-<span class="c1"># Abaqus writes &quot;Abaqus/Standard&quot; or &quot;Abaqus/Explicit&quot; on the first line;</span>
-<span class="c1"># older versions or certain locales may use spaced-out &quot;S T A N D A R D&quot;.</span>
-<span class="n">_STA_STANDARD_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;STANDARD&#39;</span><span class="p">,</span> <span class="s1">&#39;S T A N D A R D&#39;</span><span class="p">)</span>
-<span class="n">_STA_EXPLICIT_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;EXPLICIT&#39;</span><span class="p">,</span> <span class="s1">&#39;E X P L I C I T&#39;</span><span class="p">)</span>
+<span class="c1"># Abaqus writes "Abaqus/Standard" or "Abaqus/Explicit" on the first line;</span>
+<span class="c1"># older versions or certain locales may use spaced-out "S T A N D A R D".</span>
+<span class="n">_STA_STANDARD_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'STANDARD'</span><span class="p">,</span> <span class="s1">'S T A N D A R D'</span><span class="p">)</span>
+<span class="n">_STA_EXPLICIT_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'EXPLICIT'</span><span class="p">,</span> <span class="s1">'E X P L I C I T'</span><span class="p">)</span>
 
 <span class="c1"># Increment-line pattern for Standard solver:</span>
 <span class="c1">#   step  increment  attempt  time  dt  ...</span>
 <span class="c1"># Each field is right-aligned; the line starts with whitespace then digits.</span>
-<span class="n">_STA_INCREMENT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s+\d+\s+\d+\s+\d+\s+&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+<span class="n">_STA_INCREMENT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\s+\d+\s+\d+\s+\d+\s+'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
 
 <span class="c1"># Explicit solver increment lines have a similar leading numeric pattern</span>
-<span class="n">_STA_EXPLICIT_ROW_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s+\d+\s+\d+\s+&#39;</span><span class="p">)</span>
+<span class="n">_STA_EXPLICIT_ROW_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\s+\d+\s+\d+\s+'</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="parse_sta">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.parse_sta">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.parse_sta">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_sta</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Parse an Abaqus .sta file for verdict, increment count, and solver type.</span>
+<span class="w">	</span><span class="sd">"""Parse an Abaqus .sta file for verdict, increment count, and solver type.</span>
 
 <span class="sd">	Parameters</span>
 <span class="sd">	----------</span>
@@ -353,54 +357,54 @@
 <span class="sd">	-------</span>
 <span class="sd">	tuple[str, int, str]</span>
 <span class="sd">		``(verdict, increments, solver_type)`` where *verdict* is one of</span>
-<span class="sd">		``&#39;COMPLETED&#39;``, ``&#39;NOT_COMPLETED&#39;``, ``&#39;ABORTED&#39;``, or</span>
-<span class="sd">		``&#39;INDETERMINATE&#39;``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">		``'COMPLETED'``, ``'NOT_COMPLETED'``, ``'ABORTED'``, or</span>
+<span class="sd">		``'INDETERMINATE'``.</span>
+<span class="sd">	"""</span>
 	<span class="k">try</span><span class="p">:</span>
-		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'replace'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 			<span class="n">full</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
 	<span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">):</span>
-		<span class="k">return</span> <span class="p">(</span><span class="s1">&#39;INDETERMINATE&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="p">(</span><span class="s1">'INDETERMINATE'</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">'unknown'</span><span class="p">)</span>
 
 	<span class="c1"># -- solver type --------------------------------------------------------</span>
-	<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+	<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">'unknown'</span>
 	<span class="n">head_upper</span> <span class="o">=</span> <span class="n">full</span><span class="p">[:</span><span class="mi">4096</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
 	<span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">m</span> <span class="ow">in</span> <span class="n">head_upper</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_STA_STANDARD_MARKERS</span><span class="p">):</span>
-		<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">&#39;standard&#39;</span>
+		<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">'standard'</span>
 	<span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="n">m</span> <span class="ow">in</span> <span class="n">head_upper</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">_STA_EXPLICIT_MARKERS</span><span class="p">):</span>
-		<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">&#39;explicit&#39;</span>
+		<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">'explicit'</span>
 
 	<span class="c1"># -- verdict (from tail) ------------------------------------------------</span>
 	<span class="n">tail</span> <span class="o">=</span> <span class="n">full</span><span class="p">[</span><span class="o">-</span><span class="mi">8192</span><span class="p">:]</span>  <span class="c1"># last 8 KB covers the summary section</span>
-	<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;INDETERMINATE&#39;</span>
+	<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'INDETERMINATE'</span>
 
-	<span class="k">if</span> <span class="n">solver_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">):</span>
+	<span class="k">if</span> <span class="n">solver_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'standard'</span><span class="p">,</span> <span class="s1">'unknown'</span><span class="p">):</span>
 		<span class="k">if</span> <span class="n">_STA_STANDARD_COMPLETED</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">:</span>
-			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;COMPLETED&#39;</span>
+			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'COMPLETED'</span>
 		<span class="k">elif</span> <span class="n">_STA_STANDARD_NOT_COMPLETED</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">:</span>
-			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;NOT_COMPLETED&#39;</span>
-		<span class="k">elif</span> <span class="s1">&#39;ABORTED&#39;</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">:</span>
-			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;ABORTED&#39;</span>
+			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'NOT_COMPLETED'</span>
+		<span class="k">elif</span> <span class="s1">'ABORTED'</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">:</span>
+			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'ABORTED'</span>
 
-	<span class="k">if</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">&#39;explicit&#39;</span><span class="p">:</span>
-		<span class="n">tail_lines</span> <span class="o">=</span> <span class="n">tail</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-		<span class="n">last_lines</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tail_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-		<span class="k">if</span> <span class="s1">&#39;ERROR&#39;</span> <span class="ow">in</span> <span class="n">last_lines</span><span class="p">:</span>
-			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;ABORTED&#39;</span>
-		<span class="k">elif</span> <span class="s1">&#39;ABORTED&#39;</span> <span class="ow">in</span> <span class="n">last_lines</span><span class="p">:</span>
-			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;ABORTED&#39;</span>
+	<span class="k">if</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">'explicit'</span><span class="p">:</span>
+		<span class="n">tail_lines</span> <span class="o">=</span> <span class="n">tail</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+		<span class="n">last_lines</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tail_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">:])</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+		<span class="k">if</span> <span class="s1">'ERROR'</span> <span class="ow">in</span> <span class="n">last_lines</span><span class="p">:</span>
+			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'ABORTED'</span>
+		<span class="k">elif</span> <span class="s1">'ABORTED'</span> <span class="ow">in</span> <span class="n">last_lines</span><span class="p">:</span>
+			<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'ABORTED'</span>
 		<span class="k">elif</span> <span class="n">tail_lines</span><span class="p">:</span>
 			<span class="n">last_line</span> <span class="o">=</span> <span class="n">tail_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 			<span class="k">if</span> <span class="n">last_line</span> <span class="ow">and</span> <span class="p">(</span><span class="n">_STA_EXPLICIT_ROW_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">tail_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 							<span class="ow">or</span> <span class="n">_STA_STANDARD_COMPLETED</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">):</span>
-				<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;COMPLETED&#39;</span>
+				<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'COMPLETED'</span>
 
 	<span class="c1"># -- increment count (from full file) -----------------------------------</span>
 	<span class="n">increments</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="k">if</span> <span class="n">solver_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">):</span>
+	<span class="k">if</span> <span class="n">solver_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'standard'</span><span class="p">,</span> <span class="s1">'unknown'</span><span class="p">):</span>
 		<span class="n">increments</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_STA_INCREMENT_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">full</span><span class="p">))</span>
-	<span class="k">elif</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">&#39;explicit&#39;</span><span class="p">:</span>
-		<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">full</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+	<span class="k">elif</span> <span class="n">solver_type</span> <span class="o">==</span> <span class="s1">'explicit'</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">full</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">):</span>
 			<span class="k">if</span> <span class="n">_STA_EXPLICIT_ROW_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
 				<span class="n">increments</span> <span class="o">+=</span> <span class="mi">1</span>
 
@@ -412,20 +416,20 @@
 <span class="c1"># .msg / .dat error harvesting</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
-<span class="c1"># Patterns anchored at line start with optional whitespace and up to 3 &#39;*&#39;</span>
-<span class="n">_ERROR_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*\*{0,3}ERROR&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
-<span class="n">_WARNING_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*\*{0,3}WARNING&#39;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="c1"># Patterns anchored at line start with optional whitespace and up to 3 '*'</span>
+<span class="n">_ERROR_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\s*\*{0,3}ERROR'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="n">_WARNING_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\s*\*{0,3}WARNING'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="harvest_errors">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.harvest_errors">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.harvest_errors">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">harvest_errors</span><span class="p">(</span>
 	<span class="n">msg_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="n">dat_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="n">k_errors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
 	<span class="n">k_chars</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Stream-scan .msg and .dat files for ERROR / WARNING lines.</span>
+<span class="w">	</span><span class="sd">"""Stream-scan .msg and .dat files for ERROR / WARNING lines.</span>
 
 <span class="sd">	Reads files line-by-line so multi-GB .msg files never blow memory.</span>
 <span class="sd">	Consecutive identical errors are folded into one entry with a repeat</span>
@@ -447,7 +451,7 @@
 <span class="sd">	-------</span>
 <span class="sd">	tuple[list[str], int, int]</span>
 <span class="sd">		``(errors, error_total, warning_total)``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 	<span class="n">error_total</span> <span class="o">=</span> <span class="mi">0</span>
 	<span class="n">warning_total</span> <span class="o">=</span> <span class="mi">0</span>
@@ -460,7 +464,7 @@
 		<span class="k">if</span> <span class="n">prev_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="n">entry</span> <span class="o">=</span> <span class="n">prev_error</span><span class="p">[:</span><span class="n">k_chars</span><span class="p">]</span>
 			<span class="k">if</span> <span class="n">repeat_count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-				<span class="n">entry</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">  [repeated </span><span class="si">{</span><span class="n">repeat_count</span><span class="si">}</span><span class="s2"> times]&quot;</span>
+				<span class="n">entry</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entry</span><span class="si">}</span><span class="s2">  [repeated </span><span class="si">{</span><span class="n">repeat_count</span><span class="si">}</span><span class="s2"> times]"</span>
 			<span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
 			<span class="n">prev_error</span> <span class="o">=</span> <span class="kc">None</span>
 			<span class="n">repeat_count</span> <span class="o">=</span> <span class="mi">0</span>
@@ -487,7 +491,7 @@
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">path</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
 			<span class="k">continue</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'replace'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 				<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
 					<span class="n">_process_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 		<span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
@@ -505,9 +509,9 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="diagnose">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.diagnose">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.diagnose">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span><span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">work_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverDiagnostics</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Run full diagnostics on a completed (or failed) Abaqus job.</span>
+<span class="w">	</span><span class="sd">"""Run full diagnostics on a completed (or failed) Abaqus job.</span>
 
 <span class="sd">	Reads files in the following order of importance:</span>
 
@@ -531,27 +535,27 @@
 <span class="sd">	-------</span>
 <span class="sd">	SolverDiagnostics</span>
 <span class="sd">		Populated diagnostic snapshot.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="n">sta_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.sta&quot;</span><span class="p">)</span>
-	<span class="n">msg_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.msg&quot;</span><span class="p">)</span>
-	<span class="n">dat_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.dat&quot;</span><span class="p">)</span>
-	<span class="n">log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log&quot;</span><span class="p">)</span>
+<span class="sd">	"""</span>
+	<span class="n">sta_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.sta"</span><span class="p">)</span>
+	<span class="n">msg_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.msg"</span><span class="p">)</span>
+	<span class="n">dat_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.dat"</span><span class="p">)</span>
+	<span class="n">log_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">work_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log"</span><span class="p">)</span>
 
 	<span class="n">source_files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 	<span class="c1"># 1. .sta — verdict + increments + solver type</span>
-	<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;INDETERMINATE&#39;</span>
+	<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'INDETERMINATE'</span>
 	<span class="n">increments</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">&#39;unknown&#39;</span>
+	<span class="n">solver_type</span> <span class="o">=</span> <span class="s1">'unknown'</span>
 	<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">sta_path</span><span class="p">):</span>
-		<span class="n">source_files</span><span class="p">[</span><span class="s1">&#39;sta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sta_path</span>
+		<span class="n">source_files</span><span class="p">[</span><span class="s1">'sta'</span><span class="p">]</span> <span class="o">=</span> <span class="n">sta_path</span>
 		<span class="n">verdict</span><span class="p">,</span> <span class="n">increments</span><span class="p">,</span> <span class="n">solver_type</span> <span class="o">=</span> <span class="n">parse_sta</span><span class="p">(</span><span class="n">sta_path</span><span class="p">)</span>
 
 	<span class="c1"># 2. .msg + .dat — error harvesting</span>
 	<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">msg_path</span><span class="p">):</span>
-		<span class="n">source_files</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">msg_path</span>
+		<span class="n">source_files</span><span class="p">[</span><span class="s1">'msg'</span><span class="p">]</span> <span class="o">=</span> <span class="n">msg_path</span>
 	<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dat_path</span><span class="p">):</span>
-		<span class="n">source_files</span><span class="p">[</span><span class="s1">&#39;dat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat_path</span>
+		<span class="n">source_files</span><span class="p">[</span><span class="s1">'dat'</span><span class="p">]</span> <span class="o">=</span> <span class="n">dat_path</span>
 
 	<span class="n">errors</span><span class="p">,</span> <span class="n">error_total</span><span class="p">,</span> <span class="n">warning_total</span> <span class="o">=</span> <span class="n">harvest_errors</span><span class="p">(</span>
 		<span class="n">msg_path</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">msg_path</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
@@ -559,15 +563,15 @@
 	<span class="p">)</span>
 
 	<span class="c1"># 3. .log — fallback ABORTED detection</span>
-	<span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s1">&#39;INDETERMINATE&#39;</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">log_path</span><span class="p">):</span>
-		<span class="n">source_files</span><span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_path</span>
+	<span class="k">if</span> <span class="n">verdict</span> <span class="o">==</span> <span class="s1">'INDETERMINATE'</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">log_path</span><span class="p">):</span>
+		<span class="n">source_files</span><span class="p">[</span><span class="s1">'log'</span><span class="p">]</span> <span class="o">=</span> <span class="n">log_path</span>
 		<span class="k">try</span><span class="p">:</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_path</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'replace'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
 				<span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">SEEK_END</span><span class="p">)</span>
 				<span class="n">size</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
 				<span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">size</span> <span class="o">-</span> <span class="mi">4096</span><span class="p">))</span>
-				<span class="k">if</span> <span class="s1">&#39;ABORTED&#39;</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
-					<span class="n">verdict</span> <span class="o">=</span> <span class="s1">&#39;ABORTED&#39;</span>
+				<span class="k">if</span> <span class="s1">'ABORTED'</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
+					<span class="n">verdict</span> <span class="o">=</span> <span class="s1">'ABORTED'</span>
 		<span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
 			<span class="k">pass</span>
 
@@ -588,11 +592,11 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="apply_truth_table">
-<a class="viewcode-back" href="../../../source/ABQflow.html#ABQflow.apply_truth_table">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.apply_truth_table">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_truth_table</span><span class="p">(</span><span class="n">returncode</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sta_verdict</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Combine subprocess return code and .sta verdict into a single judgment.</span>
+<span class="w">	</span><span class="sd">"""Combine subprocess return code and .sta verdict into a single judgment.</span>
 
-<span class="sd">	The principle: **.sta&#39;s ``COMPLETED`` marker is the only success</span>
+<span class="sd">	The principle: **.sta's ``COMPLETED`` marker is the only success</span>
 <span class="sd">	certificate; the return code is merely corroborating evidence.**</span>
 
 <span class="sd">	.. list-table:: Truth table</span>
@@ -629,15 +633,15 @@
 <span class="sd">	tuple[bool, str | None]</span>
 <span class="sd">		``(is_success, warning_message)``.  *warning_message* is only</span>
 <span class="sd">		populated for the ``rc≠0 + COMPLETED`` edge case.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
-	<span class="k">if</span> <span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
+<span class="sd">	"""</span>
+	<span class="k">if</span> <span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="o">==</span> <span class="s1">'COMPLETED'</span><span class="p">:</span>
 		<span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-	<span class="k">if</span> <span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;NOT_COMPLETED&#39;</span><span class="p">,</span> <span class="s1">&#39;ABORTED&#39;</span><span class="p">):</span>
+	<span class="k">if</span> <span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'NOT_COMPLETED'</span><span class="p">,</span> <span class="s1">'ABORTED'</span><span class="p">):</span>
 		<span class="k">return</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 	<span class="k">if</span> <span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># INDETERMINATE</span>
 		<span class="k">return</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-	<span class="k">if</span> <span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="o">==</span> <span class="s1">&#39;COMPLETED&#39;</span><span class="p">:</span>
-		<span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;rc=</span><span class="si">{</span><span class="n">returncode</span><span class="si">}</span><span class="s2"> but .sta reports COMPLETED — probable cleanup error, results valid&quot;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sta_verdict</span> <span class="o">==</span> <span class="s1">'COMPLETED'</span><span class="p">:</span>
+		<span class="k">return</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"rc=</span><span class="si">{</span><span class="n">returncode</span><span class="si">}</span><span class="s2"> but .sta reports COMPLETED — probable cleanup error, results valid"</span><span class="p">)</span>
 	<span class="c1"># returncode != 0, any other verdict</span>
 	<span class="k">return</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
 
@@ -680,7 +684,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../../../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="ABQflow" href="modules.html" /><link rel="prev" title="Getting Started" href="getting_started.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Remote Execution" href="remote_execution.html" /><link rel="prev" title="Getting Started" href="getting_started.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>Architecture - ABQflow 0.5.0 documentation</title>
+        <title>Architecture - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -201,9 +201,13 @@
   <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -255,7 +259,7 @@
         <article role="main" id="furo-main-content">
           <section id="architecture">
 <h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
-<p>This page describes the design rationale and internals of ABQflow (v0.5.0).</p>
+<p>This page describes the design rationale and internals of ABQflow (v0.5.1).</p>
 <section id="design-principles">
 <h2>Design Principles<a class="headerlink" href="#design-principles" title="Link to this heading">¶</a></h2>
 <p><strong>Data + Service = Strategy</strong></p>
@@ -403,10 +407,10 @@ framework uses a <strong>sentinel-marker</strong> approach to reliably extract J
 when Abaqus prints banner text or warnings to stdout.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_stress&quot;</span><span class="p">:</span> <span class="mf">4525.3</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;COMPLETED&quot;</span><span class="p">}</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;===ABQ_RESULT_BEGIN===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;===ABQ_RESULT_END===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"max_stress"</span><span class="p">:</span> <span class="mf">4525.3</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"COMPLETED"</span><span class="p">}</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"===ABQ_RESULT_BEGIN===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"===ABQ_RESULT_END===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>When sentinel markers are absent, the framework falls back to scanning from the
@@ -439,15 +443,15 @@ no silent <code class="docutils literal notranslate"><span class="pre">KeyError<
 analysis).</p>
 <p><strong>Dict config → JobSpec:</strong></p>
 <p>Old:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">jobs</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;job_name&#39;</span><span class="p">:</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;inp_based&#39;</span><span class="p">,</span> <span class="s1">&#39;base_inp_path&#39;</span><span class="p">:</span> <span class="s1">&#39;...&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}}]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">jobs</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">'job_name'</span><span class="p">:</span> <span class="s1">'x'</span><span class="p">,</span> <span class="s1">'type'</span><span class="p">:</span> <span class="s1">'inp_based'</span><span class="p">,</span> <span class="s1">'base_inp_path'</span><span class="p">:</span> <span class="s1">'...'</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}}]</span>
 </pre></div>
 </div>
 <p>New (compatible — <code class="docutils literal notranslate"><span class="pre">from_dict</span></code> bridge):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">&#39;job_name&#39;</span><span class="p">:</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;inp_based&#39;</span><span class="p">,</span> <span class="s1">&#39;base_inp_path&#39;</span><span class="p">:</span> <span class="s1">&#39;...&#39;</span><span class="p">,</span> <span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}})</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">'job_name'</span><span class="p">:</span> <span class="s1">'x'</span><span class="p">,</span> <span class="s1">'type'</span><span class="p">:</span> <span class="s1">'inp_based'</span><span class="p">,</span> <span class="s1">'base_inp_path'</span><span class="p">:</span> <span class="s1">'...'</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}})</span>
 </pre></div>
 </div>
 <p>New (native):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="p">(</span><span class="n">job_name</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">preparation</span><span class="o">=</span><span class="n">PreparationSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;inp_based&#39;</span><span class="p">,</span> <span class="n">source_path</span><span class="o">=</span><span class="s1">&#39;...&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="p">(</span><span class="n">job_name</span><span class="o">=</span><span class="s1">'x'</span><span class="p">,</span> <span class="n">preparation</span><span class="o">=</span><span class="n">PreparationSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">'inp_based'</span><span class="p">,</span> <span class="n">source_path</span><span class="o">=</span><span class="s1">'...'</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}))</span>
 </pre></div>
 </div>
 <p><strong>Batch result format:</strong></p>
@@ -473,12 +477,12 @@ auto-call them.  The default <code class="docutils literal notranslate"><span cl
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="modules.html">
+          <a class="next-page" href="remote_execution.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">ABQflow</div>
+                <div class="title">Remote Execution</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -550,7 +554,7 @@ auto-call them.  The default <code class="docutils literal notranslate"><span cl
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

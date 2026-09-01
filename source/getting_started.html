@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Architecture" href="architecture.html" /><link rel="prev" title="ABQflow" href="../index.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>Getting Started - ABQflow 0.5.0 documentation</title>
+        <title>Getting Started - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -190,7 +190,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -201,9 +201,13 @@
   <ul class="current">
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -264,7 +268,7 @@ sweeps, and the output format.</p>
 </pre></div>
 </div>
 <p>If you want the optional <code class="docutils literal notranslate"><span class="pre">abqpy</span></code> integration path:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;ABQflow[abqpy]&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"ABQflow[abqpy]"</span>
 </pre></div>
 </div>
 <p>If you manage environments with Pixi:</p>
@@ -289,22 +293,22 @@ that get replaced per job.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ABQflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchAbaqusProcessor</span><span class="p">,</span> <span class="n">JobSpec</span><span class="p">,</span> <span class="n">PreparationSpec</span><span class="p">,</span> <span class="n">HookSpec</span>
 
 <span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="p">(</span>
-    <span class="n">job_name</span> <span class="o">=</span> <span class="s2">&quot;planar_stress&quot;</span><span class="p">,</span>
-    <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;modular&quot;</span><span class="p">,</span>
+    <span class="n">job_name</span> <span class="o">=</span> <span class="s2">"planar_stress"</span><span class="p">,</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="s2">"modular"</span><span class="p">,</span>
     <span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
-        <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;inp_based&quot;</span><span class="p">,</span>
-        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s2">"inp_based"</span><span class="p">,</span>
+        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">"./examples/cae_file/planar_stress_template.inp"</span><span class="p">,</span>
         <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;youngs_modulus&quot;</span><span class="p">:</span> <span class="mi">210000</span><span class="p">,</span>
-            <span class="s2">&quot;load_magnitude&quot;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span>
+            <span class="s2">"youngs_modulus"</span><span class="p">:</span> <span class="mi">210000</span><span class="p">,</span>
+            <span class="s2">"load_magnitude"</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="p">),</span>
     <span class="n">post_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_max_stress_mises.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">"./examples/extraction_scripts/get_max_stress_mises.py"</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_stress_mises&quot;</span><span class="p">,},</span>
-                <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_displacement&quot;</span><span class="p">,},</span>
+                <span class="p">{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"max_stress_mises"</span><span class="p">,},</span>
+                <span class="p">{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"max_displacement"</span><span class="p">,},</span>
             <span class="p">]</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -312,14 +316,14 @@ that get replaced per job.</p>
 
 <span class="n">processor</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span>
     <span class="n">batch_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">spec</span><span class="p">],</span>
-    <span class="n">base_output_dir</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;./examples/01_SingleParameterizedJob/output&quot;</span><span class="p">),</span>
+    <span class="n">base_output_dir</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"./examples/01_SingleParameterizedJob/output"</span><span class="p">),</span>
     <span class="n">cpus_per_job</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">duplicate_mode</span> <span class="o">=</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span>
+    <span class="n">duplicate_mode</span> <span class="o">=</span> <span class="s2">"overwrite"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">outcomes</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">results</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">results</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -330,7 +334,7 @@ that get replaced per job.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ABQflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchAbaqusProcessor</span><span class="p">,</span> <span class="n">JobSpec</span><span class="p">,</span> <span class="n">PreparationSpec</span><span class="p">,</span> <span class="n">HookSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ABQflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_from_array</span><span class="p">,</span> <span class="n">degenerate_from_array</span>
 
-<span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;youngs_modulus&#39;</span><span class="p">,</span> <span class="s1">&#39;load_magnitude&#39;</span><span class="p">]</span>
+<span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'youngs_modulus'</span><span class="p">,</span> <span class="s1">'load_magnitude'</span><span class="p">]</span>
 <span class="n">param_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
       <span class="p">[</span><span class="mi">200000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">],</span>
       <span class="p">[</span><span class="mi">210000</span><span class="p">,</span> <span class="mi">3000</span><span class="p">],</span>
@@ -339,26 +343,26 @@ that get replaced per job.</p>
 <span class="p">])</span>
 
 <span class="n">base_job_spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="p">(</span>
-    <span class="n">job_name</span> <span class="o">=</span> <span class="s2">&quot;planar_stress_batch&quot;</span><span class="p">,</span>
-    <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;modular&quot;</span><span class="p">,</span>
+    <span class="n">job_name</span> <span class="o">=</span> <span class="s2">"planar_stress_batch"</span><span class="p">,</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="s2">"modular"</span><span class="p">,</span>
     <span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
-        <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;inp_based&quot;</span><span class="p">,</span>
-        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/cae_file/planar_stress_template.inp&quot;</span><span class="p">,</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="s2">"inp_based"</span><span class="p">,</span>
+        <span class="n">source_path</span> <span class="o">=</span> <span class="s2">"./examples/cae_file/planar_stress_template.inp"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="n">pre_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_total_mass.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">"./examples/extraction_scripts/get_total_mass.py"</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;total_mass&quot;</span><span class="p">,},</span>
+                <span class="p">{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"total_mass"</span><span class="p">,},</span>
             <span class="p">]</span>
         <span class="p">)</span>
     <span class="p">],</span>
     <span class="n">post_extraction</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">HookSpec</span><span class="p">(</span>
-            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./examples/extraction_scripts/get_max_stress_mises.py&quot;</span><span class="p">,</span>
+            <span class="n">script_path</span> <span class="o">=</span> <span class="s2">"./examples/extraction_scripts/get_max_stress_mises.py"</span><span class="p">,</span>
             <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_stress_mises&quot;</span><span class="p">,},</span>
-                <span class="p">{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;max_displacement&quot;</span><span class="p">,},</span>
+                <span class="p">{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"max_stress_mises"</span><span class="p">,},</span>
+                <span class="p">{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"max_displacement"</span><span class="p">,},</span>
             <span class="p">]</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -370,11 +374,11 @@ that get replaced per job.</p>
     <span class="n">base_spec</span>  <span class="o">=</span> <span class="n">base_job_spec</span>
 <span class="p">)</span>
 
-<span class="n">proc</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span><span class="n">spec_list</span><span class="p">,</span> <span class="s1">&#39;./examples/02_BatchParameterizedJob/output&#39;</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">proc</span> <span class="o">=</span> <span class="n">BatchAbaqusProcessor</span><span class="p">(</span><span class="n">spec_list</span><span class="p">,</span> <span class="s1">'./examples/02_BatchParameterizedJob/output'</span><span class="p">,</span> <span class="n">cpus_per_job</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
 <span class="n">outcomes</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">run_batch</span><span class="p">(</span><span class="n">num_parallel_jobs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <span class="c1"># Get a 2D numpy array of results</span>
-<span class="n">arr</span> <span class="o">=</span> <span class="n">degenerate_from_array</span><span class="p">(</span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">outcomes</span><span class="p">,</span> <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;total_mass&quot;</span><span class="p">,</span> <span class="s2">&quot;max_stress_mises&quot;</span><span class="p">,</span> <span class="s2">&quot;max_displacement&quot;</span><span class="p">])</span>
+<span class="n">arr</span> <span class="o">=</span> <span class="n">degenerate_from_array</span><span class="p">(</span><span class="n">outcomes</span> <span class="o">=</span> <span class="n">outcomes</span><span class="p">,</span> <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"total_mass"</span><span class="p">,</span> <span class="s2">"max_stress_mises"</span><span class="p">,</span> <span class="s2">"max_displacement"</span><span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>  <span class="c1"># shape (4, 3)</span>
 </pre></div>
 </div>
@@ -388,8 +392,8 @@ that get replaced per job.</p>
 <p>Every job returns a <a class="reference internal" href="ABQflow.html#ABQflow.JobOutcome" title="ABQflow.JobOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code></a> dataclass:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
-    <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># e.g. &quot;beam_sweep_0001&quot;</span>
-    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>            <span class="c1"># &quot;COMPLETED&quot;, &quot;SIMULATION_FAILED&quot;, ...</span>
+    <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># e.g. "beam_sweep_0001"</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>            <span class="c1"># "COMPLETED", "SIMULATION_FAILED", ...</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span>   <span class="c1"># extracted data keyed by result_name</span>
     <span class="n">error</span><span class="p">:</span>   <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>    <span class="c1"># traceback if something went wrong</span>
 </pre></div>
@@ -497,24 +501,24 @@ that eliminates the boilerplate below; you write only the physics.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hookkit</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_one</span><span class="p">(</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Physics in, value out. Raise on failure.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Physics in, value out. Raise on failure."""</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">odbAccess</span><span class="w"> </span><span class="kn">import</span> <span class="n">openOdb</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">'result_name'</span><span class="p">]</span>
 
     <span class="k">with</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">opened</span><span class="p">(</span><span class="n">openOdb</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">odb_path</span><span class="p">,</span> <span class="n">readOnly</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span> <span class="k">as</span> <span class="n">odb</span><span class="p">:</span>
-        <span class="n">step</span> <span class="o">=</span> <span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;step&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'step'</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">odb</span><span class="o">.</span><span class="n">steps</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
         <span class="n">frame</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">asm</span> <span class="o">=</span> <span class="n">odb</span><span class="o">.</span><span class="n">rootAssembly</span>
 
-        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;max_stress_mises&#39;</span><span class="p">:</span>
-            <span class="n">vals</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">fieldOutputs</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">getSubset</span><span class="p">(</span>
-                <span class="n">region</span><span class="o">=</span><span class="n">asm</span><span class="o">.</span><span class="n">elementSets</span><span class="p">[</span><span class="s1">&#39; ALL ELEMENTS&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">'max_stress_mises'</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">fieldOutputs</span><span class="p">[</span><span class="s1">'S'</span><span class="p">]</span><span class="o">.</span><span class="n">getSubset</span><span class="p">(</span>
+                <span class="n">region</span><span class="o">=</span><span class="n">asm</span><span class="o">.</span><span class="n">elementSets</span><span class="p">[</span><span class="s1">' ALL ELEMENTS'</span><span class="p">])</span><span class="o">.</span><span class="n">values</span>
             <span class="k">return</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">mises</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">))</span>
 
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unsupported result_name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"unsupported result_name: </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">&#39;--odb_path&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">'--odb_path'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Quick start (INP / mdb):</strong></p>
@@ -525,23 +529,23 @@ that eliminates the boilerplate below; you write only the physics.</p>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">extract_one</span><span class="p">(</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">task</span><span class="p">):</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">abaqus</span><span class="w"> </span><span class="kn">import</span> <span class="n">mdb</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">&#39;result_name&#39;</span><span class="p">]</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">task</span><span class="p">[</span><span class="s1">'result_name'</span><span class="p">]</span>
 
-    <span class="n">mdb</span><span class="o">.</span><span class="n">ModelFromInputFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;_hook_temp&#39;</span><span class="p">,</span> <span class="n">inputFileName</span><span class="o">=</span><span class="n">inp_path</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s1">&#39;Model-1&#39;</span> <span class="ow">in</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
-        <span class="k">del</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;Model-1&#39;</span><span class="p">]</span>
+    <span class="n">mdb</span><span class="o">.</span><span class="n">ModelFromInputFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'_hook_temp'</span><span class="p">,</span> <span class="n">inputFileName</span><span class="o">=</span><span class="n">inp_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">'Model-1'</span> <span class="ow">in</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">'Model-1'</span><span class="p">]</span>
 
-    <span class="n">root_assembly</span> <span class="o">=</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">&#39;_hook_temp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rootAssembly</span>
-    <span class="n">region</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">sets</span><span class="p">[</span><span class="s1">&#39;ALL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">elements</span>
+    <span class="n">root_assembly</span> <span class="o">=</span> <span class="n">mdb</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s1">'_hook_temp'</span><span class="p">]</span><span class="o">.</span><span class="n">rootAssembly</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">sets</span><span class="p">[</span><span class="s1">'ALL'</span><span class="p">]</span><span class="o">.</span><span class="n">elements</span>
 
-    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;total_mass&#39;</span><span class="p">:</span>
-        <span class="n">mass</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">getMassProperties</span><span class="p">(</span><span class="n">regions</span><span class="o">=</span><span class="n">region</span><span class="p">)[</span><span class="s1">&#39;mass&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">'total_mass'</span><span class="p">:</span>
+        <span class="n">mass</span> <span class="o">=</span> <span class="n">root_assembly</span><span class="o">.</span><span class="n">getMassProperties</span><span class="p">(</span><span class="n">regions</span><span class="o">=</span><span class="n">region</span><span class="p">)[</span><span class="s1">'mass'</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">hookkit</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">mass</span><span class="p">)</span>
 
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unsupported result_name: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"unsupported result_name: </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">&#39;--inp_path&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">hookkit</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">extract_one</span><span class="p">,</span> <span class="n">source_arg</span><span class="o">=</span><span class="s1">'--inp_path'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Field output (large data -&gt; CSV sidecar):</strong></p>
@@ -551,8 +555,8 @@ dict – <code class="docutils literal notranslate"><span class="pre">&quot;inli
 writes a CSV and returns a lightweight envelope, and leaving it unset lets
 hookkit decide automatically (&gt;10k rows or &gt;1MB -&gt; file, else inline):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">HookSpec</span><span class="p">(</span>
-    <span class="n">script_path</span> <span class="o">=</span> <span class="s2">&quot;./hooks/get_stress_field.py&quot;</span><span class="p">,</span>
-    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;result_name&quot;</span><span class="p">:</span> <span class="s2">&quot;stress_field&quot;</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="s2">&quot;file&quot;</span><span class="p">}]</span>
+    <span class="n">script_path</span> <span class="o">=</span> <span class="s2">"./hooks/get_stress_field.py"</span><span class="p">,</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"result_name"</span><span class="p">:</span> <span class="s2">"stress_field"</span><span class="p">,</span> <span class="s2">"output"</span><span class="p">:</span> <span class="s2">"file"</span><span class="p">}]</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -565,10 +569,10 @@ directly only if you need a custom, non-Python-2/3-compatible harness.</p>
 <p><em>Sentinel markers:</em></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="o">,</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_stress&quot;</span><span class="p">:</span> <span class="mf">123.4</span><span class="p">,</span> <span class="s2">&quot;mass&quot;</span><span class="p">:</span> <span class="mf">0.56</span><span class="p">}</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;===ABQ_RESULT_BEGIN===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;===ABQ_RESULT_END===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"max_stress"</span><span class="p">:</span> <span class="mf">123.4</span><span class="p">,</span> <span class="s2">"mass"</span><span class="p">:</span> <span class="mf">0.56</span><span class="p">}</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"===ABQ_RESULT_BEGIN===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">__stdout__</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">"===ABQ_RESULT_END===</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The framework splits on these markers, ignoring Abaqus banner noise.</p>
@@ -667,7 +671,7 @@ and collect results into a <code class="docutils literal notranslate"><span clas
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>

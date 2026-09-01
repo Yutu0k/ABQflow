@@ -9,21 +9,21 @@ ABQflow.helpers.constant module
 
 .. automodule:: ABQflow.helpers.constant
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 ABQflow.helpers.convert module
 ------------------------------
 
 .. automodule:: ABQflow.helpers.convert
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: ABQflow.helpers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.context - ABQflow 0.5.0 documentation</title>
+        <title>ABQflow.core.context - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,9 +200,13 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../source/ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -243,7 +247,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for ABQflow.core.context</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;JobContext — frozen data contract that strategies read but cannot mutate.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""JobContext — frozen data contract that strategies read but cannot mutate."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -253,7 +257,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobContext</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Immutable data contract holding all information a strategy can observe.</span>
+<span class="w">	</span><span class="sd">"""Immutable data contract holding all information a strategy can observe.</span>
 
 <span class="sd">	Strategies depend on this object but cannot mutate it, preventing</span>
 <span class="sd">	accidental cross-strategy side effects.  Every field is read-only</span>
@@ -264,64 +268,64 @@
 <span class="sd">	job_name : str</span>
 <span class="sd">		Unique identifier for this job (also used as directory name).</span>
 <span class="sd">	output_dir : str</span>
-<span class="sd">		Absolute path to the job&#39;s working directory.</span>
+<span class="sd">		Absolute path to the job's working directory.</span>
 <span class="sd">	cpus : int</span>
 <span class="sd">		Number of CPUs requested for the Abaqus solver run.</span>
 <span class="sd">	abaqus_exe : str</span>
-<span class="sd">		Path or command name for the Abaqus executable (default ``&quot;abaqus&quot;``).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">		Path or command name for the Abaqus executable (default ``"abaqus"``).</span>
+<span class="sd">	"""</span>
 
 	<span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">cpus</span><span class="p">:</span> <span class="nb">int</span>
-	<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;abaqus&quot;</span>
+	<span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"abaqus"</span>
 	<span class="n">user_subroutine</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">inp_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the input file (``&lt;output_dir&gt;/&lt;job_name&gt;.inp``).&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.inp&quot;</span><span class="p">)</span>
+<span class="w">		</span><span class="sd">"""Absolute path to the input file (``&lt;output_dir&gt;/&lt;job_name&gt;.inp``)."""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.inp"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">odb_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the output database (``&lt;output_dir&gt;/&lt;job_name&gt;.odb``).&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.odb&quot;</span><span class="p">)</span>
+<span class="w">		</span><span class="sd">"""Absolute path to the output database (``&lt;output_dir&gt;/&lt;job_name&gt;.odb``)."""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.odb"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to Abaqus&#39;s own native job log (``&lt;output_dir&gt;/&lt;job_name&gt;.log``).</span>
+<span class="w">		</span><span class="sd">"""Absolute path to Abaqus's own native job log (``&lt;output_dir&gt;/&lt;job_name&gt;.log``).</span>
 
 <span class="sd">		This file is owned and written by the Abaqus solver process itself</span>
 <span class="sd">		(``abaqus job=... interactive`` writes it as a side effect). ABQflow</span>
 <span class="sd">		never opens this path for writing — see :attr:`exec_log_path` for</span>
-<span class="sd">		ABQflow&#39;s own execution log, which uses a distinct filename to avoid</span>
+<span class="sd">		ABQflow's own execution log, which uses a distinct filename to avoid</span>
 <span class="sd">		colliding with this one.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.log"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">exec_log_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to ABQflow&#39;s own execution log (``&lt;output_dir&gt;/&lt;job_name&gt;_abqflow.log``).</span>
+<span class="w">		</span><span class="sd">"""Absolute path to ABQflow's own execution log (``&lt;output_dir&gt;/&lt;job_name&gt;_abqflow.log``).</span>
 
-<span class="sd">		Deliberately distinct from :attr:`log_path` (Abaqus&#39;s native job log)</span>
+<span class="sd">		Deliberately distinct from :attr:`log_path` (Abaqus's native job log)</span>
 <span class="sd">		so the two writers never collide on the same file.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">_abqflow.log&quot;</span><span class="p">)</span>
+<span class="sd">		"""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">_abqflow.log"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">sta_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the status file (``&lt;output_dir&gt;/&lt;job_name&gt;.sta``).&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.sta&quot;</span><span class="p">)</span>
+<span class="w">		</span><span class="sd">"""Absolute path to the status file (``&lt;output_dir&gt;/&lt;job_name&gt;.sta``)."""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.sta"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">msg_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the message file (``&lt;output_dir&gt;/&lt;job_name&gt;.msg``).&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.msg&quot;</span><span class="p">)</span>
+<span class="w">		</span><span class="sd">"""Absolute path to the message file (``&lt;output_dir&gt;/&lt;job_name&gt;.msg``)."""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.msg"</span><span class="p">)</span>
 
 	<span class="nd">@property</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">dat_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Absolute path to the data file (``&lt;output_dir&gt;/&lt;job_name&gt;.dat``).&quot;&quot;&quot;</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.dat&quot;</span><span class="p">)</span></div>
+<span class="w">		</span><span class="sd">"""Absolute path to the data file (``&lt;output_dir&gt;/&lt;job_name&gt;.dat``)."""</span>
+		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">.dat"</span><span class="p">)</span></div>
 
 </pre></div>
         </article>
@@ -362,7 +366,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../../../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>

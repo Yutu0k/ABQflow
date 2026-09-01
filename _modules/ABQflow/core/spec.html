@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
-        <title>ABQflow.core.spec - ABQflow 0.5.0 documentation</title>
+        <title>ABQflow.core.spec - ABQflow 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
@@ -165,7 +165,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../../index.html"><div class="brand">ABQflow 0.5.0 documentation</div></a>
+      <a href="../../../index.html"><div class="brand">ABQflow 0.5.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -189,7 +189,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
   
   
-  <span class="sidebar-brand-text">ABQflow 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">ABQflow 0.5.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -200,9 +200,13 @@
   <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/getting_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../source/architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/remote_execution.html">Remote Execution</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../source/modules.html">ABQflow</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of ABQflow</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../source/ABQflow.html">ABQflow package</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of ABQflow package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../source/ABQflow.core.html">ABQflow.core package</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of ABQflow.core package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../source/ABQflow.core.backends.html">ABQflow.core.backends package</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../source/ABQflow.helpers.html">ABQflow.helpers package</a></li>
 </ul>
 </li>
@@ -243,11 +247,11 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for ABQflow.core.spec</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;JobSpec and related configuration dataclasses — typed, validated at construction.</span>
+<span></span><span class="sd">"""JobSpec and related configuration dataclasses — typed, validated at construction.</span>
 
 <span class="sd">Replaces the legacy dict-based config format.  :class:`JobSpec` validates itself</span>
 <span class="sd">in ``__post_init__`` so errors are caught before batch execution begins.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -260,7 +264,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HookSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HookSpec</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Description of one extraction/pre-extraction hook script and its tasks.</span>
+<span class="w">	</span><span class="sd">"""Description of one extraction/pre-extraction hook script and its tasks.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -269,7 +273,7 @@
 <span class="sd">	tasks : list[dict]</span>
 <span class="sd">		List of task descriptors; each dict typically contains</span>
 <span class="sd">		``result_name``, ``script_path``, and task-specific parameters.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
 
@@ -279,7 +283,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubroutineSpec</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Specification for an Abaqus user subroutine (UMAT/VUMAT/UEL/...).</span>
+<span class="w">	</span><span class="sd">"""Specification for an Abaqus user subroutine (UMAT/VUMAT/UEL/...).</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
@@ -287,28 +291,28 @@
 <span class="sd">		Path to the subroutine source file (or, when ``precompiled=True``,</span>
 <span class="sd">		to the already-compiled object/library).</span>
 <span class="sd">	language : str</span>
-<span class="sd">		``&#39;fortran&#39;`` (default), ``&#39;c&#39;``, or ``&#39;cpp&#39;``.</span>
+<span class="sd">		``'fortran'`` (default), ``'c'``, or ``'cpp'``.</span>
 <span class="sd">	solver : str</span>
-<span class="sd">		Target solver: ``&#39;standard&#39;`` (default), ``&#39;explicit&#39;``, or ``&#39;cfd&#39;``.</span>
+<span class="sd">		Target solver: ``'standard'`` (default), ``'explicit'``, or ``'cfd'``.</span>
 <span class="sd">		Controls the flag passed to ``abaqus make`` (see</span>
 <span class="sd">		:meth:`~ABQflow.core.runner.AbaqusRunner.build_make_command`).</span>
 <span class="sd">	precompiled : bool</span>
 <span class="sd">		If ``True``, skip the compile phase entirely and pass</span>
 <span class="sd">		``source_path`` straight through to ``user=`` on the solver/preflight</span>
 <span class="sd">		commands. Default ``False``.</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 	<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span>
-	<span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;fortran&#39;</span>
-	<span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;standard&#39;</span>
+	<span class="n">language</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'fortran'</span>
+	<span class="n">solver</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'standard'</span>
 	<span class="n">precompiled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;fortran&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;cpp&#39;</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'fortran'</span><span class="p">,</span> <span class="s1">'c'</span><span class="p">,</span> <span class="s1">'cpp'</span><span class="p">):</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">&quot;SubroutineSpec.language must be &#39;fortran&#39;, &#39;c&#39;, or &#39;cpp&#39;; got &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">language</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;standard&#39;</span><span class="p">,</span> <span class="s1">&#39;explicit&#39;</span><span class="p">,</span> <span class="s1">&#39;cfd&#39;</span><span class="p">):</span>
+				<span class="sa">f</span><span class="s2">"SubroutineSpec.language must be 'fortran', 'c', or 'cpp'; got '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">language</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">solver</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'standard'</span><span class="p">,</span> <span class="s1">'explicit'</span><span class="p">,</span> <span class="s1">'cfd'</span><span class="p">):</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">&quot;SubroutineSpec.solver must be &#39;standard&#39;, &#39;explicit&#39;, or &#39;cfd&#39;; got &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+				<span class="sa">f</span><span class="s2">"SubroutineSpec.solver must be 'standard', 'explicit', or 'cfd'; got '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">solver</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span></div>
 
 
 
@@ -316,13 +320,13 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationSpec</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Specification for the preparation phase of a modular workflow.</span>
+<span class="w">	</span><span class="sd">"""Specification for the preparation phase of a modular workflow.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	kind : str</span>
-<span class="sd">		Preparation strategy identifier.  Currently ``&#39;inp_based&#39;``, ``&#39;existing_inp&#39;``, or</span>
-<span class="sd">		``&#39;model_generation&#39;``.</span>
+<span class="sd">		Preparation strategy identifier.  Currently ``'inp_based'``, ``'existing_inp'``, or</span>
+<span class="sd">		``'model_generation'``.</span>
 <span class="sd">	source_path : str</span>
 <span class="sd">		Path to the base INP file (for ``inp_based``) or model-generation</span>
 <span class="sd">		script (for ``model_generation``).</span>
@@ -331,9 +335,9 @@
 <span class="sd">		placeholder replacements for ``inp_based``).</span>
 <span class="sd">	options : dict</span>
 <span class="sd">		Additional options for the preparation strategy (Currently only used by ``existing_inp``):</span>
-<span class="sd">		- &#39;staging_mode&#39; (str): ``&#39;copy&#39;`` (default) </span>
-<span class="sd">		- &#39;resolve_includes&#39; (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">		- 'staging_mode' (str): ``'copy'`` (default) </span>
+<span class="sd">		- 'resolve_includes' (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).</span>
+<span class="sd">	"""</span>
 	<span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span>
 	<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
@@ -345,7 +349,7 @@
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobSpec</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">&quot;&quot;&quot;Single-job configuration validated at construction time.</span>
+<span class="w">	</span><span class="sd">"""Single-job configuration validated at construction time.</span>
 
 <span class="sd">	Fails fast — validation runs in ``__post_init__`` so invalid configs are</span>
 <span class="sd">	rejected before any Abaqus process is launched.</span>
@@ -355,19 +359,19 @@
 <span class="sd">	job_name : str</span>
 <span class="sd">		Unique name for this job (also used as the working directory name).</span>
 <span class="sd">	workflow : str</span>
-<span class="sd">		``&#39;modular&#39;`` (default, 4-phase pipeline) or ``&#39;monolithic&#39;``</span>
+<span class="sd">		``'modular'`` (default, 4-phase pipeline) or ``'monolithic'``</span>
 <span class="sd">		(single-script).</span>
 <span class="sd">	preparation : PreparationSpec or None</span>
-<span class="sd">		Preparation spec; required when ``workflow=&#39;modular&#39;``, ignored for</span>
+<span class="sd">		Preparation spec; required when ``workflow='modular'``, ignored for</span>
 <span class="sd">		monolithic.</span>
 <span class="sd">	preflight : str, default=None</span>
 <span class="sd">		Preflight mode for modular workflows. </span>
 <span class="sd">		- None: No preflight checks (default)</span>
-<span class="sd">		- &#39;syntaxcheck&#39;: Run abaqus syntax check</span>
-<span class="sd">		- &#39;datacheck&#39;: Run abaqus datacheck</span>
+<span class="sd">		- 'syntaxcheck': Run abaqus syntax check</span>
+<span class="sd">		- 'datacheck': Run abaqus datacheck</span>
 <span class="sd">	monolithic_script : str or None</span>
 <span class="sd">		Path to the monolithic script; required when</span>
-<span class="sd">		``workflow=&#39;monolithic&#39;``.</span>
+<span class="sd">		``workflow='monolithic'``.</span>
 <span class="sd">	monolithic_params : dict</span>
 <span class="sd">		Parameters forwarded to the monolithic script as ``--key value`` args.</span>
 <span class="sd">	pre_extraction : list[HookSpec]</span>
@@ -376,15 +380,15 @@
 <span class="sd">		Hooks run *after* the solver (e.g. ODB result extraction).</span>
 <span class="sd">	subroutine : SubroutineSpec or None</span>
 <span class="sd">		User subroutine to compile and pass via ``user=`` to the solver</span>
-<span class="sd">		(modular workflow only; ignored for ``workflow=&#39;monolithic&#39;``).</span>
+<span class="sd">		(modular workflow only; ignored for ``workflow='monolithic'``).</span>
 <span class="sd">	meta : dict</span>
 <span class="sd">		Arbitrary user metadata</span>
-<span class="sd">	&quot;&quot;&quot;</span>
+<span class="sd">	"""</span>
 
 	<span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>
-	<span class="n">workflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;modular&#39;</span>
+	<span class="n">workflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'modular'</span>
 	<span class="n">preparation</span><span class="p">:</span> <span class="n">PreparationSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-	<span class="n">preflight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># IMP-04: None | &#39;syntaxcheck&#39; | &#39;datacheck&#39;</span>
+	<span class="n">preflight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># IMP-04: None | 'syntaxcheck' | 'datacheck'</span>
 	<span class="n">monolithic_script</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 	<span class="n">monolithic_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 	<span class="n">pre_extraction</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -393,11 +397,11 @@
 	<span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Validate the spec after field assignment.</span>
+<span class="w">		</span><span class="sd">"""Validate the spec after field assignment.</span>
 
 <span class="sd">		Validation rules:</span>
 
-<span class="sd">		* ``workflow`` must be ``&#39;modular&#39;`` or ``&#39;monolithic&#39;``.</span>
+<span class="sd">		* ``workflow`` must be ``'modular'`` or ``'monolithic'``.</span>
 <span class="sd">		* Modular workflow requires a non-``None`` ``preparation``.</span>
 <span class="sd">		* Monolithic workflow requires a non-empty ``monolithic_script``.</span>
 
@@ -405,31 +409,31 @@
 <span class="sd">		------</span>
 <span class="sd">		ValueError</span>
 <span class="sd">			If any validation rule is violated.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;modular&#39;</span><span class="p">,</span> <span class="s1">&#39;monolithic&#39;</span><span class="p">):</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] unknown workflow: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;modular&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] modular workflow requires &#39;preparation&#39;&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] monolithic workflow requires &#39;monolithic_script&#39;&quot;</span><span class="p">)</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;syntaxcheck&#39;</span><span class="p">,</span> <span class="s1">&#39;datacheck&#39;</span><span class="p">):</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'modular'</span><span class="p">,</span> <span class="s1">'monolithic'</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] unknown workflow: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'modular'</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] modular workflow requires 'preparation'"</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">monolithic_script</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] monolithic workflow requires 'monolithic_script'"</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preflight</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'syntaxcheck'</span><span class="p">,</span> <span class="s1">'datacheck'</span><span class="p">):</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] preflight must be &#39;syntaxcheck&#39;, &#39;datacheck&#39;, or None; &quot;</span>
-				<span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+				<span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] preflight must be 'syntaxcheck', 'datacheck', or None; "</span>
+				<span class="sa">f</span><span class="s2">"got '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">preflight</span><span class="si">}</span><span class="s2">'."</span>
 			<span class="p">)</span>
 		<span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-				<span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;existing_inp&#39;</span>
+				<span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">'existing_inp'</span>
 				<span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">params</span><span class="p">):</span>
 			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] kind=&#39;existing_inp&#39; does not use params — &quot;</span>
-				<span class="sa">f</span><span class="s2">&quot;params will be ignored. If you need template substitution, use kind=&#39;inp_based&#39;.&quot;</span>
+				<span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] kind='existing_inp' does not use params — "</span>
+				<span class="sa">f</span><span class="s2">"params will be ignored. If you need template substitution, use kind='inp_based'."</span>
 			<span class="p">)</span>
 
 <div class="viewcode-block" id="JobSpec.from_dict">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobSpec.from_dict">[docs]</a>
 	<span class="nd">@classmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobSpec</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">&quot;&quot;&quot;Migration bridge: construct a :class:`JobSpec` from a legacy dict.</span>
+<span class="w">		</span><span class="sd">"""Migration bridge: construct a :class:`JobSpec` from a legacy dict.</span>
 
 <span class="sd">		Deep-copies the input dict so the returned spec owns all of its</span>
 <span class="sd">		mutable data (no shared references with the caller).</span>
@@ -446,25 +450,25 @@
 <span class="sd">		-------</span>
 <span class="sd">		JobSpec</span>
 <span class="sd">			Fully validated spec.</span>
-<span class="sd">		&quot;&quot;&quot;</span>
+<span class="sd">		"""</span>
 		<span class="n">d</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-		<span class="n">workflow</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;workflow&#39;</span><span class="p">,</span> <span class="s1">&#39;modular&#39;</span><span class="p">)</span>
+		<span class="n">workflow</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'workflow'</span><span class="p">,</span> <span class="s1">'modular'</span><span class="p">)</span>
 
 		<span class="n">prep</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;modular&#39;</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'modular'</span><span class="p">:</span>
 			<span class="n">prep</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
-				<span class="n">kind</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;inp_based&#39;</span><span class="p">),</span>
-				<span class="n">source_path</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;base_inp_path&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;model_script_path&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
-				<span class="n">params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="p">{})))</span>
+				<span class="n">kind</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="s1">'inp_based'</span><span class="p">),</span>
+				<span class="n">source_path</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'base_inp_path'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'model_script_path'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">,</span>
+				<span class="n">params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span> <span class="p">{})))</span>
 
 		<span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-			<span class="n">job_name</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;job_name&#39;</span><span class="p">],</span>
+			<span class="n">job_name</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">'job_name'</span><span class="p">],</span>
 			<span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
 			<span class="n">preparation</span><span class="o">=</span><span class="n">prep</span><span class="p">,</span>
-			<span class="n">monolithic_script</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;script_path&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-			<span class="n">monolithic_params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;params&#39;</span><span class="p">,</span> <span class="p">{}))</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">&#39;monolithic&#39;</span> <span class="k">else</span> <span class="p">{},</span>
-			<span class="n">pre_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre_extraction&#39;</span><span class="p">,</span> <span class="p">[])],</span>
-			<span class="n">post_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post_extraction&#39;</span><span class="p">,</span> <span class="p">[])],</span>
+			<span class="n">monolithic_script</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'script_path'</span><span class="p">)</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+			<span class="n">monolithic_params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span> <span class="p">{}))</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="k">else</span> <span class="p">{},</span>
+			<span class="n">pre_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pre_extraction'</span><span class="p">,</span> <span class="p">[])],</span>
+			<span class="n">post_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'post_extraction'</span><span class="p">,</span> <span class="p">[])],</span>
 		<span class="p">)</span></div>
 </div>
 
@@ -507,7 +511,7 @@
       
     </aside>
   </div>
-</div><script src="../../../_static/documentation_options.js?v=11a7d535"></script>
+</div><script src="../../../_static/documentation_options.js?v=0361e92f"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
