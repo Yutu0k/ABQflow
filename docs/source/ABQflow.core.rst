@@ -1,6 +1,14 @@
 ABQflow.core package
 ====================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   ABQflow.core.backends
+
 Submodules
 ----------
 
@@ -9,61 +17,85 @@ ABQflow.core.abaqus\_automation module
 
 .. automodule:: ABQflow.core.abaqus_automation
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.context module
 ---------------------------
 
 .. automodule:: ABQflow.core.context
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+ABQflow.core.diagnostics module
+-------------------------------
+
+.. automodule:: ABQflow.core.diagnostics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+ABQflow.core.hosts module
+-------------------------
+
+.. automodule:: ABQflow.core.hosts
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.registry module
 ----------------------------
 
 .. automodule:: ABQflow.core.registry
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
+
+ABQflow.core.remote\_launch module
+----------------------------------
+
+.. automodule:: ABQflow.core.remote_launch
+   :members:
+   :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.runner module
 --------------------------
 
 .. automodule:: ABQflow.core.runner
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.spec module
 ------------------------
 
 .. automodule:: ABQflow.core.spec
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.status module
 --------------------------
 
 .. automodule:: ABQflow.core.status
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 ABQflow.core.strategies module
 ------------------------------
 
 .. automodule:: ABQflow.core.strategies
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: ABQflow.core
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

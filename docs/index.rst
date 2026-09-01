@@ -25,6 +25,7 @@ Quick Links
 
 * :doc:`Getting Started <source/getting_started>` -- install, first job, batch sweep
 * :doc:`Architecture <source/architecture>` -- design overview, strategy pattern, resource planning
+* :doc:`Remote Execution <source/remote_execution>` -- run a batch on other machines, work distribution, shared includes
 * :doc:`API Reference <source/modules>` -- full module reference (auto-generated)
 
 .. toctree::
@@ -33,4 +34,5 @@ Quick Links
 
    source/getting_started
    source/architecture
+   source/remote_execution
    source/modules
