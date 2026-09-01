@@ -5,7 +5,7 @@
 - [x] Submit jobs to remote Windows machines over SSH/SFTP (See `./examples/08_RemoteSubmission`)
 - [x] Allow the submitting machine to join the pool via `HostSpec.local()`, so a batch can mix local and remote hosts
 - [x] Add `paramiko` as an optional `[remote]` extra
-- [x] Add detached remote launch with file-based polling in `core/remote_launch.py` — solver survives SSH disconnects instead of dying with the channel
+- [x] Add detached remote launch with file-based polling in `core/remote_launch.py` - solver survives SSH disconnects instead of dying with the channel
 
 
 ## Fixed
