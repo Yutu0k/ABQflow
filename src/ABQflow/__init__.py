@@ -38,6 +38,20 @@ from .core.diagnostics import (
 	harvest_errors,
 	parse_sta,
 )
+from .core.backends import (
+	ExecResult,
+	ExecutionBackend,
+	JobHandle,
+	LocalBackend,
+	RecordingBackend,
+	make_backend,
+)
+from .core.hosts import (
+	HostSpec,
+	assign_hosts,
+	summarise_assignment,
+	total_capacity,
+)
 from .core.registry import PREPARATION_REGISTRY, build_workflow, register_preparation
 from .core.runner import AbaqusRunner, CommandRecord, extract_json
 from .core.spec import HookSpec, JobSpec, PreparationSpec, SubroutineSpec
@@ -81,12 +95,18 @@ __all__ = [
 	"AbaqusRunner",
 	"BatchAbaqusProcessor",
 	"CommandRecord",
+	# Core — execution backends (remote is opt-in)
+	"ExecResult",
+	"ExecutionBackend",
 	"ExistingInpStrategy",
 	"ExtractionStrategy",
 	"HookSpec",
+	# Core — multi-machine execution
+	"HostSpec",
 	"InpModifyStrategy",
 	# Core — context & runner
 	"JobContext",
+	"JobHandle",
 	"JobOutcome",
 	"JobPlan",
 	# Core — spec
@@ -95,6 +115,7 @@ __all__ = [
 	"JobStatus",
 	"JobStatusManager",
 	"JobWorkflowStrategy",
+	"LocalBackend",
 	"ModelGenerationStrategy",
 	"ModelPropertiesExtractionStrategy",
 	"ModularWorkflowStrategy",
@@ -103,12 +124,14 @@ __all__ = [
 	"PreparationSpec",
 	# Core — strategies
 	"PreparationStrategy",
+	"RecordingBackend",
 	# Core — diagnostics
 	"SolverDiagnostics",
 	"SolverResult",
 	"SubroutineCompileStrategy",
 	"SubroutineSpec",
 	"apply_truth_table",
+	"assign_hosts",
 	# Core — registry
 	"build_workflow",
 	"degenerate_from_array",
@@ -121,6 +144,7 @@ __all__ = [
 	"is_sidecar",
 	"iter_fields",
 	"load_field",
+	"make_backend",
 	"outcomes_to_dict",
 	"outcomes_to_list",
 	"parse_sta",
@@ -130,6 +154,8 @@ __all__ = [
 	"resolve_sidecar",
 	"sanitize_job_name",
 	"solver_tokens",
+	"summarise_assignment",
+	"total_capacity",
 ]
 
 def _get_version() -> str:

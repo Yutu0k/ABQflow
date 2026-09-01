@@ -2,6 +2,7 @@
 authors = [{name = "yutu0k", email = "yutu0k@sjtu.edu.cn"}]
 dependencies = [
 	"numpy",
+	"psutil",
 	"rich",
 ]
 classifiers = [
@@ -23,11 +24,14 @@ name = "ABQflow"
 description = "A modular batch-processing framework for Abaqus FEA — typed job specs, strategy pattern workflow, fault-tolerant parallel execution, and resource-aware scheduling."
 requires-python = ">=3.9"
 readme = "README.md"
-version = "0.5.0"
+version = "0.5.1"
 
 [project.optional-dependencies]
 abqpy = [
 	"abqpy>=2025.9,<2026",
+]
+remote = [
+	"paramiko>=3.4",
 ]
 dev = [
 	"furo>=2024.8.6,<2025",
@@ -81,3 +85,5 @@ ipykernel = "*"
 ipywidgets = ">=8.1.7,<9"
 pip = ">=26.0.1,<27"
 twine = ">=7.0.0,<8"
+paramiko = ">=5.0.0,<6"
+python-dotenv = ">=1.2.3,<2"

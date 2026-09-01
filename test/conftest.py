@@ -1,8 +1,18 @@
-"""Shared fixtures for the whole test suite, plus the ``abaqus`` marker gate.
+"""Shared fixtures for the whole test suite, plus the opt-in marker gates.
 
-Tests marked ``@pytest.mark.abaqus`` launch the real Abaqus executable
-(slow, consumes license tokens) and are skipped unless ``--run-abaqus`` is
-passed on the command line.
+Two kinds of test are skipped by default because they need something the
+machine running pytest may not have:
+
+``@pytest.mark.abaqus``
+	Launches the real Abaqus executable — slow, and consumes license tokens.
+	Enabled with ``--run-abaqus``.
+``@pytest.mark.remote``
+	Connects to a real remote machine over SSH.  Enabled with
+	``--run-remote``, and additionally needs ``ABQFLOW_REMOTE_*`` environment
+	variables to say which machine.
+
+An end-to-end remote solve carries both markers and therefore needs both
+flags.
 """
 
 import logging
@@ -19,6 +29,11 @@ def pytest_addoption(parser):
 		help="Run tests marked 'abaqus' that launch the real Abaqus solver "
 			"(slow, consumes license tokens). Skipped by default.",
 	)
+	parser.addoption(
+		"--run-remote", action="store_true", default=False,
+		help="Run tests marked 'remote' that connect to a real SSH host "
+			"(needs ABQFLOW_REMOTE_* env vars). Skipped by default.",
+	)
 
 
 def pytest_configure(config):
@@ -26,15 +41,24 @@ def pytest_configure(config):
 		"markers",
 		"abaqus: test launches the real Abaqus executable (opt-in via --run-abaqus)",
 	)
+	config.addinivalue_line(
+		"markers",
+		"remote: test connects to a real remote machine (opt-in via --run-remote)",
+	)
 
 
 def pytest_collection_modifyitems(config, items):
-	if config.getoption("--run-abaqus"):
-		return
-	skip_abaqus = pytest.mark.skip(reason="needs --run-abaqus to run tests that launch real Abaqus")
-	for item in items:
-		if "abaqus" in item.keywords:
-			item.add_marker(skip_abaqus)
+	gates = [
+		("abaqus", "--run-abaqus", "tests that launch real Abaqus"),
+		("remote", "--run-remote", "tests that connect to a real remote machine"),
+	]
+	for marker, flag, what in gates:
+		if config.getoption(flag):
+			continue
+		skip = pytest.mark.skip(reason=f"needs {flag} to run {what}")
+		for item in items:
+			if marker in item.keywords:
+				item.add_marker(skip)
 
 
 def _resolve_abaqus_exe():
@@ -55,6 +79,44 @@ def abaqus_exe():
 	if not exe:
 		pytest.skip("No Abaqus executable found (set ABQFLOW_ABAQUS_EXE to override)")
 	return exe
+
+
+@pytest.fixture(scope="session")
+def remote_host():
+	"""A :class:`HostSpec` built from ``ABQFLOW_REMOTE_*``; skips if unset.
+
+	Recognised variables (``HOST``/``HOSTNAME`` and ``USER``/``USERNAME`` are
+	interchangeable)::
+
+		ABQFLOW_REMOTE_HOST         hostname or bare IPv6/IPv4 literal
+		ABQFLOW_REMOTE_USER         account name
+		ABQFLOW_REMOTE_PASSWORD     account password
+		ABQFLOW_REMOTE_ABAQUS_EXE   absolute path to abaqus.bat on that machine
+		ABQFLOW_REMOTE_WORK_ROOT    remote directory for per-job folders
+	"""
+	from ABQflow.core.hosts import HostSpec
+
+	def _env(*names, default=None):
+		for name in names:
+			value = os.environ.get("ABQFLOW_REMOTE_" + name)
+			if value:
+				return value
+		return default
+
+	hostname = _env("HOST", "HOSTNAME")
+	if not hostname:
+		pytest.skip("set ABQFLOW_REMOTE_HOST (and USER/PASSWORD) to run remote tests")
+
+	return HostSpec(
+		name=_env("NAME", default="itest"),
+		hostname=hostname,
+		username=_env("USER", "USERNAME"),
+		password=_env("PASSWORD"),
+		port=int(_env("PORT", default="22")),
+		abaqus_exe=_env("ABAQUS_EXE", default="abaqus"),
+		work_root=_env("WORK_ROOT", default=r"D:\abqwork"),
+		cpus_total=int(_env("CPUS_TOTAL", default="8")),
+	)
 
 
 @pytest.fixture

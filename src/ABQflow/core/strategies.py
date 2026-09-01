@@ -7,6 +7,7 @@ three injected arguments at call time: :class:`~abaqus_batch_pack.context.JobCon
 
 from __future__ import annotations
 
+import codecs
 import json
 import logging
 import os
@@ -23,6 +24,35 @@ from .status import JobStatus, JobStatusManager
 
 # Regex for {{placeholder}} in INP files (B8)
 _PLACEHOLDER_RE = re.compile(r"\{\{(\w+)\}\}")
+
+
+def read_inp_text(path: str) -> str:
+	"""Read an INP file without depending on the machine's locale.
+
+	Python's text mode defaults to the system encoding — GBK on a Chinese
+	Windows, cp1252 elsewhere — so a plain ``open(path)`` raises on any deck
+	those codecs reject.  A UTF-8 byte-order mark is enough to trigger it,
+	which makes decks exported by many editors unreadable on exactly the
+	machines this package targets.
+
+	Decoding order: UTF-8 (BOM stripped if present), then latin-1, which
+	never fails and preserves the bytes.  Abaqus keywords are ASCII either
+	way, so the fallback only affects comments and free-text fields.
+	"""
+	with open(path, 'rb') as f:
+		raw = f.read()
+	if raw.startswith(codecs.BOM_UTF8):
+		raw = raw[len(codecs.BOM_UTF8):]
+	try:
+		return raw.decode('utf-8')
+	except UnicodeDecodeError:
+		return raw.decode('latin-1')
+
+
+def write_inp_text(path: str, content: str) -> None:
+	"""Write INP text as UTF-8, leaving line endings exactly as given."""
+	with open(path, 'w', encoding='utf-8', newline='') as f:
+		f.write(content)
 
 # Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting
 _INCLUDE_RE = re.compile(r'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)', re.IGNORECASE)
@@ -85,8 +115,7 @@ class InpModifyStrategy(PreparationStrategy):
 				logger: logging.Logger) -> bool:
 		logger.info(f"Sub strategy [InpModify]: Based on INP file '{self.base_inp_path}'")
 		try:
-			with open(self.base_inp_path, 'r') as f:
-				content = f.read()
+			content = read_inp_text(self.base_inp_path)
 		except Exception as e:
 			logger.error(f"Sub strategy [InpModify] failed reading INP: {e}")
 			return False
@@ -103,8 +132,7 @@ class InpModifyStrategy(PreparationStrategy):
 		content = _PLACEHOLDER_RE.sub(
 			lambda m: str(self.data_params[m.group(1)]), content)
 
-		with open(ctx.inp_path, 'w') as f:
-			f.write(content)
+		write_inp_text(ctx.inp_path, content)
 		logger.info(f"Successfully created INP file: {ctx.inp_path}")
 		return True
 
@@ -197,8 +225,7 @@ class ExistingInpStrategy(PreparationStrategy):
 
 		# 2. Read content
 		try:
-			with open(self.source_inp_path, 'r') as f:
-				content = f.read()
+			content = read_inp_text(self.source_inp_path)
 		except Exception as e:
 			logger.error(f"Failed to read source INP: {e}")
 			return False
@@ -237,8 +264,7 @@ class ExistingInpStrategy(PreparationStrategy):
 		# 5. Write the (possibly rewritten) INP to ctx.inp_path
 		if self.staging_mode == 'copy':
 			try:
-				with open(ctx.inp_path, 'w') as f:
-					f.write(content)
+				write_inp_text(ctx.inp_path, content)
 				logger.info(f"Wrote INP to {ctx.inp_path}")
 			except Exception as e:
 				logger.error(f"Failed to write INP: {e}")
@@ -361,7 +387,10 @@ class OdbExtractionStrategy(ExtractionStrategy):
 				logger: logging.Logger) -> dict:
 		logger.info("Sub strategy [OdbExtract]: Start extracting from ODB...")
 
-		if not os.path.exists(ctx.odb_path):
+		# Ask the runner, not the local filesystem: with a remote backend the
+		# .odb only ever exists on the executing machine, and a plain local
+		# check would make every remote extraction silently return all-None.
+		if not runner.artifact_exists(ctx.odb_path):
 			logger.error(f"ODB file does not exist: {ctx.odb_path}")
 			all_results = {}
 			for hook in self.hooks:

@@ -10,6 +10,7 @@ Run: pixi run pytest test/integration/test_full_job_run.py --run-abaqus -v
 import os
 
 import pytest
+from _paths import GET_MAX_STRESS_SCRIPT, TEMPLATE_INP
 
 from ABQflow import (
 	BatchAbaqusProcessor,
@@ -18,8 +19,6 @@ from ABQflow import (
 	PreparationSpec,
 	diagnose,
 )
-
-from _paths import GET_MAX_STRESS_SCRIPT, TEMPLATE_INP
 
 pytestmark = pytest.mark.abaqus
 
