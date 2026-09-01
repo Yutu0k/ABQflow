@@ -186,14 +186,82 @@ class AbaqusRunner:
 								else LocalBackend())
 		return self._local_backend
 
+	def _shared_dir(self) -> str:
+		"""Where reusable uploads live on the executing machine."""
+		shared = getattr(self.host, 'shared_dir', None)
+		if shared:
+			return shared
+		# No host object (a bare backend): fall back to a sibling of the job
+		# directory, which still shares across jobs in the same work root.
+		return os.path.dirname(self.exec_ctx.output_dir.rstrip('\\/')) + '\\_abqflow_shared'
+
+	def _stage_include_targets(self, includes: list[str],
+							source_dir: str) -> dict[str, str] | None:
+		"""Upload each ``*INCLUDE`` target once per machine; return the mapping.
+
+		Include targets are usually a shared mesh or geometry, often far
+		larger than the deck referencing them, and identical across every job
+		in a batch.  Copying one into each job directory would make upload —
+		not solving — the dominant cost of a parameter sweep, so they go to
+		:attr:`HostSpec.shared_dir` instead and the directive is rewritten to
+		that absolute remote path.
+
+		Names are content-addressed (``<sha256[:12]>_<basename>``), which buys
+		three things at once: the same file is uploaded once no matter how
+		many jobs or batches reference it, two different files that happen to
+		share a basename cannot collide, and "already present remotely" is
+		exactly equivalent to "identical content" — so the existence check is
+		a correct cache check, not a guess.  Hashing reads the file once from
+		local disk, which is cheap next to sending it over SFTP.
+
+		Returns
+		-------
+		dict[str, str] or None
+			``{original_path: remote_absolute_path}``, or ``None`` if any
+			target is missing locally.
+		"""
+		if not includes:
+			return {}
+
+		shared_dir = self._shared_dir()
+		self.backend.makedirs(shared_dir)
+
+		mapping: dict[str, str] = {}
+		for raw in includes:
+			if raw in mapping:
+				continue
+			candidate = os.path.join(
+				source_dir, raw.replace('/', os.sep).replace('\\', os.sep))
+			if not os.path.isfile(candidate):
+				self.logger.error("*INCLUDE target not found locally: %s", candidate)
+				return None
+
+			with open(candidate, 'rb') as f:
+				digest = hashlib.sha256(f.read()).hexdigest()[:12]
+			base = os.path.basename(raw.replace('\\', '/'))
+			remote = f'{shared_dir}\\{digest}_{base}'
+
+			if self.backend.exists(remote):
+				self.logger.info("Include target already on %s, reusing: %s",
+								self.backend.name, remote)
+			else:
+				size = self.backend.put(candidate, remote)
+				self.logger.info("Uploaded include target to shared dir: %s (%d bytes)",
+								remote, size)
+			mapping[raw] = remote
+
+		return mapping
+
 	def stage_inputs(self) -> bool | None:
 		"""Upload everything the solver needs onto the executing machine.
 
 		Handles the ``*INCLUDE`` problem found during the remote spike: the
-		INP is flattened so include directives carry bare filenames, and the
-		referenced files are uploaded beside it, because Abaqus resolves them
-		against the job's working directory.  Without this, any deck with an
-		include fails remotely with an opaque preprocessing error.
+		directives point at local absolute paths that cannot exist on the far
+		side, so any deck with an include fails remotely with an opaque
+		preprocessing error.  Targets are uploaded to the machine's shared
+		directory — once per machine, not once per job — and the directives
+		are rewritten to that absolute remote path.  See
+		:meth:`_stage_include_targets`.
 
 		Returns
 		-------
@@ -204,7 +272,7 @@ class AbaqusRunner:
 		if not self.is_remote:
 			return None
 
-		from .remote_launch import flatten_includes
+		from .remote_launch import find_includes, rewrite_includes
 
 		local_inp = self.ctx.inp_path
 		if not os.path.isfile(local_inp):
@@ -225,7 +293,15 @@ class AbaqusRunner:
 		except UnicodeDecodeError:
 			text, encoding = raw.decode('latin-1'), 'latin-1'
 
-		flattened, includes = flatten_includes(text)
+		# Resolve and upload the *INCLUDE targets first, then rewrite the deck
+		# to point at wherever they ended up.  I/O stays out of the pure
+		# substitution helper.
+		source_dir = os.path.dirname(os.path.abspath(local_inp))
+		mapping = self._stage_include_targets(find_includes(text), source_dir)
+		if mapping is None:
+			return False
+
+		flattened = rewrite_includes(text, mapping.get)
 
 		if flattened == text:
 			# Nothing rewritten — upload the original bytes untouched.
@@ -241,16 +317,6 @@ class AbaqusRunner:
 					os.remove(staged)
 				except OSError:
 					pass
-
-		source_dir = os.path.dirname(os.path.abspath(local_inp))
-		for rel in includes:
-			candidate = os.path.join(source_dir, rel.replace('/', os.sep).replace('\\', os.sep))
-			if not os.path.isfile(candidate):
-				self.logger.error("*INCLUDE target not found locally: %s", candidate)
-				return False
-			base = os.path.basename(rel.replace('\\', '/'))
-			self.backend.put(candidate, f'{self.exec_ctx.output_dir}\\{base}')
-			self.logger.info("Staged include target: %s", base)
 
 		if self.ctx.user_subroutine and os.path.isfile(self.ctx.user_subroutine):
 			base = os.path.basename(self.ctx.user_subroutine)

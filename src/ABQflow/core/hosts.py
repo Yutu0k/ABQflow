@@ -209,6 +209,21 @@ class HostSpec:
 		"""Whether this spec designates a machine reached over SSH."""
 		return bool(self.hostname)
 
+	@property
+	def shared_dir(self) -> str:
+		"""Directory holding files reused across this machine's jobs.
+
+		``*INCLUDE`` targets land here rather than in each job directory: a
+		shared mesh is often far larger than the deck that references it, and
+		uploading it once per job would make transfer, not solving, the
+		dominant cost of a batch.  Contents are content-addressed, so they
+		survive between batches and are never invalidated by a stale name.
+
+		Not touched by ``cleanup``, which only ever removes job directories —
+		this is a cache, and keeping it is the whole point.
+		"""
+		return self.work_root.rstrip('\\/') + '\\_abqflow_shared'
+
 	def job_dir(self, job_name: str) -> str:
 		"""Working directory for *job_name* on this machine.
 

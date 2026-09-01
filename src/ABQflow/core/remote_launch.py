@@ -44,30 +44,65 @@ def find_includes(text: str) -> list[str]:
 	return [m.group(3).strip() for m in _INCLUDE_RE.finditer(text)]
 
 
-def flatten_includes(text: str) -> tuple[str, list[str]]:
-	"""Rewrite every ``*INCLUDE, INPUT=`` to a bare filename.
+def rewrite_includes(text: str, resolver) -> str:
+	"""Rewrite every ``*INCLUDE, INPUT=`` path through *resolver*.
 
 	``ExistingInpStrategy`` deliberately rewrites includes to **local
 	absolute paths**, which are guaranteed not to exist on another machine —
 	so every job with an include would fail remotely with a cryptic Abaqus
-	preprocessing error.  Abaqus resolves a bare include filename against the
-	job's working directory, so uploading the targets alongside the INP and
-	stripping the directory component makes the deck self-contained.
+	preprocessing error.  This is the substitution step that fixes that; the
+	caller decides *what* each path becomes.
+
+	Kept free of I/O on purpose: the caller resolves and uploads first, then
+	hands in a finished mapping, so this stays a pure function that a unit
+	test can drive with plain strings.
+
+	Parameters
+	----------
+	text : str
+		INP contents.
+	resolver : callable
+		``(original_path) -> str or None``.  ``None`` leaves that directive
+		untouched, which is what an unresolvable path should do — silently
+		rewriting it to something that does not exist would be worse.
+
+	Returns
+	-------
+	str
+		The rewritten deck.
+	"""
+	def _sub(m: re.Match) -> str:
+		raw = m.group(3).strip()
+		replacement = resolver(raw)
+		if replacement is None:
+			return m.group(0)
+		return m.group(1) + replacement
+
+	return _INCLUDE_RE.sub(_sub, text)
+
+
+def flatten_includes(text: str) -> tuple[str, list[str]]:
+	"""Rewrite every ``*INCLUDE, INPUT=`` to a bare filename.
+
+	Abaqus resolves a bare include filename against the job's working
+	directory, so this makes a deck self-contained once its targets sit
+	beside it.  Use it when the referenced files genuinely belong to one job;
+	:meth:`AbaqusRunner.stage_inputs` instead points them at a shared
+	directory, so a large mesh is uploaded once per machine rather than once
+	per job.
 
 	Returns
 	-------
 	tuple[str, list[str]]
-		``(rewritten_text, original_paths)``.  The originals are what the
-		caller must upload into the job directory.
+		``(rewritten_text, original_paths)``.
 	"""
 	originals: list[str] = []
 
-	def _sub(m: re.Match) -> str:
-		raw = m.group(3).strip()
+	def _resolve(raw: str) -> str:
 		originals.append(raw)
-		return m.group(1) + os.path.basename(raw.replace('\\', '/'))
+		return os.path.basename(raw.replace('\\', '/'))
 
-	return _INCLUDE_RE.sub(_sub, text), originals
+	return rewrite_includes(text, _resolve), originals
 
 
 def build_launcher_bat(abaqus_exe: str, job_name: str, work_dir: str,

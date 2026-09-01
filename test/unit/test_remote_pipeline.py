@@ -35,11 +35,19 @@ def logger():
 
 
 @pytest.fixture
-def ctx(tmp_path):
-	job_dir = tmp_path / 'local' / 'j1'
-	job_dir.mkdir(parents=True)
-	return JobContext(job_name='j1', output_dir=str(job_dir), cpus=2,
-					abaqus_exe='abaqus')
+def ctx_factory(tmp_path):
+	"""Build a JobContext per job name, for tests spanning several jobs."""
+	def _make(job_name: str = 'j1') -> JobContext:
+		job_dir = tmp_path / 'local' / job_name
+		job_dir.mkdir(parents=True, exist_ok=True)
+		return JobContext(job_name=job_name, output_dir=str(job_dir), cpus=2,
+						abaqus_exe='abaqus')
+	return _make
+
+
+@pytest.fixture
+def ctx(ctx_factory):
+	return ctx_factory('j1')
 
 
 # ============================================================
@@ -107,23 +115,83 @@ def test_stage_inputs_uploads_the_inp(ctx, logger, tmp_path):
 	assert backend.exists(runner.exec_ctx.inp_path)
 
 
-def test_stage_inputs_flattens_and_uploads_includes(ctx, logger, tmp_path):
+def _write_deck_with_include(ctx, mesh_body='*Node\n1, 0., 0.\n',
+							rel='parts/mesh.inp'):
+	"""Write an INP referencing *rel*, and the target itself."""
+	target = os.path.join(ctx.output_dir, rel.replace('/', os.sep))
+	os.makedirs(os.path.dirname(target), exist_ok=True)
+	with open(target, 'w') as f:
+		f.write(mesh_body)
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*Heading\n*INCLUDE, INPUT={rel}\n*End\n')
+	return target
+
+
+def test_stage_inputs_rewrites_includes_to_the_shared_dir(ctx, logger, tmp_path):
 	"""The concrete blocker: includes rewritten to local absolute paths
-	cannot exist on the far machine."""
+	cannot exist on the far machine.
+
+	They are rewritten to an absolute path in the machine's shared directory
+	rather than copied beside each deck — a referenced mesh is often far
+	larger than the deck itself.
+	"""
 	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
 	runner = AbaqusRunner(ctx, logger, backend=backend)
-
-	parts = os.path.join(ctx.output_dir, 'parts')
-	os.makedirs(parts)
-	with open(os.path.join(parts, 'mesh.inp'), 'w') as f:
-		f.write('*Node\n1, 0., 0.\n')
-	with open(ctx.inp_path, 'w') as f:
-		f.write('*Heading\n*INCLUDE, INPUT=parts/mesh.inp\n*End\n')
+	_write_deck_with_include(ctx)
 
 	assert runner.stage_inputs() is True
 	uploaded = backend.read_text(runner.exec_ctx.inp_path) or ''
-	assert 'INPUT=mesh.inp' in uploaded, "include must be a bare filename"
-	assert backend.exists(runner.exec_ctx.output_dir + '\\mesh.inp')
+
+	assert '_abqflow_shared' in uploaded
+	assert 'mesh.inp' in uploaded
+	assert not backend.exists(runner.exec_ctx.output_dir + '\\mesh.inp'), \
+		"the target must not be duplicated into the job directory"
+
+
+def test_include_target_is_uploaded_once_across_jobs(ctx_factory, logger, tmp_path):
+	"""A shared mesh must not be re-sent for every job in a sweep."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+
+	uploads = []
+	original_put = backend.put
+
+	def counting_put(local, remote):
+		uploads.append(remote)
+		return original_put(local, remote)
+
+	backend.put = counting_put
+
+	for i in range(3):
+		job_ctx = ctx_factory(f'sweep_{i:02d}')
+		_write_deck_with_include(job_ctx)
+		runner = AbaqusRunner(job_ctx, logger, backend=backend)
+		assert runner.stage_inputs() is True
+
+	mesh_uploads = [u for u in uploads if 'mesh.inp' in u]
+	assert len(mesh_uploads) == 1, f"uploaded {len(mesh_uploads)} times: {mesh_uploads}"
+
+
+def test_same_basename_different_content_do_not_collide(ctx_factory, logger, tmp_path):
+	"""Content addressing keeps two different 'mesh.inp' files apart."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	remotes = []
+
+	for i, body in enumerate(('*Node\n1, 0., 0.\n', '*Node\n2, 1., 1.\n')):
+		job_ctx = ctx_factory(f'variant_{i}')
+		_write_deck_with_include(job_ctx, mesh_body=body)
+		runner = AbaqusRunner(job_ctx, logger, backend=backend)
+		assert runner.stage_inputs() is True
+		remotes.append(backend.read_text(runner.exec_ctx.inp_path) or '')
+
+	assert remotes[0] != remotes[1], "different content must map to different names"
+
+
+def test_shared_dir_sits_beside_the_job_dirs(ctx, logger, tmp_path):
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	shared = runner._shared_dir()
+	assert shared.endswith('_abqflow_shared')
+	assert not shared.startswith(runner.exec_ctx.output_dir)
 
 
 def test_stage_inputs_fails_loudly_on_a_missing_include(ctx, logger, tmp_path):
