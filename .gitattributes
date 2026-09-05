@@ -1,2 +1,7 @@
 # SCM syntax highlighting & preventing 3-way merges
 pixi.lock merge=binary linguist-language=YAML linguist-generated=true
+
+# Abaqus writes .dat with bare LF even on Windows, and datkit's fixtures encode
+# exact whitespace — checking them out with CRLF would test a file Abaqus never
+# produces.
+test/fixtures/dat/*.dat text eol=lf

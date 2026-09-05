@@ -1,8 +1,8 @@
-"""Enforce hookkit.py's Python 2.7 compatibility promise.
+"""Enforce the Python 2.7 compatibility promise of the staged single-file modules.
 
-``hookkit.py`` is staged into every job directory and imported by hooks
-running under ``abaqus python``.  Abaqus 2022 and earlier ship Python 2.7 as
-that interpreter, so a Py3-only construct in this one file breaks remote ODB
+``hookkit.py`` and ``datkit.py`` are staged into the job directory and imported
+by hooks running under ``abaqus python``.  Abaqus 2022 and earlier ship Python
+2.7 as that interpreter, so a Py3-only construct in either file breaks remote
 extraction on every older machine — and it fails at *import* time, with a
 ``SyntaxError`` that says nothing about ABQflow.
 
@@ -23,10 +23,15 @@ import os
 
 import pytest
 
-HOOKKIT = os.path.join(
+_SRC = os.path.join(
 	os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-	'src', 'ABQflow', 'hookkit.py',
+	'src', 'ABQflow',
 )
+HOOKKIT = os.path.join(_SRC, 'hookkit.py')
+DATKIT = os.path.join(_SRC, 'datkit.py')
+
+# Every AST test below runs against each of these.
+PY27_MODULES = [HOOKKIT, DATKIT]
 
 # Modules Python 2.7 does not have. hookkit must stay stdlib-only *and* old.
 _PY3_ONLY_MODULES = {
@@ -36,14 +41,16 @@ _PY3_ONLY_MODULES = {
 }
 
 
-@pytest.fixture(scope='module')
-def tree() -> ast.AST:
-	with open(HOOKKIT, 'r', encoding='utf-8') as f:
-		return ast.parse(f.read(), filename=HOOKKIT)
+@pytest.fixture(scope='module', params=PY27_MODULES,
+				ids=lambda path: os.path.basename(path))
+def tree(request) -> ast.AST:
+	with open(request.param, 'r', encoding='utf-8') as f:
+		return ast.parse(f.read(), filename=request.param)
 
 
-def test_hookkit_file_exists():
-	assert os.path.isfile(HOOKKIT), f"hookkit.py not found at {HOOKKIT}"
+@pytest.mark.parametrize('path', PY27_MODULES, ids=os.path.basename)
+def test_staged_module_exists(path):
+	assert os.path.isfile(path), f"{os.path.basename(path)} not found at {path}"
 
 
 def test_no_f_strings(tree):
@@ -110,15 +117,32 @@ def test_no_annotations(tree):
 
 
 def test_no_py3_only_imports(tree):
-	"""hookkit must import nothing Python 2.7 lacks."""
+	"""These modules must import nothing Python 2.7 lacks."""
+	offenders = sorted(_imported_roots(tree) & _PY3_ONLY_MODULES)
+	assert not offenders, f"modules missing from Python 2.7: {offenders}"
+
+
+def test_no_abqflow_imports(tree):
+	"""They run inside Abaqus's interpreter, where ABQflow is not installed.
+
+	Staging copies the bare file into the job directory, so any ``import
+	ABQflow...`` would raise there while passing every test on this machine.
+	"""
+	assert 'ABQflow' not in _imported_roots(tree), (
+		"a staged module imported ABQflow — it must stay standalone and "
+		"stdlib-only; duplicate the constant instead, as hookkit does for the "
+		"result sentinels."
+	)
+
+
+def _imported_roots(tree: ast.AST) -> set[str]:
 	imported = set()
 	for node in ast.walk(tree):
 		if isinstance(node, ast.Import):
 			imported.update(alias.name.split('.')[0] for alias in node.names)
 		elif isinstance(node, ast.ImportFrom) and node.module:
 			imported.add(node.module.split('.')[0])
-	offenders = sorted(imported & _PY3_ONLY_MODULES)
-	assert not offenders, f"modules missing from Python 2.7: {offenders}"
+	return imported
 
 
 def test_classes_are_new_style(tree):

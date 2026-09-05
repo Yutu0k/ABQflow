@@ -39,10 +39,25 @@ def _file_digest(path: str, chunk: int = 1 << 20) -> str:
 	return h.hexdigest()[:12]
 
 # ---------------------------------------------------------------------------
-# Path to hookkit.py (staged into job output dir so hooks can import it)
+# Single-file modules staged into the job output dir so hooks can import them
 # ---------------------------------------------------------------------------
-_HOOKKIT_SRC = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'hookkit.py')
+_SUPPORT_SRC_DIR = os.path.dirname(os.path.dirname(__file__))   # src/ABQflow
 _SIDECAR_KEY = '__file__'
+
+# Interpreters a hook can be launched under.  'abaqus' picks the right Abaqus
+# entry point; 'host' is this process's own Python, for hooks that read a plain
+# text artifact and so need neither the solver nor a license token.
+INTERPRETERS = ('abaqus', 'host')
+
+
+def _host_python() -> str:
+	"""Python executable for ``interpreter='host'`` hooks.
+
+	``sys.executable`` is right in every normal install; the environment
+	variable is the escape hatch for a frozen or embedded interpreter, where
+	it points at something that cannot run a script.
+	"""
+	return os.environ.get('ABQFLOW_HOST_PYTHON') or sys.executable
 
 # ---------------------------------------------------------------------------
 # IMP-03: escalation-ladder constants
@@ -467,36 +482,56 @@ class AbaqusRunner:
 				self.logger.error(f"Failed to remove .lck: {e}")
 
 	# ---- hookkit staging (HK-01 §3.5) ----
-	def _stage_hookkit(self):
+	def _stage_hookkit(self, extra_modules: tuple[str, ...] = (),
+						remote: bool | None = None):
 		"""Copy ``hookkit.py`` into the job output dir so hooks can ``import hookkit``.
 
 		Uses content-hash comparison: if an identical file already exists the
-		copy is skipped (re-run safe).  The file is NOT deleted afterwards —
-		it is a reproducible artifact of the job run.
+		copy is skipped (re-run safe).  The files are NOT deleted afterwards —
+		they are a reproducible artifact of the job run.
+
+		Parameters
+		----------
+		extra_modules : tuple[str, ...]
+			Further single-file modules from ``src/ABQflow`` to stage beside
+			it, e.g. ``('datkit.py',)`` for a ``.dat`` hook.  Staged on
+			demand rather than always: an ODB hook has no use for them, and
+			on the remote path every unconditional file is another upload per
+			hook, per job.
+		remote : bool or None
+			Whether to upload to the executing machine.  Defaults to
+			:attr:`is_remote`; a host-interpreter hook passes ``False``
+			because it runs here and reads the local copy.
 		"""
-		if not os.path.isfile(_HOOKKIT_SRC):
-			self.logger.warning("hookkit.py not found at %s — hooks using hookkit will fail", _HOOKKIT_SRC)
-			return
+		if remote is None:
+			remote = self.is_remote
 
-		dst = os.path.join(self.ctx.output_dir, 'hookkit.py')
-		already_local = False
-		if os.path.isfile(dst):
-			with open(_HOOKKIT_SRC, 'rb') as f:
-				src_hash = hashlib.sha256(f.read()).hexdigest()
-			with open(dst, 'rb') as f:
-				dst_hash = hashlib.sha256(f.read()).hexdigest()
-			already_local = (src_hash == dst_hash)
-		if not already_local:
-			os.makedirs(self.ctx.output_dir, exist_ok=True)
-			shutil.copy2(_HOOKKIT_SRC, dst)
+		for module in ('hookkit.py',) + tuple(extra_modules):
+			src = os.path.join(_SUPPORT_SRC_DIR, module)
+			if not os.path.isfile(src):
+				self.logger.warning(
+					"%s not found at %s — hooks importing it will fail", module, src)
+				continue
 
-		# Hooks import hookkit from their working directory, so it has to be
-		# on the machine that runs them.  Uploaded every time: it is ~10 kB,
-		# and a stale copy on a remote machine is far more expensive than the
-		# transfer.
-		if self.is_remote:
-			self.backend.makedirs(self.exec_ctx.output_dir)
-			self.backend.put(dst, f'{self.exec_ctx.output_dir}\\hookkit.py')
+			dst = os.path.join(self.ctx.output_dir, module)
+			already_local = False
+			if os.path.isfile(dst):
+				with open(src, 'rb') as f:
+					src_hash = hashlib.sha256(f.read()).hexdigest()
+				with open(dst, 'rb') as f:
+					dst_hash = hashlib.sha256(f.read()).hexdigest()
+				already_local = (src_hash == dst_hash)
+			if not already_local:
+				os.makedirs(self.ctx.output_dir, exist_ok=True)
+				shutil.copy2(src, dst)
+
+			# Hooks import these from their working directory, so they have to
+			# be on the machine that runs them.  Uploaded every time: ~10 kB
+			# each, and a stale copy on a remote machine is far more expensive
+			# than the transfer.
+			if remote:
+				self.backend.makedirs(self.exec_ctx.output_dir)
+				self.backend.put(dst, f'{self.exec_ctx.output_dir}\\{module}')
 
 	# ---- envelope validation (HK-01 §3.6) ----
 	@staticmethod
@@ -563,7 +598,8 @@ class AbaqusRunner:
 	# ---- Execution environment selection (fix B5/B6/B11) ----
 	@staticmethod
 	def build_script_command(script: str, needs_cae_kernel: bool,
-							abaqus_exe: str, has_abqpy: bool) -> list[str]:
+							abaqus_exe: str, has_abqpy: bool,
+							interpreter: str = 'abaqus') -> list[str]:
 		"""Select the correct interpreter and Abaqus entry-point for *script*.
 
 		Pure function — no instance state required — so both the real
@@ -573,6 +609,7 @@ class AbaqusRunner:
 
 		Decision logic (first match wins):
 
+		0. ``interpreter='host'`` — ``[sys.executable, script]``.
 		1. ``abqpy`` available — ``['python', script]``.
 		2. ``needs_cae_kernel`` is True — ``[exe, 'cae', 'noGUI=<script>', '--']``.
 		   The ``'--'`` separator prevents custom args from being consumed by the
@@ -589,22 +626,34 @@ class AbaqusRunner:
 			Path or command name for the Abaqus executable.
 		has_abqpy : bool
 			Whether the ``abqpy`` package is importable in this environment.
+		interpreter : str
+			``'abaqus'`` (default) or ``'host'``.  ``'host'`` outranks both
+			*has_abqpy* and *needs_cae_kernel*: it is a statement about the
+			artifact — a ``.dat`` is plain text — not about the environment,
+			so no Abaqus entry point applies however this machine is set up.
 
 		Returns
 		-------
 		list[str]
 			Command line as a list of tokens ready for ``subprocess.run``.
 		"""
+		if interpreter not in INTERPRETERS:
+			raise ValueError(
+				f"interpreter must be one of {INTERPRETERS}; got '{interpreter}'.")
+		if interpreter == 'host':
+			return [_host_python(), script]
 		if has_abqpy:
 			return ['python', script]
 		if needs_cae_kernel:
 			return [abaqus_exe, 'cae', f'noGUI={script}', '--']
 		return [abaqus_exe, 'python', script]
 
-	def _base_command(self, script: str, needs_cae_kernel: bool) -> list[str]:
+	def _base_command(self, script: str, needs_cae_kernel: bool,
+						interpreter: str = 'abaqus') -> list[str]:
 		"""Instance-bound convenience wrapper around :meth:`build_script_command`."""
 		return self.build_script_command(script, needs_cae_kernel,
-										self.ctx.abaqus_exe, self._has_abqpy)
+										self.ctx.abaqus_exe, self._has_abqpy,
+										interpreter=interpreter)
 
 	@staticmethod
 	def build_solver_command(ctx: JobContext) -> list[str]:
@@ -913,7 +962,9 @@ class AbaqusRunner:
 		script_path: str,
 		tasks: list[dict],
 		common_args: dict[str, str],
-		needs_cae_kernel: bool
+		needs_cae_kernel: bool,
+		interpreter: str = 'abaqus',
+		extra_modules: tuple[str, ...] = (),
 	) -> dict:
 		"""Execute a hook script with a JSON task list, return per-task results.
 
@@ -940,6 +991,15 @@ class AbaqusRunner:
 			Extra CLI arguments forwarded to every task (e.g. ``--odb_path``).
 		needs_cae_kernel : bool
 			Passed through to :meth:`_base_command` for environment selection.
+		interpreter : str
+			``'abaqus'`` (default) or ``'host'``.  A ``'host'`` hook runs on
+			**this** machine under this process's Python even when the backend
+			is remote — its artifact is plain text that was fetched here, so
+			there is nothing to ship, no path to remap, and its sidecar CSVs
+			are written straight into the local job directory.
+		extra_modules : tuple[str, ...]
+			Single-file modules to stage beside ``hookkit.py``, e.g.
+			``('datkit.py',)``.
 
 		Returns
 		-------
@@ -951,9 +1011,10 @@ class AbaqusRunner:
 			return {}
 
 		script_path = os.path.abspath(script_path)
+		on_host = (interpreter == 'host')
 
 		if self.record_only:
-			cmd = self._base_command(script_path, needs_cae_kernel)
+			cmd = self._base_command(script_path, needs_cae_kernel, interpreter)
 			for k, v in common_args.items():
 				cmd += [k, str(v)]
 			cmd += ['--job_name', self.ctx.job_name]
@@ -981,7 +1042,8 @@ class AbaqusRunner:
 				os.path.basename(script_path), self.backend.name)
 
 		# Stage hookkit into the job output dir (HK-01 §3.5)
-		self._stage_hookkit()
+		self._stage_hookkit(extra_modules=extra_modules,
+							remote=self.is_remote and not on_host)
 
 		tmp = os.path.join(self.ctx.output_dir, f"tasks_{uuid.uuid4().hex}.json")
 		try:
@@ -990,7 +1052,7 @@ class AbaqusRunner:
 
 			exec_script = script_path
 			exec_tasks = tmp
-			if self.is_remote:
+			if self.is_remote and not on_host:
 				# The hook script and its task list must exist on the machine
 				# that will run them.
 				exec_script = f'{self.exec_ctx.output_dir}\\{os.path.basename(script_path)}'
@@ -1004,19 +1066,22 @@ class AbaqusRunner:
 			# must go through its own `abaqus python` / `abaqus cae`.
 			cmd = self.build_script_command(
 				exec_script, needs_cae_kernel, self.exec_ctx.abaqus_exe,
-				self._has_abqpy and not self.is_remote)
+				self._has_abqpy and not self.is_remote,
+				interpreter=interpreter)
 
 			# common_args carry artifact paths (--odb_path, --inp_path). They
 			# arrive as *local* paths, and a hook running on another machine
 			# cannot open those — it fails per task, hookkit turns each into
 			# None, and the job reports EXTRACTION_FAILED with nothing in the
-			# log to say why. Map them onto the executing machine.
+			# log to say why. Map them onto the executing machine — unless the
+			# hook runs here, in which case the local path is the right one.
+			map_path = (lambda p: p) if on_host else self._remote_path
 			for k, v in common_args.items():
-				cmd += [k, self._remote_path(str(v))]
+				cmd += [k, map_path(str(v))]
 			cmd += ['--job_name', self.ctx.job_name]
 			cmd += ['--tasks_json', exec_tasks]
 
-			proc = self._run(cmd)
+			proc = self._run(cmd, on_local=True if on_host else None)
 			if proc is None:
 				return {t['result_name']: None for t in tasks}
 
@@ -1041,7 +1106,11 @@ class AbaqusRunner:
 			# checks the file exists, so validating first would turn every
 			# field result into None on the remote path — verified against a
 			# real remote job, not assumed.
-			if self.is_remote and any(
+			#
+			# A host hook is the exception: it already wrote its CSV into the
+			# local job directory, and fetching would overwrite that with a
+			# stale remote namesake — or with nothing.
+			if self.is_remote and not on_host and any(
 					isinstance(v, dict) and _SIDECAR_KEY in v for v in results.values()):
 				self.fetch_results(patterns=('*.csv',))
 

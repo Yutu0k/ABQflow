@@ -403,6 +403,9 @@ class ExtractionStrategy(ABC):
 	----------
 	OdbExtractionStrategy
 		Post-simulation extraction from ODB (requires ``odbAccess``).
+	DatExtractionStrategy
+		Post-simulation extraction from the printed ``.dat`` output (plain
+		text — runs under the host Python, no Abaqus).
 	ModelPropertiesExtractionStrategy
 		Pre-simulation extraction from INP (requires ``mdb`` / CAE kernel).
 	"""
@@ -470,6 +473,70 @@ class OdbExtractionStrategy(ExtractionStrategy):
 				tasks=tasks,
 				common_args={'--odb_path': ctx.odb_path},
 				needs_cae_kernel=False)   # odbAccess, not mdb
+			all_results.update(results)
+		return all_results
+
+
+class DatExtractionStrategy(ExtractionStrategy):
+	"""Extract results from the ``.dat`` file via hook scripts.
+
+	An ODB is often too large to open just to read a few numbers; adding
+	``*NODE PRINT`` / ``*EL PRINT`` to the deck makes Abaqus write the same
+	values as text into ``<job>.dat``, and this strategy reads them back.
+
+	Runs the hook under the **host** Python, not ``abaqus python``: a ``.dat``
+	is plain text, so parsing it needs neither the Abaqus kernel nor a license
+	token — which is most of the point.  With a remote backend the file is
+	fetched into the local job directory first and the hook then runs here;
+	shipping a text parser to the solver machine would buy nothing and would
+	leave sidecar CSVs on the wrong host.
+
+	Each hook script receives ``--dat_path`` as a common argument and a JSON
+	task list via ``--tasks_json``.  ``datkit.py`` is staged alongside
+	``hookkit.py`` so hooks can ``import datkit``.
+
+	Attributes
+	----------
+	hooks : list[HookSpec]
+		List of hook descriptors, each with ``script_path`` and ``tasks``.
+	"""
+
+	def __init__(self, hooks: list[HookSpec]):
+		self.hooks = hooks
+
+	def extract(self, ctx: JobContext, runner: AbaqusRunner,
+				logger: logging.Logger) -> dict:
+		logger.info("Sub strategy [DatExtract]: Start extracting from DAT...")
+
+		# The solver writes the .dat on the executing machine, so pull it home
+		# before the guard: the hook runs here and opens a local path.
+		if runner.is_remote and not runner.record_only:
+			runner.fetch_results(patterns=('*.dat',))
+
+		# Plain os.path.exists, deliberately — unlike OdbExtractionStrategy,
+		# which asks the runner because the ODB never leaves the remote
+		# machine. After the fetch above, *local* existence is the condition
+		# that actually decides whether the hook can do its job.
+		if not os.path.exists(ctx.dat_path):
+			logger.error(f"DAT file does not exist: {ctx.dat_path}")
+			all_results = {}
+			for hook in self.hooks:
+				for task in hook.tasks:
+					all_results[task['result_name']] = None
+			return all_results
+
+		all_results = {}
+		for hook in self.hooks:
+			script_path = hook.script_path
+			tasks = hook.tasks
+			logger.info(f"  -> Run DAT hook script: {script_path} ({len(tasks)} tasks)")
+			results = runner.run_hook(
+				script_path=script_path,
+				tasks=tasks,
+				common_args={'--dat_path': ctx.dat_path},
+				needs_cae_kernel=False,
+				interpreter='host',            # plain text: no Abaqus needed
+				extra_modules=('datkit.py',))
 			all_results.update(results)
 		return all_results
 
