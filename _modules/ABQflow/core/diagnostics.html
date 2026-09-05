@@ -265,7 +265,7 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="SolverDiagnostics">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SolverDiagnostics">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.SolverDiagnostics">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverDiagnostics</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Diagnostic snapshot harvested after a solver run.</span>
@@ -306,7 +306,7 @@
 
 
 <div class="viewcode-block" id="SolverResult">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SolverResult">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.SolverResult">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SolverResult</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Returned by :meth:`AbaqusRunner.run_solver`.</span>
@@ -344,7 +344,7 @@
 
 
 <div class="viewcode-block" id="parse_sta">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.parse_sta">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.parse_sta">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_sta</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">"""Parse an Abaqus .sta file for verdict, increment count, and solver type.</span>
 
@@ -422,7 +422,7 @@
 
 
 <div class="viewcode-block" id="harvest_errors">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.harvest_errors">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.harvest_errors">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">harvest_errors</span><span class="p">(</span>
 	<span class="n">msg_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 	<span class="n">dat_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
@@ -509,7 +509,7 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="diagnose">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.diagnose">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.diagnose">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span><span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">work_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SolverDiagnostics</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Run full diagnostics on a completed (or failed) Abaqus job.</span>
 
@@ -592,7 +592,7 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="apply_truth_table">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.apply_truth_table">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.diagnostics.apply_truth_table">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_truth_table</span><span class="p">(</span><span class="n">returncode</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sta_verdict</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">"""Combine subprocess return code and .sta verdict into a single judgment.</span>
 

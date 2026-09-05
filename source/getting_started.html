@@ -389,7 +389,7 @@ that get replaced per job.</p>
 </section>
 <section id="output-format-joboutcome">
 <h2>Output Format: <code class="docutils literal notranslate"><span class="pre">JobOutcome</span></code><a class="headerlink" href="#output-format-joboutcome" title="Link to this heading">¶</a></h2>
-<p>Every job returns a <a class="reference internal" href="ABQflow.html#ABQflow.JobOutcome" title="ABQflow.JobOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code></a> dataclass:</p>
+<p>Every job returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> dataclass:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobOutcome</span><span class="p">:</span>
     <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span>          <span class="c1"># e.g. "beam_sweep_0001"</span>
@@ -401,7 +401,7 @@ that get replaced per job.</p>
 <p>Iterate the list directly, or build <code class="docutils literal notranslate"><span class="pre">{oc.job_name:</span> <span class="pre">oc</span> <span class="pre">for</span> <span class="pre">oc</span> <span class="pre">in</span> <span class="pre">outcomes}</span></code>
 when you need it keyed by name.  One converter helper is available:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="ABQflow.html#ABQflow.degenerate_from_array" title="ABQflow.degenerate_from_array"><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> from batch results.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code> – <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> from batch results.</p></li>
 </ul>
 </section>
 <section id="configuration-reference">
@@ -458,15 +458,15 @@ when you need it keyed by name.  One converter helper is available:</p>
 <p><strong>``run_batch``</strong> parameters:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">num_parallel_jobs</span></code> – Requested parallelism. May be reduced by the
-<a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> resource planner.</p></li>
+<code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code> resource planner.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">license_tokens</span></code> (optional) – Total Abaqus license tokens available.
 If provided, parallelism is also capped by token consumption
-(<a class="reference internal" href="ABQflow.html#ABQflow.solver_tokens" title="ABQflow.solver_tokens"><code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a>).</p></li>
+(<code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code>).</p></li>
 </ul>
 </section>
 <section id="license-token-planning">
 <h2>License Token Planning<a class="headerlink" href="#license-token-planning" title="Link to this heading">¶</a></h2>
-<p><a class="reference internal" href="ABQflow.html#ABQflow.solver_tokens" title="ABQflow.solver_tokens"><code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code></a> and <a class="reference internal" href="ABQflow.html#ABQflow.plan_parallelism" title="ABQflow.plan_parallelism"><code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code></a> let you
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">solver_tokens()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">plan_parallelism()</span></code> let you
 work out parallelism ahead of time instead of guessing:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">ABQflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">solver_tokens</span><span class="p">,</span> <span class="n">plan_parallelism</span>
 

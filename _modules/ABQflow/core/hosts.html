@@ -278,7 +278,7 @@
 
 
 <div class="viewcode-block" id="physical_cores">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.physical_cores">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.physical_cores">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">physical_cores</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Physical core count of *this* machine, with a safe fallback.</span>
 
@@ -299,7 +299,7 @@
 
 
 <div class="viewcode-block" id="solver_tokens">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.solver_tokens">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.solver_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solver_tokens</span><span class="p">(</span><span class="n">n_cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
 
@@ -313,7 +313,7 @@
 
 
 <div class="viewcode-block" id="HostSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HostSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""A machine that can execute Abaqus jobs.</span>
@@ -443,7 +443,7 @@
 			<span class="p">)</span>
 
 <div class="viewcode-block" id="HostSpec.local">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.local">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.local">[docs]</a>
 	<span class="nd">@classmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">local</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'local'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HostSpec</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""This machine, as a pool member.</span>
@@ -485,7 +485,7 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_root</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">/'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">_abqflow_shared'</span>
 
 <div class="viewcode-block" id="HostSpec.job_dir">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.job_dir">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.job_dir">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">job_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Working directory for *job_name* on this machine.</span>
 
@@ -497,14 +497,14 @@
 
 
 <div class="viewcode-block" id="HostSpec.resolved_cpus">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.resolved_cpus">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.resolved_cpus">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">resolved_cpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_default</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""``cpus=`` for jobs on this machine, falling back to the batch value."""</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="k">else</span> <span class="n">batch_default</span></div>
 
 
 <div class="viewcode-block" id="HostSpec.resolved_abaqus_exe">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.resolved_abaqus_exe">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.resolved_abaqus_exe">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">resolved_abaqus_exe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_default</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Abaqus command for this machine, falling back to the batch value.</span>
 
@@ -515,7 +515,7 @@
 
 
 <div class="viewcode-block" id="HostSpec.capacity">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.capacity">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.capacity">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""How many jobs may run here at once.</span>
 
@@ -550,7 +550,7 @@
 
 
 <div class="viewcode-block" id="HostSpec.allocation_weight">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.allocation_weight">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.allocation_weight">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">allocation_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Share of the batch this machine should receive.</span>
 
@@ -570,7 +570,7 @@
 
 
 <div class="viewcode-block" id="HostAssignment">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostAssignment">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostAssignment">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HostAssignment</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""One job placed on one machine."""</span>
@@ -581,7 +581,7 @@
 
 
 <div class="viewcode-block" id="assign_hosts">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.assign_hosts">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.assign_hosts">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assign_hosts</span><span class="p">(</span><span class="n">job_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">],</span>
 				<span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">"""Distribute *job_names* over *hosts* in proportion to their weights.</span>
@@ -637,7 +637,7 @@
 
 
 <div class="viewcode-block" id="summarise_assignment">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.summarise_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.summarise_assignment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_assignment</span><span class="p">(</span><span class="n">assignment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">	</span><span class="sd">"""Group an assignment into ``{host_name: [job_name, ...]}`` for logging."""</span>
 	<span class="n">grouped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -648,7 +648,7 @@
 
 
 <div class="viewcode-block" id="total_capacity">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.total_capacity">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.total_capacity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">total_capacity</span><span class="p">(</span><span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">],</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Sum of every machine's concurrency capacity."""</span>
 	<span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">)</span></div>

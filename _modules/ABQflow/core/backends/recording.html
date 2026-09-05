@@ -272,7 +272,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RecordingBackend</span><span class="p">(</span><span class="n">ExecutionBackend</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">"""Record every command and file operation; execute nothing.</span>
 
@@ -308,7 +308,7 @@
 	<span class="c1"># ---- context mapping ----</span>
 
 <div class="viewcode-block" id="RecordingBackend.map_context">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.map_context">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.map_context">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">map_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobContext</span><span class="p">:</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_root</span><span class="p">:</span>
 			<span class="k">return</span> <span class="n">ctx</span>
@@ -318,7 +318,7 @@
 	<span class="c1"># ---- execution ----</span>
 
 <div class="viewcode-block" id="RecordingBackend.run">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.run">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.run">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExecResult</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Record *cmd* and answer with a well-formed hook payload.</span>
 
@@ -333,7 +333,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.submit_detached">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.submit_detached">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.submit_detached">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">submit_detached</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cwd</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 						<span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobHandle</span><span class="p">:</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">command_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="s1">'solver'</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="n">cwd</span><span class="p">))</span>
@@ -343,7 +343,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.poll">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.poll">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.poll">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">JobHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_poll_index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_sequence</span><span class="p">):</span>
 			<span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_poll_sequence</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_poll_index</span><span class="p">]</span>
@@ -354,7 +354,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.terminate">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.terminate">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.terminate">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">JobHandle</span><span class="p">,</span> <span class="n">abaqus_exe</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">grace_s</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">command_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
 			<span class="n">CommandRecord</span><span class="p">(</span><span class="s1">'terminate'</span><span class="p">,</span> <span class="p">[</span><span class="n">abaqus_exe</span><span class="p">,</span> <span class="s1">'terminate'</span><span class="p">,</span>
@@ -369,19 +369,19 @@
 		<span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'/'</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RecordingBackend.exists">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.exists">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.exists">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span></div>
 
 
 <div class="viewcode-block" id="RecordingBackend.makedirs">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.makedirs">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.makedirs">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="k">return</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="RecordingBackend.put">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.put">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.put">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 		<span class="k">try</span><span class="p">:</span>
 			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
@@ -393,7 +393,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.put_text">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.put_text">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.put_text">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">put_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 		<span class="n">data</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)]</span> <span class="o">=</span> <span class="n">data</span>
@@ -401,7 +401,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.get">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.get">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.get">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">local_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">remote_path</span><span class="p">)</span>
 		<span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
@@ -416,7 +416,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.glob_get">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.glob_get">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.glob_get">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">glob_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">remote_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">patterns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
 				<span class="n">local_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 		<span class="n">prefix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">remote_dir</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'/'</span>
@@ -434,13 +434,13 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.remove">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.remove">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.remove">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="RecordingBackend.read_text">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.read_text">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.read_text">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">read_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">65536</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_key</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 		<span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -449,7 +449,7 @@
 
 
 <div class="viewcode-block" id="RecordingBackend.close">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.close">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.close">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 		<span class="k">return</span> <span class="kc">None</span></div>
 
@@ -457,7 +457,7 @@
 	<span class="c1"># ---- inspection helpers ----</span>
 
 <div class="viewcode-block" id="RecordingBackend.commands">
-<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.RecordingBackend.commands">[docs]</a>
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.recording.RecordingBackend.commands">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">commands</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">		</span><span class="sd">"""Recorded command lines, optionally filtered by *stage*."""</span>
 		<span class="k">return</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">cmd</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_log</span>

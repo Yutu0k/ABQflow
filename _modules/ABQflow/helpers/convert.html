@@ -273,7 +273,7 @@
 
 
 <div class="viewcode-block" id="is_sidecar">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.is_sidecar">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.is_sidecar">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_sidecar</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Return ``True`` if *value* is a sidecar envelope (dict with ``__file__``).</span>
 
@@ -291,7 +291,7 @@
 
 
 <div class="viewcode-block" id="resolve_sidecar">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.resolve_sidecar">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.resolve_sidecar">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_sidecar</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">load</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">"""Resolve a sidecar envelope to an absolute path and optional data.</span>
 
@@ -336,7 +336,7 @@
 
 
 <div class="viewcode-block" id="load_field">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.load_field">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.load_field">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_field</span><span class="p">(</span><span class="n">outcome</span><span class="p">,</span> <span class="n">result_name</span><span class="p">,</span> <span class="n">numeric_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">"""Load a single named field from a ``JobOutcome``.</span>
 
@@ -450,7 +450,7 @@
 
 
 <div class="viewcode-block" id="iter_fields">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.iter_fields">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.iter_fields">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">iter_fields</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">result_name</span><span class="p">,</span> <span class="n">on_missing</span><span class="o">=</span><span class="s1">'skip'</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">"""Yield ``(job_name, ndarray)`` pairs for a named field across a batch.</span>
 
@@ -516,7 +516,7 @@
 
 
 <div class="viewcode-block" id="sanitize_job_name">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.sanitize_job_name">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.sanitize_job_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">sanitize_job_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">80</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Clean *name* so it is a valid Abaqus job name.</span>
 
@@ -566,7 +566,7 @@
 
 
 <div class="viewcode-block" id="generate_from_inp_files">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_inp_files">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.generate_from_inp_files">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_inp_files</span><span class="p">(</span>
 	<span class="n">inp_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
 	<span class="n">base_spec</span><span class="p">:</span> <span class="n">JobSpec</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">,</span>
@@ -678,7 +678,7 @@
 
 
 <div class="viewcode-block" id="generate_from_array">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.generate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_array</span><span class="p">(</span><span class="n">samples_array</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">base_spec</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">JobSpec</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">"""Create N :class:`JobSpec` objects from an (N, D) parameter array.</span>
 
@@ -753,7 +753,7 @@
 
 
 <div class="viewcode-block" id="degenerate_from_array">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.degenerate_from_array">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.helpers.convert.degenerate_from_array">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">degenerate_from_array</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">output_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 						<span class="n">default_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">require_completed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Extract a 2D NumPy array of output values from a list of outcomes.</span>

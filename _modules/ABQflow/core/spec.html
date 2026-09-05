@@ -259,8 +259,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
 
+<span class="c1"># Artifacts a post-extraction hook can read.  Module-level rather than a class</span>
+<span class="c1"># attribute: an annotated attribute on a dataclass becomes a field.</span>
+<span class="n">HOOK_SOURCES</span> <span class="o">=</span> <span class="p">(</span><span class="s1">'odb'</span><span class="p">,</span> <span class="s1">'dat'</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="HookSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HookSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.spec.HookSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HookSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Description of one extraction/pre-extraction hook script and its tasks.</span>
@@ -272,14 +277,31 @@
 <span class="sd">	tasks : list[dict]</span>
 <span class="sd">		List of task descriptors; each dict typically contains</span>
 <span class="sd">		``result_name``, ``script_path``, and task-specific parameters.</span>
+<span class="sd">	source : str</span>
+<span class="sd">		Which artifact the hook reads — ``'odb'`` (default) or ``'dat'``.</span>
+<span class="sd">		Consulted for ``post_extraction`` only; ``pre_extraction`` always</span>
+<span class="sd">		reads the INP through the CAE kernel.</span>
+
+<span class="sd">		``'dat'`` selects</span>
+<span class="sd">		:class:`~ABQflow.core.strategies.DatExtractionStrategy`, which runs</span>
+<span class="sd">		the hook under the host Python instead of ``abaqus python``: a</span>
+<span class="sd">		``.dat`` is plain text, so reading it needs neither the solver nor a</span>
+<span class="sd">		license token.  Use it for values written by ``*NODE PRINT`` /</span>
+<span class="sd">		``*EL PRINT`` when the ODB is too large to open.</span>
 <span class="sd">	"""</span>
 	<span class="n">script_path</span><span class="p">:</span> <span class="nb">str</span>
-	<span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+	<span class="n">tasks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+	<span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'odb'</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">HOOK_SOURCES</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">"HookSpec.source must be one of </span><span class="si">{</span><span class="n">HOOK_SOURCES</span><span class="si">}</span><span class="s2">; got '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">'."</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="SubroutineSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.SubroutineSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.spec.SubroutineSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SubroutineSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Specification for an Abaqus user subroutine (UMAT/VUMAT/UEL/...).</span>
@@ -316,7 +338,7 @@
 
 
 <div class="viewcode-block" id="PreparationSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PreparationSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.spec.PreparationSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreparationSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Specification for the preparation phase of a modular workflow.</span>
@@ -385,7 +407,7 @@
 
 
 <div class="viewcode-block" id="JobSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.spec.JobSpec">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Single-job configuration validated at construction time.</span>
@@ -416,7 +438,10 @@
 <span class="sd">	pre_extraction : list[HookSpec]</span>
 <span class="sd">		Hooks run *before* the solver (e.g. model property extraction).</span>
 <span class="sd">	post_extraction : list[HookSpec]</span>
-<span class="sd">		Hooks run *after* the solver (e.g. ODB result extraction).</span>
+<span class="sd">		Hooks run *after* the solver.  Each entry's</span>
+<span class="sd">		:attr:`HookSpec.source` picks the artifact it reads — ``'odb'``</span>
+<span class="sd">		(default) or ``'dat'`` — and hooks execute in declaration order</span>
+<span class="sd">		whether or not they read the same one.</span>
 <span class="sd">	subroutine : SubroutineSpec or None</span>
 <span class="sd">		User subroutine to compile and pass via ``user=`` to the solver</span>
 <span class="sd">		(modular workflow only; ignored for ``workflow='monolithic'``).</span>

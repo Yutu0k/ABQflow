@@ -1107,21 +1107,6 @@ into it and results fetched back.  True for any remote backend, and
 also for a <code class="xref py py-class docutils literal notranslate"><span class="pre">LocalBackend</span></code> given an explicit <code class="docutils literal notranslate"><span class="pre">work_root</span></code>.</p>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.command_log">
-<span class="sig-name descname"><span class="pre">command_log</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.CommandRecord" title="ABQflow.core.runner.CommandRecord"><span class="pre">CommandRecord</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.command_log" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.files">
-<span class="sig-name descname"><span class="pre">files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.files" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.fetched">
-<span class="sig-name descname"><span class="pre">fetched</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.fetched" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.map_context">
 <span class="sig-name descname"><span class="pre">map_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend.map_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.map_context" title="Link to this definition">¶</a></dt>
@@ -1695,7 +1680,7 @@ unmodified <code class="docutils literal notranslate"><span class="pre">.sta</sp
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>host</strong> (<a class="reference internal" href="ABQflow.html#ABQflow.HostSpec" title="ABQflow.HostSpec"><em>HostSpec</em></a>)</p>
+<dd class="field-odd"><p><strong>host</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.hosts.HostSpec" title="ABQflow.core.hosts.HostSpec"><em>HostSpec</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2926,9 +2911,6 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#module-ABQflow.core.backends.recording">ABQflow.core.backends.recording module</a><ul>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend"><code class="docutils literal notranslate"><span class="pre">RecordingBackend</span></code></a><ul>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.is_remote</span></code></a></li>
-<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.command_log"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.command_log</span></code></a></li>
-<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.files"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.files</span></code></a></li>
-<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.fetched"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.fetched</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.map_context"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.map_context()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.run"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.run()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.submit_detached"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.submit_detached()</span></code></a></li>

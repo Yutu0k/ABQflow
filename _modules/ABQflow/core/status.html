@@ -261,7 +261,7 @@
 
 
 <div class="viewcode-block" id="JobStatus">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatus">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatus">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 <span class="w">	</span><span class="sd">"""Lifecycle state for a single batch job.</span>
 
@@ -335,7 +335,7 @@
 
 
 <div class="viewcode-block" id="PhaseRecord">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.PhaseRecord">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.PhaseRecord">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseRecord</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""One phase's start/end/outcome — the unit of a job's phase history.</span>
@@ -367,7 +367,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">JobStatusManager</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""State machine for a single job with terminal-state protection.</span>
 
@@ -450,14 +450,14 @@
 	<span class="c1"># ---- phase-start markers (IMP: fix dead PREPARING/SIMULATING/EXTRACTING states) ----</span>
 
 <div class="viewcode-block" id="JobStatusManager.mark_compiling">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_compiling">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.mark_compiling">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">mark_compiling</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Mark the start of subroutine compilation."""</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">'compile'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.mark_preparing">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_preparing">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.mark_preparing">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">mark_preparing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Mark the start of the preparation phase."""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
@@ -466,14 +466,14 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.mark_preflight">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_preflight">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.mark_preflight">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">mark_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Mark the start of the preflight check."""</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_open_phase</span><span class="p">(</span><span class="s1">'preflight'</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="JobStatusManager.mark_simulating">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_simulating">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.mark_simulating">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">mark_simulating</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Mark the start of the solver run."""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current_status</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TERMINAL_FAILURES</span><span class="p">:</span>
@@ -482,7 +482,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.mark_extracting">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.mark_extracting">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.mark_extracting">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">mark_extracting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'extraction'</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Mark the start of an extraction phase.</span>
 
@@ -500,7 +500,7 @@
 	<span class="c1"># ---- phase-end recorders ----</span>
 
 <div class="viewcode-block" id="JobStatusManager.record_compile">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_compile">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_compile">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Record the outcome of user-subroutine compilation.</span>
 
@@ -523,7 +523,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.record_preparation">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preparation">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_preparation">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_preparation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Record the outcome of the preparation phase.</span>
 
@@ -546,7 +546,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.record_preflight">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_preflight">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_preflight">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_preflight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Record the outcome of the preflight phase (IMP-04).</span>
 
@@ -568,7 +568,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.record_simulation">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_simulation">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_simulation">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_simulation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">success</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Record the outcome of the Abaqus solver run.</span>
 
@@ -591,7 +591,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.record_extraction">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.record_extraction">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.record_extraction">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">record_extraction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
 <span class="w">		</span><span class="sd">"""Record extraction results; fails if any task returned ``None``.</span>
 
@@ -618,7 +618,7 @@
 
 
 <div class="viewcode-block" id="JobStatusManager.get_final_status">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobStatusManager.get_final_status">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.status.JobStatusManager.get_final_status">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">get_final_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobStatus</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Return the current state or ``COMPLETED`` if no failure was recorded.</span>
 
