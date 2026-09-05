@@ -494,6 +494,12 @@ class ModelPropertiesExtractionStrategy(ExtractionStrategy):
 				logger: logging.Logger) -> dict:
 		logger.info("Sub strategy [ModelPropsExtract]: Start extracting from INP...")
 
+		# Deliberately a *local* check, unlike OdbExtractionStrategy's
+		# runner.artifact_exists: the INP is produced here by preparation, so
+		# the local copy is the source of truth and "did preparation run?" is
+		# the question worth asking.  Asking the executing machine instead
+		# would be wrong in the other direction — at this point the deck has
+		# not been uploaded yet; run_hook stages it just before the hook runs.
 		if not os.path.exists(ctx.inp_path):
 			logger.error(f"INP file does not exist: {ctx.inp_path}")
 			all_results = {}
