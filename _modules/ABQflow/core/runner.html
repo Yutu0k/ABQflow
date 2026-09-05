@@ -393,6 +393,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="n">backend</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_local_backend</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_staged</span> <span class="o">=</span> <span class="kc">False</span>
 
 		<span class="c1"># Context as seen by the executing machine.  Identical to ``ctx`` for</span>
 		<span class="c1"># LocalBackend; rewritten to the remote job directory (and that</span>
@@ -533,6 +534,12 @@
 <span class="sd">		"""</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_remote</span><span class="p">:</span>
 			<span class="k">return</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staged</span><span class="p">:</span>
+			<span class="c1"># Three phases need the inputs on the far side — preflight, hooks</span>
+			<span class="c1"># and the solver — and each stages defensively rather than trusting</span>
+			<span class="c1"># the others to have run.  Uploading a mesh three times is the</span>
+			<span class="c1"># wrong way to pay for that safety.</span>
+			<span class="k">return</span> <span class="kc">True</span>
 
 		<span class="kn">from</span><span class="w"> </span><span class="nn">.remote_launch</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_includes</span><span class="p">,</span> <span class="n">rewrite_includes</span>
 
@@ -586,6 +593,7 @@
 							<span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Staged user subroutine: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
 
+		<span class="bp">self</span><span class="o">.</span><span class="n">_staged</span> <span class="o">=</span> <span class="kc">True</span>
 		<span class="k">return</span> <span class="kc">True</span></div>
 
 
@@ -1181,6 +1189,24 @@
 			<span class="bp">self</span><span class="o">.</span><span class="n">command_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">CommandRecord</span><span class="p">(</span><span class="sa">f</span><span class="s1">'hook:</span><span class="si">{</span><span class="n">script_path</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">))</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[record_only] would run hook: </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="p">{</span><span class="n">t</span><span class="p">[</span><span class="s1">'result_name'</span><span class="p">]:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">}</span>
+
+		<span class="c1"># A hook's inputs must be on the machine that will run it.  This is the</span>
+		<span class="c1"># same defensive stage run_preflight does, and its absence here was a</span>
+		<span class="c1"># real bug: pre-extraction runs *before* the solver, so on a remote host</span>
+		<span class="c1"># the INP had not been uploaded yet when the hook opened it.  Abaqus</span>
+		<span class="c1"># does not raise on a missing input file — ModelFromInputFile hands back</span>
+		<span class="c1"># an empty model — so the failure surfaced further down the hook as</span>
+		<span class="c1"># something like "Unknown key ALL", pointing nowhere near the cause.</span>
+		<span class="c1">#</span>
+		<span class="c1"># A warning rather than a failure: a post-extraction hook reads the ODB,</span>
+		<span class="c1"># which only ever exists remotely, and has no use for the INP at all.</span>
+		<span class="c1"># Refusing to run it because the local deck went missing would break a</span>
+		<span class="c1"># standalone run_extraction() that is otherwise perfectly able to work.</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_remote</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stage_inputs</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+				<span class="s2">"Could not stage inputs before hook '</span><span class="si">%s</span><span class="s2">'; it will run against "</span>
+				<span class="s2">"whatever is already on </span><span class="si">%s</span><span class="s2">."</span><span class="p">,</span>
+				<span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">script_path</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 		<span class="c1"># Stage hookkit into the job output dir (HK-01 §3.5)</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_stage_hookkit</span><span class="p">()</span>

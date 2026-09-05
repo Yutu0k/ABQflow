@@ -733,6 +733,12 @@
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Sub strategy [ModelPropsExtract]: Start extracting from INP..."</span><span class="p">)</span>
 
+		<span class="c1"># Deliberately a *local* check, unlike OdbExtractionStrategy's</span>
+		<span class="c1"># runner.artifact_exists: the INP is produced here by preparation, so</span>
+		<span class="c1"># the local copy is the source of truth and "did preparation run?" is</span>
+		<span class="c1"># the question worth asking.  Asking the executing machine instead</span>
+		<span class="c1"># would be wrong in the other direction — at this point the deck has</span>
+		<span class="c1"># not been uploaded yet; run_hook stages it just before the hook runs.</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">):</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INP file does not exist: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="n">all_results</span> <span class="o">=</span> <span class="p">{}</span>
