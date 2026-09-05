@@ -364,6 +364,113 @@ def test_cae_kernel_hook_uses_the_remote_abaqus_cae(ctx, logger, tmp_path):
 
 
 # ============================================================
+# a hook's inputs are on the far side before the hook runs
+# ============================================================
+
+def _hook_ran_with_inp_present(ctx, logger, tmp_path, extra_setup=None):
+	"""Run one CAE hook remotely; report whether the INP was there at the time.
+
+	The backend's ``run`` is wrapped rather than inspected afterwards, because
+	the question is *ordering*: by the end of the job the INP is always
+	present, which is exactly why this bug survived.
+	"""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'),
+							hook_results={'total_mass': 1.0})
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	if extra_setup:
+		extra_setup(ctx, runner)
+
+	seen = {}
+	original_run = backend.run
+
+	def watching_run(cmd, cwd, timeout=None):
+		seen.setdefault('inp_present', backend.exists(runner.exec_ctx.inp_path))
+		return original_run(cmd, cwd, timeout=timeout)
+
+	backend.run = watching_run
+
+	script = tmp_path / 'get_total_mass.py'
+	script.write_text('print("x")\n')
+	results = runner.run_hook(str(script), [{'result_name': 'total_mass'}],
+							{'--inp_path': ctx.inp_path}, needs_cae_kernel=True)
+	return seen.get('inp_present'), results, backend, runner
+
+
+def test_a_hook_finds_its_inp_already_uploaded(ctx, logger, tmp_path):
+	"""The reported bug: pre-extraction runs before the solver, and staging
+	used to live inside run_solver — so on a remote host the hook opened an INP
+	that had not been uploaded yet.  Abaqus does not raise on a missing input
+	file, it hands back an empty model, so this surfaced as a nonsense error
+	from deep inside the hook instead of as a staging failure."""
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+
+	present, results, _, _ = _hook_ran_with_inp_present(ctx, logger, tmp_path)
+
+	assert present is True, "the hook ran before its INP reached the machine"
+	assert results == {'total_mass': 1.0}
+
+
+def test_a_hook_also_gets_the_include_targets(ctx, logger, tmp_path):
+	"""A deck the hook opens pulls in its includes too, so those must travel
+	with it — not arrive later with the solver."""
+	target = _write_deck_with_include(ctx)
+	assert os.path.isfile(target)
+
+	present, _, backend, runner = _hook_ran_with_inp_present(ctx, logger, tmp_path)
+
+	assert present is True
+	staged_deck = backend.read_text(runner.exec_ctx.inp_path) or ''
+	assert '_abqflow_shared' in staged_deck
+	included = staged_deck.split('INPUT=')[1].split('\n')[0].strip()
+	assert backend.exists(included), "the include target never reached the machine"
+
+
+def test_staging_happens_once_across_hook_preflight_and_solver(ctx, logger, tmp_path):
+	"""Three phases each stage defensively; the deck must still cross once."""
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	uploads = []
+	original_put = backend.put
+	backend.put = lambda l, r: (uploads.append(r), original_put(l, r))[1]
+
+	assert runner.stage_inputs() is True
+	assert runner.stage_inputs() is True
+	assert runner.stage_inputs() is True
+
+	inp_uploads = [u for u in uploads if u == runner.exec_ctx.inp_path]
+	assert len(inp_uploads) == 1, f"uploaded {len(inp_uploads)} times"
+
+
+def test_a_hook_still_runs_when_there_is_no_local_inp_to_stage(ctx, logger, tmp_path):
+	"""A post-extraction hook reads the ODB, which only ever exists remotely.
+	Refusing to run it because the local deck is gone would break a standalone
+	run_extraction()."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'),
+							hook_results={'max_stress': 3.0})
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert not os.path.exists(ctx.inp_path)
+
+	script = tmp_path / 'get_max.py'
+	script.write_text('print("x")\n')
+	results = runner.run_hook(str(script), [{'result_name': 'max_stress'}],
+							{'--odb_path': ctx.odb_path}, needs_cae_kernel=False)
+
+	assert results == {'max_stress': 3.0}
+
+
+def test_a_local_hook_needs_no_staging(ctx, logger, tmp_path):
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+	runner = AbaqusRunner(ctx, logger)
+	assert runner.stage_inputs() is None
+
+
+# ============================================================
 # preparation stays on this machine
 # ============================================================
 

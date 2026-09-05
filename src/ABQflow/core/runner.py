@@ -136,6 +136,7 @@ class AbaqusRunner:
 		self.host = host
 		self.backend = backend
 		self._local_backend = None
+		self._staged = False
 
 		# Context as seen by the executing machine.  Identical to ``ctx`` for
 		# LocalBackend; rewritten to the remote job directory (and that
@@ -271,6 +272,12 @@ class AbaqusRunner:
 		"""
 		if not self.is_remote:
 			return None
+		if self._staged:
+			# Three phases need the inputs on the far side — preflight, hooks
+			# and the solver — and each stages defensively rather than trusting
+			# the others to have run.  Uploading a mesh three times is the
+			# wrong way to pay for that safety.
+			return True
 
 		from .remote_launch import find_includes, rewrite_includes
 
@@ -324,6 +331,7 @@ class AbaqusRunner:
 							f'{self.exec_ctx.output_dir}\\{base}')
 			self.logger.info("Staged user subroutine: %s", base)
 
+		self._staged = True
 		return True
 
 	def fetch_results(self, patterns: tuple[str, ...] | None = None) -> list[str]:
@@ -889,6 +897,24 @@ class AbaqusRunner:
 			self.command_log.append(CommandRecord(f'hook:{script_path}', cmd, self.ctx.output_dir))
 			self.logger.info(f"[record_only] would run hook: {' '.join(cmd)}")
 			return {t['result_name']: None for t in tasks}
+
+		# A hook's inputs must be on the machine that will run it.  This is the
+		# same defensive stage run_preflight does, and its absence here was a
+		# real bug: pre-extraction runs *before* the solver, so on a remote host
+		# the INP had not been uploaded yet when the hook opened it.  Abaqus
+		# does not raise on a missing input file — ModelFromInputFile hands back
+		# an empty model — so the failure surfaced further down the hook as
+		# something like "Unknown key ALL", pointing nowhere near the cause.
+		#
+		# A warning rather than a failure: a post-extraction hook reads the ODB,
+		# which only ever exists remotely, and has no use for the INP at all.
+		# Refusing to run it because the local deck went missing would break a
+		# standalone run_extraction() that is otherwise perfectly able to work.
+		if self.is_remote and self.stage_inputs() is False:
+			self.logger.warning(
+				"Could not stage inputs before hook '%s'; it will run against "
+				"whatever is already on %s.",
+				os.path.basename(script_path), self.backend.name)
 
 		# Stage hookkit into the job output dir (HK-01 §3.5)
 		self._stage_hookkit()
