@@ -1,0 +1,8 @@
+** Parameterized material fragment.
+** Included by planar_stress_nested_scenario.inp; substituted per job and
+** written into each job directory, so the shared base INP stays untouched.
+*Material, name=Material
+*Density
+ 2.7e-09,
+*Elastic
+{{youngs_modulus}}, 0.3

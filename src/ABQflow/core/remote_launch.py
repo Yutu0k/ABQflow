@@ -23,20 +23,14 @@ for output rather than by trusting a return code.
 
 from __future__ import annotations
 
-import os
 import re
+
+from .inp_include import INCLUDE_RE as _INCLUDE_RE
 
 # Grace-period bounds, matching AbaqusRunner's local ladder so the two stay
 # comparable.
 _GRACE_MIN = 30
 _GRACE_MAX = 300
-
-# Same directive shape ExistingInpStrategy matches; Abaqus accepts INPUT= with
-# or without quotes and the keyword is case-insensitive.
-_INCLUDE_RE = re.compile(
-	r'(^\s*\*INCLUDE\s*,\s*INPUT\s*=\s*)(["\']?)([^"\'\r\n]+)\2',
-	re.IGNORECASE | re.MULTILINE,
-)
 
 
 def find_includes(text: str) -> list[str]:
@@ -79,30 +73,6 @@ def rewrite_includes(text: str, resolver) -> str:
 		return m.group(1) + replacement
 
 	return _INCLUDE_RE.sub(_sub, text)
-
-
-def flatten_includes(text: str) -> tuple[str, list[str]]:
-	"""Rewrite every ``*INCLUDE, INPUT=`` to a bare filename.
-
-	Abaqus resolves a bare include filename against the job's working
-	directory, so this makes a deck self-contained once its targets sit
-	beside it.  Use it when the referenced files genuinely belong to one job;
-	:meth:`AbaqusRunner.stage_inputs` instead points them at a shared
-	directory, so a large mesh is uploaded once per machine rather than once
-	per job.
-
-	Returns
-	-------
-	tuple[str, list[str]]
-		``(rewritten_text, original_paths)``.
-	"""
-	originals: list[str] = []
-
-	def _resolve(raw: str) -> str:
-		originals.append(raw)
-		return os.path.basename(raw.replace('\\', '/'))
-
-	return rewrite_includes(text, _resolve), originals
 
 
 def build_launcher_bat(abaqus_exe: str, job_name: str, work_dir: str,

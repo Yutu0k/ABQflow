@@ -1,0 +1,34 @@
+** Scenario deck that owns nothing but its load case: the mesh comes from a
+** shared base INP and the material from a parameterized template.
+**
+** planar_stress_main.inp    -> static, shared by every job in the batch
+** material_template.inp     -> parameterized, materialized into each job dir
+*Include, input=planar_stress_main.inp
+*Include, input=material_template.inp
+** ----------------------------------------------------------------
+**
+** STEP: Elastic
+**
+*Step, name=Elastic, nlgeom=NO
+*Static
+1., 1., 1e-05, 1.
+**
+** BOUNDARY CONDITIONS
+**
+*Boundary
+_PickedSet5, ENCASTRE
+*Boundary
+_PickedSet8, XSYMM
+**
+** LOADS
+**
+** Name: Load   Type: Pressure
+*Dsload
+_PickedSurf4, P, -{{load_magnitude}}
+**
+** OUTPUT REQUESTS
+**
+*Restart, write, frequency=0
+*Output, field, variable=PRESELECT
+*Output, history, variable=PRESELECT
+*End Step
