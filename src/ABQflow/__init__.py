@@ -12,8 +12,6 @@ Key Methods
 - degenerate_from_array
 - generate_from_array
 - generate_from_inp_files
-- outcomes_to_dict
-- outcomes_to_list
 
 """
 
@@ -67,6 +65,7 @@ from .core.strategies import (
 	ExistingInpStrategy,
 	ExtractionStrategy,
 	InpModifyStrategy,
+	InpPreparationStrategy,
 	JobWorkflowStrategy,
 	ModelGenerationStrategy,
 	ModelPropertiesExtractionStrategy,
@@ -87,8 +86,6 @@ from .helpers.convert import (
 	is_sidecar,
 	iter_fields,
 	load_field,
-	outcomes_to_dict,
-	outcomes_to_list,
 	resolve_sidecar,
 	sanitize_job_name,
 )
@@ -114,6 +111,7 @@ __all__ = [
 	# Core — multi-machine execution
 	"HostSpec",
 	"InpModifyStrategy",
+	"InpPreparationStrategy",
 	# Core — context & runner
 	"JobContext",
 	"JobHandle",
@@ -155,8 +153,6 @@ __all__ = [
 	"iter_fields",
 	"load_field",
 	"make_backend",
-	"outcomes_to_dict",
-	"outcomes_to_list",
 	"parse_sta",
 	# Core — resource planning
 	"plan_parallelism",

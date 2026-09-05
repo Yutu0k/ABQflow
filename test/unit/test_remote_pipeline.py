@@ -207,6 +207,225 @@ def test_stage_inputs_is_a_noop_locally(ctx, logger):
 
 
 # ============================================================
+# staging the whole include tree, in two tiers
+# ============================================================
+
+def _w(root, rel, text):
+	path = os.path.join(str(root), rel.replace('/', os.sep))
+	os.makedirs(os.path.dirname(path), exist_ok=True)
+	with open(path, 'w', newline='') as f:
+		f.write(text)
+	return path
+
+
+def _includes_of(backend, remote):
+	"""The raw INPUT= values of a deck that was uploaded to *remote*."""
+	from ABQflow.core.inp_include import INCLUDE_RE
+	return [m.group(3).strip()
+			for m in INCLUDE_RE.finditer(backend.read_text(remote) or '')]
+
+
+def test_a_nested_include_is_staged_too(ctx, logger, tmp_path):
+	"""The gap the flat single-pass staging left: only the job's own INP was
+	scanned, so a mesh that included a second fragment left it behind and the
+	remote solve died in preprocessing."""
+	shared = tmp_path / 'shared_src'
+	_w(shared, 'leaf.inp', '*Node\n1, 0., 0.\n')
+	_w(shared, 'mid.inp', f'*INCLUDE, INPUT={shared / "leaf.inp"}\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*Heading\n*INCLUDE, INPUT={shared / "mid.inp"}\n*End\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	# The root points at mid, and mid — uploaded, not skipped — points at leaf.
+	mid_remote = _includes_of(backend, runner.exec_ctx.inp_path)[0]
+	assert '_abqflow_shared' in mid_remote
+	assert backend.exists(mid_remote)
+	leaf_remote = _includes_of(backend, mid_remote)[0]
+	assert '_abqflow_shared' in leaf_remote
+	assert backend.exists(leaf_remote), "the second-level target was never uploaded"
+
+
+def test_a_bare_filename_travels_with_the_job(ctx, logger, tmp_path):
+	"""What preparation materialises for one job is unique to that job, so it
+	ships into the job directory and the directive keeps the bare name."""
+	_w(ctx.output_dir, 'material.inp', '*Elastic\n210000, 0.3\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*INCLUDE, INPUT=material.inp\n*Step\n*End Step\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	assert _includes_of(backend, runner.exec_ctx.inp_path) == ['material.inp']
+	assert backend.exists(runner.exec_ctx.output_dir + '\\material.inp')
+	assert '_abqflow_shared' not in (backend.read_text(runner.exec_ctx.inp_path) or '')
+
+
+def test_the_two_tiers_coexist_in_one_deck(ctx, logger, tmp_path):
+	mesh = _w(tmp_path / 'cae', 'main.inp', '*Node\n1, 0., 0.\n')
+	_w(ctx.output_dir, 'material.inp', '*Elastic\n210000, 0.3\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={mesh}\n'
+				'*INCLUDE, INPUT=material.inp\n*Step\n*End Step\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	static_ref, perjob_ref = _includes_of(backend, runner.exec_ctx.inp_path)
+	assert '_abqflow_shared' in static_ref
+	assert perjob_ref == 'material.inp'
+	assert backend.exists(runner.exec_ctx.output_dir + '\\material.inp')
+
+
+def test_per_job_files_of_different_jobs_do_not_collide(ctx_factory, logger, tmp_path):
+	"""Two jobs materialise a same-named fragment with different values; each
+	must land in its own job directory, not in the machine-wide cache."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	remotes = []
+
+	for i, value in enumerate((200000, 230000)):
+		job_ctx = ctx_factory(f'sweep_{i}')
+		_w(job_ctx.output_dir, 'material.inp', f'*Elastic\n{value}, 0.3\n')
+		with open(job_ctx.inp_path, 'w') as f:
+			f.write('*INCLUDE, INPUT=material.inp\n*Step\n*End Step\n')
+		runner = AbaqusRunner(job_ctx, logger, backend=backend)
+		assert runner.stage_inputs() is True
+		remotes.append(runner.exec_ctx.output_dir + '\\material.inp')
+
+	assert remotes[0] != remotes[1]
+	assert '200000' in backend.read_text(remotes[0])
+	assert '230000' in backend.read_text(remotes[1])
+
+
+def test_a_rewritten_shared_file_is_addressed_by_what_was_uploaded(ctx_factory, logger, tmp_path):
+	"""Two source trees whose intermediates are byte-identical but whose leaves
+	differ must not share a cache entry: the intermediate's uploaded bytes
+	differ once its own directive is rewritten."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	mids = []
+
+	for i, leaf_body in enumerate(('*Node\n1, 0., 0.\n', '*Node\n2, 9., 9.\n')):
+		src = tmp_path / f'src{i}'
+		_w(src, 'leaf.inp', leaf_body)
+		_w(src, 'mid.inp', f'*INCLUDE, INPUT={src / "leaf.inp"}\n')
+		job_ctx = ctx_factory(f'variant_{i}')
+		with open(job_ctx.inp_path, 'w') as f:
+			f.write(f'*INCLUDE, INPUT={src / "mid.inp"}\n')
+		runner = AbaqusRunner(job_ctx, logger, backend=backend)
+		assert runner.stage_inputs() is True
+		mids.append(_includes_of(backend, runner.exec_ctx.inp_path)[0])
+
+	assert mids[0] != mids[1], "the rewritten intermediates collided in the cache"
+
+
+def test_an_unrewritten_shared_file_keeps_its_on_disk_digest(ctx, logger, tmp_path):
+	"""Cache continuity: a mesh with no includes of its own is still addressed
+	by its own bytes, so entries uploaded before this change stay valid."""
+	import hashlib
+	body = '*Node\n1, 0., 0.\n'
+	mesh = _w(tmp_path / 'cae', 'main.inp', body)
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={mesh}\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	expected = hashlib.sha256(body.encode()).hexdigest()[:12]
+	assert expected in _includes_of(backend, runner.exec_ctx.inp_path)[0]
+
+
+def test_a_file_included_twice_uploads_once(ctx, logger, tmp_path):
+	mesh = _w(tmp_path / 'cae', 'main.inp', '*Node\n1, 0., 0.\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={mesh}\n*Step\n*INCLUDE, INPUT={mesh}\n*End Step\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	uploads = []
+	original_put = backend.put
+	backend.put = lambda l, r: (uploads.append(r), original_put(l, r))[1]
+
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+	assert len([u for u in uploads if 'main.inp' in u]) == 1
+
+
+def test_a_cycle_in_the_tree_is_reported_not_recursed_into(ctx, logger, tmp_path):
+	src = tmp_path / 'cyc'
+	_w(src, 'a.inp', f'*INCLUDE, INPUT={src / "b.inp"}\n')
+	_w(src, 'b.inp', f'*INCLUDE, INPUT={src / "a.inp"}\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={src / "a.inp"}\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is False
+
+
+def test_a_read_only_source_tree_is_never_written_to(ctx, logger, tmp_path):
+	"""Rewritten content is spooled into the job directory, not next to the
+	source: a shared mesh library is not ours to write into."""
+	src = tmp_path / 'library'
+	_w(src, 'leaf.inp', '*Node\n1, 0., 0.\n')
+	_w(src, 'mid.inp', f'*INCLUDE, INPUT={src / "leaf.inp"}\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={src / "mid.inp"}\n')
+	before = sorted(os.listdir(src))
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	assert sorted(os.listdir(src)) == before, "staging left files in the source tree"
+	assert not [n for n in os.listdir(ctx.output_dir) if n.endswith('.staged')]
+
+
+def test_a_missing_nested_target_fails_loudly(ctx, logger, tmp_path):
+	src = tmp_path / 'src'
+	_w(src, 'mid.inp', f'*INCLUDE, INPUT={src / "absent.inp"}\n')
+	with open(ctx.inp_path, 'w') as f:
+		f.write(f'*INCLUDE, INPUT={src / "mid.inp"}\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is False
+
+
+def test_preparation_and_staging_agree_on_the_convention(ctx, logger, tmp_path):
+	"""End to end across both stages: whatever preparation writes into the job
+	directory, staging must classify correctly with no manifest between them."""
+	from ABQflow.core.strategies import InpModifyStrategy
+
+	mesh = _w(tmp_path / 'cae', 'main.inp', '*Node\n1, 0., 0.\n')
+	_w(tmp_path / 'cae', 'material_template.inp', '*Elastic\n{{E}}, 0.3\n')
+	root = _w(tmp_path / 'cae', 'scenario.inp',
+			'*Include, input=main.inp\n'
+			'*Include, input=material_template.inp\n'
+			'*Step\n*Dsload\nS, P, -{{load}}\n*End Step\n')
+
+	assert InpModifyStrategy(root, {'E': 210000, 'load': 3000}).prepare(ctx, None, logger)
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert runner.stage_inputs() is True
+
+	static_ref, perjob_ref = _includes_of(backend, runner.exec_ctx.inp_path)
+	# The 125 KB-class mesh went to the machine cache, once.
+	assert '_abqflow_shared' in static_ref and backend.exists(static_ref)
+	assert os.path.normcase(mesh) != os.path.normcase(static_ref)
+	# The substituted material fragment travelled with the job.
+	assert perjob_ref == 'material_template.inp'
+	staged_material = backend.read_text(
+		runner.exec_ctx.output_dir + '\\material_template.inp')
+	assert '210000' in staged_material
+	assert '{{E}}' not in staged_material
+
+
+# ============================================================
 # fetching results
 # ============================================================
 
@@ -361,6 +580,113 @@ def test_cae_kernel_hook_uses_the_remote_abaqus_cae(ctx, logger, tmp_path):
 	cmd = (backend.commands('hook') or backend.commands('run'))[0]
 	assert cmd[0] == runner.exec_ctx.abaqus_exe
 	assert cmd[1] == 'cae' and cmd[2].startswith('noGUI=')
+
+
+# ============================================================
+# a hook's inputs are on the far side before the hook runs
+# ============================================================
+
+def _hook_ran_with_inp_present(ctx, logger, tmp_path, extra_setup=None):
+	"""Run one CAE hook remotely; report whether the INP was there at the time.
+
+	The backend's ``run`` is wrapped rather than inspected afterwards, because
+	the question is *ordering*: by the end of the job the INP is always
+	present, which is exactly why this bug survived.
+	"""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'),
+							hook_results={'total_mass': 1.0})
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	if extra_setup:
+		extra_setup(ctx, runner)
+
+	seen = {}
+	original_run = backend.run
+
+	def watching_run(cmd, cwd, timeout=None):
+		seen.setdefault('inp_present', backend.exists(runner.exec_ctx.inp_path))
+		return original_run(cmd, cwd, timeout=timeout)
+
+	backend.run = watching_run
+
+	script = tmp_path / 'get_total_mass.py'
+	script.write_text('print("x")\n')
+	results = runner.run_hook(str(script), [{'result_name': 'total_mass'}],
+							{'--inp_path': ctx.inp_path}, needs_cae_kernel=True)
+	return seen.get('inp_present'), results, backend, runner
+
+
+def test_a_hook_finds_its_inp_already_uploaded(ctx, logger, tmp_path):
+	"""The reported bug: pre-extraction runs before the solver, and staging
+	used to live inside run_solver — so on a remote host the hook opened an INP
+	that had not been uploaded yet.  Abaqus does not raise on a missing input
+	file, it hands back an empty model, so this surfaced as a nonsense error
+	from deep inside the hook instead of as a staging failure."""
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+
+	present, results, _, _ = _hook_ran_with_inp_present(ctx, logger, tmp_path)
+
+	assert present is True, "the hook ran before its INP reached the machine"
+	assert results == {'total_mass': 1.0}
+
+
+def test_a_hook_also_gets_the_include_targets(ctx, logger, tmp_path):
+	"""A deck the hook opens pulls in its includes too, so those must travel
+	with it — not arrive later with the solver."""
+	target = _write_deck_with_include(ctx)
+	assert os.path.isfile(target)
+
+	present, _, backend, runner = _hook_ran_with_inp_present(ctx, logger, tmp_path)
+
+	assert present is True
+	staged_deck = backend.read_text(runner.exec_ctx.inp_path) or ''
+	assert '_abqflow_shared' in staged_deck
+	included = staged_deck.split('INPUT=')[1].split('\n')[0].strip()
+	assert backend.exists(included), "the include target never reached the machine"
+
+
+def test_staging_happens_once_across_hook_preflight_and_solver(ctx, logger, tmp_path):
+	"""Three phases each stage defensively; the deck must still cross once."""
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+
+	uploads = []
+	original_put = backend.put
+	backend.put = lambda l, r: (uploads.append(r), original_put(l, r))[1]
+
+	assert runner.stage_inputs() is True
+	assert runner.stage_inputs() is True
+	assert runner.stage_inputs() is True
+
+	inp_uploads = [u for u in uploads if u == runner.exec_ctx.inp_path]
+	assert len(inp_uploads) == 1, f"uploaded {len(inp_uploads)} times"
+
+
+def test_a_hook_still_runs_when_there_is_no_local_inp_to_stage(ctx, logger, tmp_path):
+	"""A post-extraction hook reads the ODB, which only ever exists remotely.
+	Refusing to run it because the local deck is gone would break a standalone
+	run_extraction()."""
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'),
+							hook_results={'max_stress': 3.0})
+	runner = AbaqusRunner(ctx, logger, backend=backend)
+	assert not os.path.exists(ctx.inp_path)
+
+	script = tmp_path / 'get_max.py'
+	script.write_text('print("x")\n')
+	results = runner.run_hook(str(script), [{'result_name': 'max_stress'}],
+							{'--odb_path': ctx.odb_path}, needs_cae_kernel=False)
+
+	assert results == {'max_stress': 3.0}
+
+
+def test_a_local_hook_needs_no_staging(ctx, logger, tmp_path):
+	with open(ctx.inp_path, 'w') as f:
+		f.write('*Heading\n*Step\n*End Step\n')
+	runner = AbaqusRunner(ctx, logger)
+	assert runner.stage_inputs() is None
 
 
 # ============================================================

@@ -274,6 +274,33 @@ def sanitize_job_name(name: str, max_len: int = 80) -> str:
 
 # ======================== Array generation / degeneration ========================
 
+def _warn_discarded(discarded: dict[str, object], generator: str) -> None:
+	"""Warn about base_spec settings *generator* is about to overwrite.
+
+	A generator fills some fields in for you, and anything you set there is
+	thrown away.  Silently is the wrong way to do that: the failure mode is a
+	batch that runs to completion with a source file or a parameter set the
+	user is convinced is in effect, and nothing in the results says otherwise.
+
+	Warned once per call rather than once per generated spec — the same
+	mistake repeated N times is still one mistake.
+
+	Parameters
+	----------
+	discarded : dict
+		``{field label: value the user set}``.  Falsy values are skipped, since
+		an unset field is exactly what a generator expects to find.
+	generator : str
+		Name of the calling generator, for the message.
+	"""
+	named = [f'{label}={value!r}' for label, value in discarded.items() if value]
+	if named:
+		warnings.warn(
+			f"{generator}() supplies these itself; the base_spec values you set are "
+			f"ignored: {', '.join(named)}.",
+			stacklevel=3)
+
+
 def generate_from_inp_files(
 	inp_files: list[str] | str,
 	base_spec: JobSpec | dict,
@@ -289,10 +316,13 @@ def generate_from_inp_files(
 	----------
 	inp_files : list[str] or str
 		List of INP paths, or a glob pattern (e.g. ``'./legacy/*.inp'``).
-	base_spec : JobSpec or dict
-		Template spec whose ``workflow``, extraction hooks, and other
-		non-preparation fields are copied.  The ``preparation`` field is
-		**overwritten** for each generated spec.
+	base_spec : JobSpec
+		Template spec whose ``workflow``, extraction hooks, ``options`` and
+		other non-preparation fields are copied.  ``preparation.kind``,
+		``.source_path`` and ``.params`` are **supplied by this function** —
+		leave them unset in the base spec; setting them anyway earns a warning
+		saying the values were discarded.  ``meta`` is merged, not replaced, so
+		your own keys survive alongside ``'source_inp'``.
 	naming : str
 		Job-name generation rule:
 
@@ -327,9 +357,16 @@ def generate_from_inp_files(
 	if sort:
 		files.sort(key=lambda p: _natural_key(os.path.basename(p)))
 
-	# 3. Normalise base_spec (check for dict, not JobSpec — autoreload-safe)
-	if isinstance(base_spec, dict):
-		base_spec = JobSpec.from_dict(base_spec)
+	# 3. Tell the caller once about anything this function is about to discard.
+	prep = base_spec.preparation
+	if prep is not None:
+		_warn_discarded({
+			# A kind of 'existing_inp' is what this function produces anyway,
+			# so only a *different* one is worth reporting.
+			'preparation.kind': prep.kind if prep.kind != 'existing_inp' else '',
+			'preparation.source_path': prep.source_path,
+			'preparation.params': prep.params,
+		}, 'generate_from_inp_files')
 
 	# 4. Generate specs
 	specs = []
@@ -358,19 +395,15 @@ def generate_from_inp_files(
 		else:
 			raise ValueError(f"Unknown naming mode: '{naming}'")
 
-		# Overwrite preparation (warn if base_spec already had one)
-		if s.preparation is not None and s.preparation.kind not in ('existing_inp', ''):
-			warnings.warn(
-				f"Overwriting base_spec.preparation (kind='{s.preparation.kind}') "
-				f"with kind='existing_inp' for file '{path}'")
-
 		s.preparation = PreparationSpec(
 			kind='existing_inp',
 			source_path=abspath,
 			params={},
 			options=base_spec.preparation.options if base_spec.preparation else {}
 		)
-		s.meta = {'source_inp': abspath}		# 把源 INP 文件路径存储在 meta 中
+		# Merge, don't replace: base_spec.meta belongs to the caller, and
+		# dropping it would silently lose whatever they track the batch by.
+		s.meta = {**s.meta, 'source_inp': abspath}		# 源 INP 路径存进 meta
 
 		specs.append(s)
 
@@ -390,8 +423,11 @@ def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
 		NumPy internally.
 	param_names : list[str]
 		Length-D list of parameter names.
-	base_spec : JobSpec or dict
-		Template spec.  Dicts are upgraded via :meth:`JobSpec.from_dict`.
+	base_spec : JobSpec
+		Template spec.  Its ``job_name`` becomes the prefix for the generated
+		names, and ``preparation.source_path`` is the template every job is
+		built from.  ``params`` is **supplied by this function** — leave it
+		unset; setting it anyway earns a warning saying it was discarded.
 
 	Returns
 	-------
@@ -410,8 +446,19 @@ def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
 	if d != len(param_names):
 		raise ValueError(f"Dimension mismatch: array has {d} cols, param_names has {len(param_names)}")
 
-	if not isinstance(base_spec, JobSpec):
-		base_spec = JobSpec.from_dict(base_spec)
+	prep = base_spec.preparation
+	if base_spec.workflow == 'monolithic':
+		_warn_discarded({'monolithic_params': base_spec.monolithic_params},
+						'generate_from_array')
+	elif prep is not None:
+		_warn_discarded({'preparation.params': prep.params}, 'generate_from_array')
+		if prep.kind == 'existing_inp':
+			# Not a discarded value but a dead sweep: existing_inp substitutes
+			# nothing, so every job in the batch would run the identical deck.
+			warnings.warn(
+				"generate_from_array() with kind='existing_inp' produces N identical "
+				"jobs — that kind performs no substitution, so the parameter array has "
+				"no effect. Use kind='inp_based' with a template.")
 
 	specs = []
 	for i in range(n):
@@ -484,64 +531,3 @@ def degenerate_from_array(outcomes: list, output_names: list[str],
 		warnings.warn(f"{len(bad)} jobs not COMPLETED, rows contain default values: {bad}")
 
 	return np.asarray(rows, dtype=float)
-
-
-# ======================== Result conversion ========================
-
-def outcomes_to_list(outcomes: list) -> list[dict]:
-	"""Convert a list of :class:`JobOutcome` objects to a list of plain dicts.
-
-	Convenience for callers that prefer the legacy list-of-dicts shape.
-
-	Parameters
-	----------
-	outcomes : list[JobOutcome]
-		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
-
-	Returns
-	-------
-	list[dict]
-		Each dict contains ``'job_name'``, ``'status'``, flattened results,
-		and optionally ``'error'``.
-	"""
-	out = []
-	for oc in outcomes:
-		d = {**(oc.results or {}), 'status': oc.status, 'job_name': oc.job_name}
-		if oc.error:
-			d['error'] = oc.error
-		if oc.diagnostics:
-			d['diagnostics'] = oc.diagnostics
-		out.append(d)
-	return out
-
-
-def outcomes_to_dict(outcomes: list) -> dict[str, dict]:
-	"""Convert a list of :class:`JobOutcome` objects to a ``{job_name: {...}}`` dict.
-
-	Parameters
-	----------
-	outcomes : list[JobOutcome]
-		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.
-
-	Returns
-	-------
-	dict[str, dict]
-		Each value dict contains ``'status'``, flattened results, and
-		optionally ``'error'``.
-
-	Raises
-	------
-	ValueError
-		If two outcomes share the same ``job_name``.
-	"""
-	out = {}
-	for oc in outcomes:
-		if oc.job_name in out:
-			raise ValueError(f"Duplicate job_name in dict output: {oc.job_name}")
-		d = {**(oc.results or {}), 'status': oc.status}
-		if oc.error:
-			d['error'] = oc.error
-		if oc.diagnostics:
-			d['diagnostics'] = oc.diagnostics
-		out[oc.job_name] = d
-	return out

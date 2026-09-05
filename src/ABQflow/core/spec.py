@@ -6,7 +6,6 @@ in ``__post_init__`` so errors are caught before batch execution begins.
 
 from __future__ import annotations
 
-import copy
 import warnings
 from dataclasses import dataclass, field
 
@@ -90,21 +89,61 @@ class PreparationSpec:
 	Attributes
 	----------
 	kind : str
-		Preparation strategy identifier.  Currently ``'inp_based'``, ``'existing_inp'``, or
-		``'model_generation'``.
+		Preparation strategy identifier: ``'inp_based'``, ``'existing_inp'``,
+		or ``'model_generation'``.
+
+		The first two are one implementation
+		(:class:`~ABQflow.core.strategies.InpPreparationStrategy`) under two
+		names, because "fill in a template" and "use a finished deck" are the
+		same pipeline with a different amount of work in its first step.  What
+		separates them is **what varies across the batch**, and therefore which
+		generator you pair the spec with:
+
+		- ``'inp_based'`` — one template, N parameter sets.  Pair with
+		  :func:`~ABQflow.helpers.convert.generate_from_array`, or set
+		  ``params`` yourself.
+		- ``'existing_inp'`` — N already-written decks.  Pair with
+		  :func:`~ABQflow.helpers.convert.generate_from_inp_files`, which fills
+		  ``kind`` and ``source_path`` in for you.  Uses no ``params``, and
+		  reports a leftover ``{{placeholder}}`` as "you handed a template to a
+		  batch of finished decks" rather than as a missing parameter.
+
 	source_path : str
-		Path to the base INP file (for ``inp_based``) or model-generation
-		script (for ``model_generation``).
+		Path to the template or finished INP (for ``inp_based`` /
+		``existing_inp``) or the model-generation script (for
+		``model_generation``).
+
+		**Optional when a generator supplies it.**
+		:func:`~ABQflow.helpers.convert.generate_from_inp_files` fills it in
+		per file, so a base spec headed for that generator should leave it
+		empty rather than naming an unrelated INP — the same way a base spec
+		headed for :func:`~ABQflow.helpers.convert.generate_from_array` leaves
+		``params`` empty.  Setting it anyway is not silently accepted: the
+		generator warns that your value is being discarded.  A spec that
+		reaches preparation with it still empty fails with a message naming
+		both ways to fix it.
 	params : dict
-		Key-value parameters forwarded to the preparation strategy (e.g.
-		placeholder replacements for ``inp_based``).
+		Key-value parameters forwarded to the preparation strategy:
+		``{{placeholder}}`` replacements for ``inp_based``, CLI arguments for
+		``model_generation``.  Not used by ``existing_inp``.  Left empty when
+		:func:`~ABQflow.helpers.convert.generate_from_array` supplies it.
 	options : dict
-		Additional options for the preparation strategy (Currently only used by ``existing_inp``):
-		- 'staging_mode' (str): ``'copy'`` (default) 
-		- 'resolve_includes' (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).
+		Additional options.  **Unknown keys raise** rather than being ignored,
+		so a typo or an option borrowed from another kind fails loudly.
+
+		- ``'resolve_includes'`` (bool, default ``True``): whether to walk and
+		  rewrite the ``*INCLUDE`` tree.  Understood by ``inp_based`` and
+		  ``existing_inp``; see :mod:`ABQflow.core.inp_include` for what the
+		  walk does with parameterized versus static includes.
+		- ``'include_staging'`` (str, default ``'reference'``): what to do with
+		  the *static* includes.  ``'reference'`` leaves them in place and
+		  points the deck at their absolute paths, so a shared mesh is never
+		  copied.  Parameterized includes have no such choice — their content
+		  exists nowhere on disk, so they are always written into the job
+		  directory.
 	"""
 	kind: str
-	source_path: str
+	source_path: str = ''
 	params: dict = field(default_factory=dict)
 	options: dict = field(default_factory=dict)
 
@@ -193,43 +232,3 @@ class JobSpec:
 				f"[{self.job_name}] kind='existing_inp' does not use params — "
 				f"params will be ignored. If you need template substitution, use kind='inp_based'."
 			)
-
-	@classmethod
-	def from_dict(cls, d: dict) -> JobSpec:
-		"""Migration bridge: construct a :class:`JobSpec` from a legacy dict.
-
-		Deep-copies the input dict so the returned spec owns all of its
-		mutable data (no shared references with the caller).
-
-		Parameters
-		----------
-		d : dict
-			Legacy configuration dict.  Recognised keys:
-			``job_name``, ``workflow``, ``type``, ``base_inp_path``,
-			``model_script_path``, ``script_path``, ``params``,
-			``pre_extraction``, ``post_extraction``.
-
-		Returns
-		-------
-		JobSpec
-			Fully validated spec.
-		"""
-		d = copy.deepcopy(d)
-		workflow = d.get('workflow', 'modular')
-
-		prep = None
-		if workflow == 'modular':
-			prep = PreparationSpec(
-				kind=d.get('type', 'inp_based'),
-				source_path=d.get('base_inp_path') or d.get('model_script_path') or '',
-				params=copy.deepcopy(d.get('params', {})))
-
-		return cls(
-			job_name=d['job_name'],
-			workflow=workflow,
-			preparation=prep,
-			monolithic_script=d.get('script_path') if workflow == 'monolithic' else None,
-			monolithic_params=copy.deepcopy(d.get('params', {})) if workflow == 'monolithic' else {},
-			pre_extraction=[HookSpec(**h) for h in d.get('pre_extraction', [])],
-			post_extraction=[HookSpec(**h) for h in d.get('post_extraction', [])],
-		)

@@ -114,30 +114,57 @@ Inspect the plan before running anything:
 -------------------------------------
 
 Decks that pull in an external mesh or geometry with ``*INCLUDE, INPUT=`` need
-those files on the executing machine.  Two things would go wrong naively:
+those files on the executing machine.  Three things would go wrong naively:
 
-* the directive points at a **local absolute path**, which cannot resolve on
-  another machine — the job fails with an opaque Abaqus preprocessing error;
-* copying the target into every job directory would make **transfer, not
+* the directive points at a **local path**, which cannot resolve on another
+  machine — the job fails with an opaque Abaqus preprocessing error;
+* copying every target into every job directory would make **transfer, not
   solving, the dominant cost** of a sweep, since a referenced mesh is often
-  orders of magnitude larger than the deck referencing it.
+  orders of magnitude larger than the deck referencing it;
+* scanning only the job's own ``.inp`` leaves anything *it* includes behind —
+  an include tree is a tree, and the second level dies the same opaque death.
 
-So include targets are uploaded **once per machine** into a shared directory
-beside the job directories::
+The whole tree is therefore walked, and each file is placed in one of two
+tiers.  Which tier is read off the directive's **shape**, which is the
+convention :mod:`ABQflow.core.inp_include` already established when it resolved
+the tree locally — so preparation and staging agree with no manifest passed
+between them:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 30 45
+
+   * - Directive looks like
+     - Means
+     - Goes to
+   * - a bare filename
+     - per-job — a template a parameter touched, materialised beside the job's
+       own INP
+     - the remote **job directory**, name unchanged (Abaqus resolves a bare
+       include against the working directory)
+   * - anything else
+     - static — identical across the batch
+     - the machine's **shared directory**, content-addressed
+
+::
 
    <work_root>\
        _abqflow_shared\
            9e13c038540f_mesh.inp        <- uploaded once, reused by every job
        job_0001\
-           job_0001.inp                 <- *INCLUDE rewritten to the path above
+           job_0001.inp                 <- static *INCLUDE -> the path above
+           material.inp                 <- per-job, travels with this job only
        job_0002\
            job_0002.inp
+           material.inp                 <- same name, different values
        ...
 
-and the directive is rewritten to that absolute remote path.
+A per-job file is *not* a candidate for sharing even though it is small: its
+content is unique to the job, so putting it in the machine-wide cache would
+fill the cache with N entries that nothing ever reuses.
 
-Names are **content-addressed** — ``<sha256[:12]>_<basename>`` — which buys
-three properties from one decision:
+Shared names are **content-addressed** — ``<sha256[:12]>_<basename>`` — which
+buys three properties from one decision:
 
 * the same file is uploaded once no matter how many jobs or batches reference
   it;
@@ -145,8 +172,13 @@ three properties from one decision:
 * "already present remotely" is *exactly* equivalent to "identical content",
   so the existence check is a correct cache check rather than a guess.
 
-Hashing reads the file once from local disk, which is cheap next to sending it
-over SFTP.
+The hash covers **what is uploaded**, not what sits on disk: a shared file
+whose own includes were rewritten no longer has its original bytes, and
+addressing it by them would let two different rewrites of one source collide.
+A file that needed no rewriting is hashed by streaming and uploaded straight
+from disk, so a multi-gigabyte mesh is never held in memory or copied to a
+temporary file first — and its address is unchanged, so cache entries written
+before this behaviour existed stay valid.
 
 The shared directory is a cache and is **not** touched by ``cleanup``, which
 only ever removes job directories.  Delete it by hand to force a re-upload.

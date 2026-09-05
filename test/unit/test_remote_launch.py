@@ -16,12 +16,12 @@ from ABQflow.core.remote_launch import (
 	build_detach_script,
 	build_launcher_bat,
 	find_includes,
-	flatten_includes,
 	grace_period,
 	parse_detach_output,
 	parse_rc_sentinel,
 	poll_verdict,
 	quote_arg,
+	rewrite_includes,
 	wrap_cmd,
 	wrap_powershell,
 )
@@ -212,43 +212,43 @@ def test_wrap_powershell_round_trips():
 
 
 # ============================================================
-# *INCLUDE flattening
+# *INCLUDE parsing and substitution (placement lives in the runner)
 # ============================================================
 
 def test_find_includes_on_a_deck_without_any():
 	assert find_includes('*Heading\n*Node\n1, 0., 0.\n') == []
 
 
-def test_flatten_rewrites_to_a_bare_filename():
-	text = '*Heading\n*INCLUDE, INPUT=parts/mesh.inp\n*End\n'
-	flat, originals = flatten_includes(text)
-	assert originals == ['parts/mesh.inp']
-	assert find_includes(flat) == ['mesh.inp']
-
-
-def test_flatten_strips_a_local_absolute_path():
-	"""ExistingInpStrategy rewrites includes to local absolute paths, which
-	are guaranteed not to exist on another machine."""
-	text = '*INCLUDE, INPUT="C:\\deep dir\\frag.inp"\n'
-	flat, originals = flatten_includes(text)
-	assert originals == ['C:\\deep dir\\frag.inp']
-	assert 'deep dir' not in flat and 'frag.inp' in flat
-
-
 def test_include_matching_is_case_insensitive():
 	assert find_includes('*include, input=sub/frag.inp\n') == ['sub/frag.inp']
 
 
-def test_flatten_handles_several_includes():
+def test_find_includes_reads_a_quoted_path_with_spaces():
+	assert find_includes('*INCLUDE, INPUT="C:\\deep dir\\frag.inp"\n') == \
+		['C:\\deep dir\\frag.inp']
+
+
+def test_find_includes_handles_several():
 	text = ('*INCLUDE, INPUT=a/one.inp\n'
 			'*Step\n'
 			'*INCLUDE, INPUT=b/two.inp\n')
-	flat, originals = flatten_includes(text)
-	assert originals == ['a/one.inp', 'b/two.inp']
-	assert find_includes(flat) == ['one.inp', 'two.inp']
+	assert find_includes(text) == ['a/one.inp', 'b/two.inp']
 
 
-def test_flatten_leaves_a_deck_without_includes_untouched():
+def test_rewrite_substitutes_each_directive_through_the_resolver():
+	text = '*Heading\n*INCLUDE, INPUT=parts/mesh.inp\n*End\n'
+	out = rewrite_includes(text, lambda raw: r'D:\shared\abc_mesh.inp')
+	assert find_includes(out) == [r'D:\shared\abc_mesh.inp']
+
+
+def test_rewrite_leaves_a_directive_the_resolver_declines():
+	"""None means "I have no answer" — silently rewriting it to something that
+	does not exist would be worse than leaving it alone."""
+	text = '*INCLUDE, INPUT=a/one.inp\n*INCLUDE, INPUT=b/two.inp\n'
+	out = rewrite_includes(text, lambda raw: None if 'one' in raw else 'two.inp')
+	assert find_includes(out) == ['a/one.inp', 'two.inp']
+
+
+def test_rewrite_leaves_a_deck_without_includes_untouched():
 	text = '*Heading\n*Node\n'
-	flat, originals = flatten_includes(text)
-	assert flat == text and originals == []
+	assert rewrite_includes(text, lambda raw: 'x') == text

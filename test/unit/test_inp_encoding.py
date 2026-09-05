@@ -15,7 +15,7 @@ import codecs
 
 import pytest
 
-from ABQflow.core.strategies import read_inp_text, write_inp_text
+from ABQflow.core.inp_include import read_inp_text, write_inp_text
 
 _DECK = '*Heading\n** a comment\n*Step, name=S1\n*End Step\n'
 

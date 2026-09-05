@@ -35,7 +35,7 @@ def test_preflight_syntaxcheck_passes_for_valid_inp(tmp_path, abaqus_exe):
 		preparation=PreparationSpec(
 			kind="existing_inp",
 			source_path=SCENARIO_1_INP,
-			options={"staging_mode": "copy", "resolve_includes": True},
+			options={"resolve_includes": True},
 		),
 		preflight="syntaxcheck",
 		post_extraction=[
@@ -68,7 +68,7 @@ def test_preflight_syntaxcheck_fails_for_invalid_inp_and_blocks_solver(tmp_path,
 		preparation=PreparationSpec(
 			kind="existing_inp",
 			source_path=str(broken_inp_path),
-			options={"staging_mode": "copy", "resolve_includes": False},
+			options={"resolve_includes": False},
 		),
 		preflight="syntaxcheck",
 	)
@@ -101,7 +101,7 @@ def test_preflight_only_inspector_mode_stops_before_solver(tmp_path, abaqus_exe)
 		preparation=PreparationSpec(
 			kind="existing_inp",
 			source_path=SCENARIO_1_INP,
-			options={"staging_mode": "copy", "resolve_includes": True},
+			options={"resolve_includes": True},
 		),
 		preflight="syntaxcheck",
 	)

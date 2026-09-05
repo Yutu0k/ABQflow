@@ -7,55 +7,44 @@ three injected arguments at call time: :class:`~abaqus_batch_pack.context.JobCon
 
 from __future__ import annotations
 
-import codecs
 import json
 import logging
 import os
-import re
 from abc import ABC, abstractmethod
 from dataclasses import asdict
 from typing import List
 
 from .context import JobContext
 from .diagnostics import SolverResult
+from .inp_include import (
+	IncludeResolutionError,
+	ResolvedInp,
+	resolve_include_tree,
+	write_inp_text,
+)
 from .runner import AbaqusRunner, extract_json
 from .spec import HookSpec, SubroutineSpec
 from .status import JobStatus, JobStatusManager
 
-# Regex for {{placeholder}} in INP files (B8)
-_PLACEHOLDER_RE = re.compile(r"\{\{(\w+)\}\}")
 
+def _stage_resolved(resolution: ResolvedInp, ctx: JobContext,
+					logger: logging.Logger) -> bool:
+	"""Write a resolved tree into the job directory: includes first, then the root.
 
-def read_inp_text(path: str) -> str:
-	"""Read an INP file without depending on the machine's locale.
-
-	Python's text mode defaults to the system encoding — GBK on a Chinese
-	Windows, cp1252 elsewhere — so a plain ``open(path)`` raises on any deck
-	those codecs reject.  A UTF-8 byte-order mark is enough to trigger it,
-	which makes decks exported by many editors unreadable on exactly the
-	machines this package targets.
-
-	Decoding order: UTF-8 (BOM stripped if present), then latin-1, which
-	never fails and preserves the bytes.  Abaqus keywords are ASCII either
-	way, so the fallback only affects comments and free-text fields.
+	Order matters only for legibility of a failed run — if writing an include
+	fails, the root deck that references it was never created, so nothing
+	downstream can pick up a half-assembled job.
 	"""
-	with open(path, 'rb') as f:
-		raw = f.read()
-	if raw.startswith(codecs.BOM_UTF8):
-		raw = raw[len(codecs.BOM_UTF8):]
 	try:
-		return raw.decode('utf-8')
-	except UnicodeDecodeError:
-		return raw.decode('latin-1')
-
-
-def write_inp_text(path: str, content: str) -> None:
-	"""Write INP text as UTF-8, leaving line endings exactly as given."""
-	with open(path, 'w', encoding='utf-8', newline='') as f:
-		f.write(content)
-
-# Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting
-_INCLUDE_RE = re.compile(r'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)', re.IGNORECASE)
+		for filename, content in resolution.materialized.items():
+			write_inp_text(os.path.join(ctx.output_dir, filename), content)
+			logger.info(f"  Materialized parameterized include: {filename}")
+		write_inp_text(ctx.inp_path, resolution.root_text)
+	except OSError as e:
+		logger.error(f"Failed to write INP into job directory: {e}")
+		return False
+	logger.info(f"Successfully created INP file: {ctx.inp_path}")
+	return True
 
 
 # ======================== Preparation Strategies ========================
@@ -64,7 +53,7 @@ class PreparationStrategy(ABC):
 
 	Subclasses
 	----------
-	InpModifyStrategy
+	InpPreparationStrategy
 		Template-based INP generation (``{{placeholder}}`` substitution).
 	ModelGenerationStrategy
 		Run an external script that produces the INP (requires CAE kernel).
@@ -92,49 +81,187 @@ class PreparationStrategy(ABC):
 		...
 
 
-class InpModifyStrategy(PreparationStrategy):
-	"""Replace ``{{placeholder}}`` tokens in a base INP template file.
+class InpPreparationStrategy(PreparationStrategy):
+	"""Turn an INP file — template or finished deck — into a runnable job directory.
 
-	Performs coverage validation: if the INP references a placeholder that
-	is missing from *data_params*, preparation fails.  If *data_params*
-	contains keys that are not used in the INP, a warning is emitted.
+	One pipeline serves both use cases, because they are the same pipeline with
+	a different amount of work in the first step::
+
+		substitute  ->  validate  ->  stage
+
+	*substitute* walks the ``*INCLUDE`` tree once, replacing ``{{placeholder}}``
+	tokens and rewriting every directive (see :mod:`ABQflow.core.inp_include`
+	for the per-file rules).  With ``params`` empty there is simply nothing to
+	substitute, which is exactly the "pre-existing INP" case — it is not a
+	separate strategy, just this one with an empty parameter set.
+
+	*validate* checks the resolved tree, never the root alone: a modular deck
+	legitimately keeps its ``*STEP`` — or a ``{{placeholder}}`` — in an included
+	fragment, so a root-only check gives the wrong answer on exactly the decks
+	this class exists to support.
+
+	*stage* writes the result into the job directory.  Nothing is written until
+	validation passes, so a rejected deck leaves no half-built job behind.
 
 	Attributes
 	----------
-	base_inp_path : str
-		Path to the template INP file containing ``{{key}}`` placeholders.
-	data_params : dict
-		Mapping of placeholder names to substitution values.
+	source_path : str
+		Template or finished INP to prepare.
+	params : dict
+		``{{placeholder}}`` substitutions, applied across the whole tree.  Empty
+		or ``None`` means "this deck is already finished".
+	resolve_includes : bool
+		If ``True`` (default), walk and rewrite the ``*INCLUDE`` tree.  Set to
+		``False`` to leave the directives exactly as authored.
+	assert_finished : bool
+		If ``True``, a leftover placeholder is reported as "this is a template,
+		you meant to pass params" rather than as a missing parameter.  Set by
+		the ``existing_inp`` preset, whose whole point is that assertion.
+	include_staging : str
+		What to do with the *static* includes — the ones no parameter touches.
+		``'reference'`` (default and, today, the only implemented value) leaves
+		them where they are and points the deck at their absolute paths, so a
+		shared mesh is never copied.  See :meth:`_check_include_staging` for
+		why this axis is not the same thing as the old ``staging_mode``.
 	"""
 
-	def __init__(self, base_inp_path: str, data_params: dict):
-		self.base_inp_path = base_inp_path
-		self.data_params = data_params
+	#: Values ``include_staging`` may take today, and what each would mean.
+	# TODO
+	_STAGING_PLANNED = {
+		'reference': 'leave static includes in place, reference them by absolute path',
+		'copy': 'copy static includes into the job directory (not implemented yet)',
+	}
+
+	def __init__(
+		self,
+		source_path: str,
+		params: dict | None = None,
+		*,
+		resolve_includes: bool = True,
+		assert_finished: bool = False,
+		include_staging: str = 'reference',
+	):
+		self.source_path = source_path
+		self.params = params or {}
+		self.resolve_includes = resolve_includes
+		self.assert_finished = assert_finished
+		self.include_staging = include_staging
+
+	def _check_include_staging(self, logger: logging.Logger) -> bool:
+		"""Reject an ``include_staging`` value that is named but not built yet.
+
+		This axis replaces the old ``staging_mode``, which asked whether the
+		*job's deck* should be copied, linked or run in place.  That question
+		has no single answer any more: a parameterised file's content exists
+		nowhere on disk, so it *must* be written into the job directory, while
+		a static include is already "in place" and merely gets pointed at.  The
+		only remaining choice is what happens to the static ones.
+		"""
+		if self.include_staging == 'reference':
+			return True
+		if self.include_staging in self._STAGING_PLANNED:
+			logger.error(
+				f"include_staging='{self.include_staging}' is planned but not implemented "
+				f"({self._STAGING_PLANNED[self.include_staging]}). Use 'reference'.")
+		else:
+			logger.error(
+				f"Unknown include_staging: '{self.include_staging}'. "
+				f"Known values: {sorted(self._STAGING_PLANNED)}.")
+		return False
 
 	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
 				logger: logging.Logger) -> bool:
-		logger.info(f"Sub strategy [InpModify]: Based on INP file '{self.base_inp_path}'")
-		try:
-			content = read_inp_text(self.base_inp_path)
-		except Exception as e:
-			logger.error(f"Sub strategy [InpModify] failed reading INP: {e}")
+		kind = 'ExistingInp' if self.assert_finished else 'InpModify'
+		logger.info(f"Sub strategy [{kind}]: Based on INP file '{self.source_path}'")
+
+		if not self.source_path:
+			# Left empty for a generator that never ran, or simply forgotten.
+			# Naming both exits beats "file '' not found".
+			logger.error(
+				"PreparationSpec.source_path is empty. Either set it, or build the "
+				"specs with generate_from_inp_files(), which fills it in per file.")
+			return False
+		if not os.path.isfile(self.source_path):
+			logger.error(f"Source INP not found: {self.source_path}")
+			return False
+		if not self._check_include_staging(logger):
 			return False
 
-		# B8: detect missing/unused placeholders
-		found = set(_PLACEHOLDER_RE.findall(content))
-		given = set(map(str, self.data_params.keys()))
+		# ---- substitute ----
+		try:
+			resolution = resolve_include_tree(
+				self.source_path,
+				self.params,
+				reserved_names=(os.path.basename(ctx.inp_path),),
+				follow_includes=self.resolve_includes,
+				logger=logger,
+			)
+		except IncludeResolutionError as e:
+			logger.error(f"Failed to resolve INCLUDE tree: {e}")
+			return False
+		except Exception as e:
+			logger.error(f"Failed to read source INP: {e}")
+			return False
+
+		# ---- validate ----
+		if not self._validate(resolution, logger):
+			return False
+
+		# ---- stage ----
+		return _stage_resolved(resolution, ctx, logger)
+
+	def _validate(self, resolution: ResolvedInp, logger: logging.Logger) -> bool:
+		"""Check the resolved tree; log the reason and return ``False`` on failure."""
+		# A deck with no *STEP anywhere cannot solve. Checked for templates too:
+		# it turns an opaque solver error into a clear preparation error, and a
+		# template that produces an unsolvable deck is broken either way.
+		if not resolution.has_step:
+			logger.error("INP contains no *STEP — not a valid Abaqus input file")
+			return False
+
+		# B8: placeholder coverage, across the tree rather than the root.
+		found = set(resolution.placeholders)
+		given = set(map(str, self.params.keys()))
 		if missing := found - given:
-			logger.error(f"INP placeholders missing parameters: {missing}")
+			if self.assert_finished:
+				logger.error(
+					"INP contains {{placeholder}} markers — this looks like a template, "
+					"not a finished INP. Use kind='inp_based' with params instead. "
+					f"Unresolved: {sorted(missing)}")
+			else:
+				logger.error(f"INP placeholders missing parameters: {missing}")
 			return False
 		if unused := given - found:
 			logger.warning(f"Parameters not used in INP: {unused}")
-
-		content = _PLACEHOLDER_RE.sub(
-			lambda m: str(self.data_params[m.group(1)]), content)
-
-		write_inp_text(ctx.inp_path, content)
-		logger.info(f"Successfully created INP file: {ctx.inp_path}")
 		return True
+
+
+class InpModifyStrategy(InpPreparationStrategy):
+	"""Preset of :class:`InpPreparationStrategy` that substitutes parameters.
+
+	Backs ``kind='inp_based'``.  Kept as its own name because the two presets
+	state different intents at the call site — this one says "this deck is a
+	template".
+
+	Attributes
+	----------
+	source_path : str
+		Template INP containing ``{{key}}`` placeholders.
+	params : dict
+		Mapping of placeholder names to substitution values.
+	"""
+
+	def __init__(
+		self,
+		source_path: str,
+		params: dict,
+		resolve_includes: bool = True,
+		include_staging: str = 'reference'
+	):
+		super().__init__(source_path, params,
+						resolve_includes=resolve_includes,
+						assert_finished=False,
+						include_staging=include_staging)
 
 
 class ModelGenerationStrategy(PreparationStrategy):
@@ -159,6 +286,9 @@ class ModelGenerationStrategy(PreparationStrategy):
 	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
 				logger: logging.Logger) -> bool:
 		logger.info(f"Sub Strategy [ModelGeneration]: Run script '{self.model_script_path}'")
+		if not self.model_script_path:
+			logger.error("PreparationSpec.source_path is empty — nothing to run.")
+			return False
 		# Model generation needs CAE kernel (mdb) → needs_cae_kernel=True (B6 fix)
 		cmd = runner._base_command(self.model_script_path, needs_cae_kernel=True)
 		for key, value in self.script_params.items():
@@ -176,105 +306,37 @@ class ModelGenerationStrategy(PreparationStrategy):
 		return os.path.exists(ctx.inp_path)
 
 
-class ExistingInpStrategy(PreparationStrategy):
-	"""Use a pre-existing INP file directly — no generation or modification.
+class ExistingInpStrategy(InpPreparationStrategy):
+	"""Preset of :class:`InpPreparationStrategy` that asserts the deck is finished.
 
-	This strategy satisfies the preparation contract ("ensure an INP at
-	``ctx.inp_path``") by copying an already-complete INP file.  It is the
-	entry point for the UC-03 "pre-existing INP batch" use case.
-
-	Key features beyond a plain file copy:
-
-	* **INCLUDE resolution**: scans for ``*INCLUDE, INPUT=...`` lines and
-	  rewrites relative paths to absolute paths so Abaqus can find referenced
-	  files regardless of the working directory.
-	* **Template detection**: rejects INPs that still contain ``{{...}}``
-	  placeholders, steering the user toward ``kind='inp_based'`` instead.
-	* **STEP presence check**: confirms the file contains at least one
-	  ``*STEP`` keyword.
+	Backs ``kind='existing_inp'``, the UC-03 "pre-existing INP batch" case.
+	Mechanically it is the parent with an empty parameter set; what it adds is
+	an *assertion*: a ``{{placeholder}}`` anywhere in the tree is reported as
+	"you handed a template to a batch of finished decks", which is the mistake
+	actually being made, rather than as a missing parameter.
 
 	Attributes
 	----------
-	source_inp_path : str
+	source_path : str
 		Absolute or relative path to the existing INP file.
-	staging_mode : str
-		``'copy'`` (default) — copy the INP (with resolved paths) to output_dir.
 	resolve_includes : bool
 		If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use
-		absolute paths resolved against the source INP's directory.
+		absolute paths resolved against the referencing file's directory.
+	include_staging : str
+		See :class:`InpPreparationStrategy`.  Replaces the old ``staging_mode``,
+		which asked a per-job question that no longer has one answer.
 	"""
 
 	def __init__(
 		self,
-		source_inp_path: str,
-		staging_mode: str = 'copy',
+		source_path: str,
 		resolve_includes: bool = True,
+		include_staging: str = 'reference',
 	):
-		self.source_inp_path = source_inp_path
-		self.staging_mode = staging_mode
-		self.resolve_includes = resolve_includes
-
-	def prepare(self, ctx: JobContext, runner: AbaqusRunner,
-				logger: logging.Logger) -> bool:
-		logger.info(f"Sub strategy [ExistingInp]: Using pre-existing INP '{self.source_inp_path}'")
-
-		# 1. Existence & readability check
-		if not os.path.isfile(self.source_inp_path):
-			logger.error(f"Source INP not found: {self.source_inp_path}")
-			return False
-
-		# 2. Read content
-		try:
-			content = read_inp_text(self.source_inp_path)
-		except Exception as e:
-			logger.error(f"Failed to read source INP: {e}")
-			return False
-
-		# 3. Lightweight content checks
-		if not re.search(r'^\*STEP', content, re.MULTILINE | re.IGNORECASE):
-			logger.error("INP contains no *STEP — not a valid Abaqus input file")
-			return False
-
-		if _PLACEHOLDER_RE.search(content):
-			logger.error(
-				"INP contains {{placeholder}} markers — this looks like a template, "
-				"not a finished INP. Use kind='inp_based' with params instead."
-			)
-			return False
-
-		# 4. Resolve *INCLUDE paths to absolute paths
-		# TODO: 目前还是要求两个INP之间的相对路径是准确的, 而不是直接使用source_inp_path做替换
-		if self.resolve_includes:
-			source_dir = os.path.dirname(os.path.abspath(self.source_inp_path))
-
-			def _resolve_include(m: re.Match) -> str:
-				prefix, rel_path = m.group(1), m.group(2)
-				abs_path = os.path.normpath(os.path.join(source_dir, rel_path))
-				if not os.path.isfile(abs_path):
-					raise FileNotFoundError(abs_path)
-				logger.info(f"  Resolved INCLUDE: {rel_path} -> {abs_path}")
-				return f"{prefix}{abs_path}"
-
-			try:
-				content = _INCLUDE_RE.sub(_resolve_include, content)
-			except FileNotFoundError as e:
-				logger.error(f"INCLUDE file not found: {e}")
-				return False
-
-		# 5. Write the (possibly rewritten) INP to ctx.inp_path
-		if self.staging_mode == 'copy':
-			try:
-				write_inp_text(ctx.inp_path, content)
-				logger.info(f"Wrote INP to {ctx.inp_path}")
-			except Exception as e:
-				logger.error(f"Failed to write INP: {e}")
-				return False
-		else:
-			# ponytail: link/in_place deferred (S5), copy covers all MVP needs
-			logger.error(f"Unsupported staging_mode: '{self.staging_mode}'. Only 'copy' is implemented.")
-			return False
-
-		return True
+		super().__init__(source_path, None,
+						resolve_includes=resolve_includes,
+						assert_finished=True,
+						include_staging=include_staging)
 
 
 # ======================== Compile Strategies ========================
@@ -499,6 +561,12 @@ class ModelPropertiesExtractionStrategy(ExtractionStrategy):
 				logger: logging.Logger) -> dict:
 		logger.info("Sub strategy [ModelPropsExtract]: Start extracting from INP...")
 
+		# Deliberately a *local* check, unlike OdbExtractionStrategy's
+		# runner.artifact_exists: the INP is produced here by preparation, so
+		# the local copy is the source of truth and "did preparation run?" is
+		# the question worth asking.  Asking the executing machine instead
+		# would be wrong in the other direction — at this point the deck has
+		# not been uploaded yet; run_hook stages it just before the hook runs.
 		if not os.path.exists(ctx.inp_path):
 			logger.error(f"INP file does not exist: {ctx.inp_path}")
 			all_results = {}
