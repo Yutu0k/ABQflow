@@ -199,20 +199,21 @@ Old::
 
    jobs = [{'job_name': 'x', 'type': 'inp_based', 'base_inp_path': '...', 'params': {...}}]
 
-New (compatible — ``from_dict`` bridge)::
-
-   spec = JobSpec.from_dict({'job_name': 'x', 'type': 'inp_based', 'base_inp_path': '...', 'params': {...}})
-
-New (native)::
+New::
 
    spec = JobSpec(job_name='x', preparation=PreparationSpec(kind='inp_based', source_path='...', params={...}))
+
+The ``JobSpec.from_dict`` bridge that accepted the old shape has been removed;
+``batch_data`` now rejects anything that is not a :class:`JobSpec`.
 
 **Batch result format:**
 
 Old: ``run_batch()`` returned ``list[dict]`` or ``dict[str, dict]``.
-New: returns ``list[JobOutcome]``.  Use
-:func:`~ABQflow.outcomes_to_list` or
-:func:`~ABQflow.outcomes_to_dict` for the old format.
+New: returns ``list[JobOutcome]``.  The ``outcomes_to_list`` /
+``outcomes_to_dict`` converters have been removed — a :class:`JobOutcome`
+already exposes ``job_name``, ``status``, ``results``, ``error`` and
+``diagnostics``, so iterate the list directly, or build
+``{oc.job_name: oc for oc in outcomes}`` when you need it keyed.
 
 **Strategy signatures:**
 

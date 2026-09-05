@@ -255,7 +255,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
@@ -325,21 +324,61 @@
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
 <span class="sd">	kind : str</span>
-<span class="sd">		Preparation strategy identifier.  Currently ``'inp_based'``, ``'existing_inp'``, or</span>
-<span class="sd">		``'model_generation'``.</span>
+<span class="sd">		Preparation strategy identifier: ``'inp_based'``, ``'existing_inp'``,</span>
+<span class="sd">		or ``'model_generation'``.</span>
+
+<span class="sd">		The first two are one implementation</span>
+<span class="sd">		(:class:`~ABQflow.core.strategies.InpPreparationStrategy`) under two</span>
+<span class="sd">		names, because "fill in a template" and "use a finished deck" are the</span>
+<span class="sd">		same pipeline with a different amount of work in its first step.  What</span>
+<span class="sd">		separates them is **what varies across the batch**, and therefore which</span>
+<span class="sd">		generator you pair the spec with:</span>
+
+<span class="sd">		- ``'inp_based'`` — one template, N parameter sets.  Pair with</span>
+<span class="sd">		  :func:`~ABQflow.helpers.convert.generate_from_array`, or set</span>
+<span class="sd">		  ``params`` yourself.</span>
+<span class="sd">		- ``'existing_inp'`` — N already-written decks.  Pair with</span>
+<span class="sd">		  :func:`~ABQflow.helpers.convert.generate_from_inp_files`, which fills</span>
+<span class="sd">		  ``kind`` and ``source_path`` in for you.  Uses no ``params``, and</span>
+<span class="sd">		  reports a leftover ``{{placeholder}}`` as "you handed a template to a</span>
+<span class="sd">		  batch of finished decks" rather than as a missing parameter.</span>
+
 <span class="sd">	source_path : str</span>
-<span class="sd">		Path to the base INP file (for ``inp_based``) or model-generation</span>
-<span class="sd">		script (for ``model_generation``).</span>
+<span class="sd">		Path to the template or finished INP (for ``inp_based`` /</span>
+<span class="sd">		``existing_inp``) or the model-generation script (for</span>
+<span class="sd">		``model_generation``).</span>
+
+<span class="sd">		**Optional when a generator supplies it.**</span>
+<span class="sd">		:func:`~ABQflow.helpers.convert.generate_from_inp_files` fills it in</span>
+<span class="sd">		per file, so a base spec headed for that generator should leave it</span>
+<span class="sd">		empty rather than naming an unrelated INP — the same way a base spec</span>
+<span class="sd">		headed for :func:`~ABQflow.helpers.convert.generate_from_array` leaves</span>
+<span class="sd">		``params`` empty.  Setting it anyway is not silently accepted: the</span>
+<span class="sd">		generator warns that your value is being discarded.  A spec that</span>
+<span class="sd">		reaches preparation with it still empty fails with a message naming</span>
+<span class="sd">		both ways to fix it.</span>
 <span class="sd">	params : dict</span>
-<span class="sd">		Key-value parameters forwarded to the preparation strategy (e.g.</span>
-<span class="sd">		placeholder replacements for ``inp_based``).</span>
+<span class="sd">		Key-value parameters forwarded to the preparation strategy:</span>
+<span class="sd">		``{{placeholder}}`` replacements for ``inp_based``, CLI arguments for</span>
+<span class="sd">		``model_generation``.  Not used by ``existing_inp``.  Left empty when</span>
+<span class="sd">		:func:`~ABQflow.helpers.convert.generate_from_array` supplies it.</span>
 <span class="sd">	options : dict</span>
-<span class="sd">		Additional options for the preparation strategy (Currently only used by ``existing_inp``):</span>
-<span class="sd">		- 'staging_mode' (str): ``'copy'`` (default) </span>
-<span class="sd">		- 'resolve_includes' (bool): Whether to resolve ``*INCLUDE`` directives in the INP file (default: True).</span>
+<span class="sd">		Additional options.  **Unknown keys raise** rather than being ignored,</span>
+<span class="sd">		so a typo or an option borrowed from another kind fails loudly.</span>
+
+<span class="sd">		- ``'resolve_includes'`` (bool, default ``True``): whether to walk and</span>
+<span class="sd">		  rewrite the ``*INCLUDE`` tree.  Understood by ``inp_based`` and</span>
+<span class="sd">		  ``existing_inp``; see :mod:`ABQflow.core.inp_include` for what the</span>
+<span class="sd">		  walk does with parameterized versus static includes.</span>
+<span class="sd">		- ``'include_staging'`` (str, default ``'reference'``): what to do with</span>
+<span class="sd">		  the *static* includes.  ``'reference'`` leaves them in place and</span>
+<span class="sd">		  points the deck at their absolute paths, so a shared mesh is never</span>
+<span class="sd">		  copied.  Parameterized includes have no such choice — their content</span>
+<span class="sd">		  exists nowhere on disk, so they are always written into the job</span>
+<span class="sd">		  directory.</span>
 <span class="sd">	"""</span>
 	<span class="n">kind</span><span class="p">:</span> <span class="nb">str</span>
-	<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span>
+	<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">''</span>
 	<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 	<span class="n">options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
 
@@ -427,50 +466,7 @@
 			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
 				<span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">] kind='existing_inp' does not use params — "</span>
 				<span class="sa">f</span><span class="s2">"params will be ignored. If you need template substitution, use kind='inp_based'."</span>
-			<span class="p">)</span>
-
-<div class="viewcode-block" id="JobSpec.from_dict">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.JobSpec.from_dict">[docs]</a>
-	<span class="nd">@classmethod</span>
-	<span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobSpec</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">"""Migration bridge: construct a :class:`JobSpec` from a legacy dict.</span>
-
-<span class="sd">		Deep-copies the input dict so the returned spec owns all of its</span>
-<span class="sd">		mutable data (no shared references with the caller).</span>
-
-<span class="sd">		Parameters</span>
-<span class="sd">		----------</span>
-<span class="sd">		d : dict</span>
-<span class="sd">			Legacy configuration dict.  Recognised keys:</span>
-<span class="sd">			``job_name``, ``workflow``, ``type``, ``base_inp_path``,</span>
-<span class="sd">			``model_script_path``, ``script_path``, ``params``,</span>
-<span class="sd">			``pre_extraction``, ``post_extraction``.</span>
-
-<span class="sd">		Returns</span>
-<span class="sd">		-------</span>
-<span class="sd">		JobSpec</span>
-<span class="sd">			Fully validated spec.</span>
-<span class="sd">		"""</span>
-		<span class="n">d</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-		<span class="n">workflow</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'workflow'</span><span class="p">,</span> <span class="s1">'modular'</span><span class="p">)</span>
-
-		<span class="n">prep</span> <span class="o">=</span> <span class="kc">None</span>
-		<span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'modular'</span><span class="p">:</span>
-			<span class="n">prep</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
-				<span class="n">kind</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'type'</span><span class="p">,</span> <span class="s1">'inp_based'</span><span class="p">),</span>
-				<span class="n">source_path</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'base_inp_path'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'model_script_path'</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">,</span>
-				<span class="n">params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span> <span class="p">{})))</span>
-
-		<span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
-			<span class="n">job_name</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">'job_name'</span><span class="p">],</span>
-			<span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
-			<span class="n">preparation</span><span class="o">=</span><span class="n">prep</span><span class="p">,</span>
-			<span class="n">monolithic_script</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'script_path'</span><span class="p">)</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-			<span class="n">monolithic_params</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'params'</span><span class="p">,</span> <span class="p">{}))</span> <span class="k">if</span> <span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span> <span class="k">else</span> <span class="p">{},</span>
-			<span class="n">pre_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'pre_extraction'</span><span class="p">,</span> <span class="p">[])],</span>
-			<span class="n">post_extraction</span><span class="o">=</span><span class="p">[</span><span class="n">HookSpec</span><span class="p">(</span><span class="o">**</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'post_extraction'</span><span class="p">,</span> <span class="p">[])],</span>
-		<span class="p">)</span></div>
-</div>
+			<span class="p">)</span></div>
 
 </pre></div>
         </article>

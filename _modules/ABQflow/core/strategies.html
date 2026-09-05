@@ -256,61 +256,44 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">codecs</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverResult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.inp_include</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+	<span class="n">IncludeResolutionError</span><span class="p">,</span>
+	<span class="n">ResolvedInp</span><span class="p">,</span>
+	<span class="n">resolve_include_tree</span><span class="p">,</span>
+	<span class="n">write_inp_text</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbaqusRunner</span><span class="p">,</span> <span class="n">extract_json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">HookSpec</span><span class="p">,</span> <span class="n">SubroutineSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.status</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">JobStatusManager</span>
 
-<span class="c1"># Regex for {{placeholder}} in INP files (B8)</span>
-<span class="n">_PLACEHOLDER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\{\{(\w+)\}\}"</span><span class="p">)</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_stage_resolved</span><span class="p">(</span><span class="n">resolution</span><span class="p">:</span> <span class="n">ResolvedInp</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span>
+					<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Write a resolved tree into the job directory: includes first, then the root.</span>
 
-<div class="viewcode-block" id="read_inp_text">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.read_inp_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">read_inp_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">"""Read an INP file without depending on the machine's locale.</span>
-
-<span class="sd">	Python's text mode defaults to the system encoding — GBK on a Chinese</span>
-<span class="sd">	Windows, cp1252 elsewhere — so a plain ``open(path)`` raises on any deck</span>
-<span class="sd">	those codecs reject.  A UTF-8 byte-order mark is enough to trigger it,</span>
-<span class="sd">	which makes decks exported by many editors unreadable on exactly the</span>
-<span class="sd">	machines this package targets.</span>
-
-<span class="sd">	Decoding order: UTF-8 (BOM stripped if present), then latin-1, which</span>
-<span class="sd">	never fails and preserves the bytes.  Abaqus keywords are ASCII either</span>
-<span class="sd">	way, so the fallback only affects comments and free-text fields.</span>
+<span class="sd">	Order matters only for legibility of a failed run — if writing an include</span>
+<span class="sd">	fails, the root deck that references it was never created, so nothing</span>
+<span class="sd">	downstream can pick up a half-assembled job.</span>
 <span class="sd">	"""</span>
-	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-		<span class="n">raw</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-	<span class="k">if</span> <span class="n">raw</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">codecs</span><span class="o">.</span><span class="n">BOM_UTF8</span><span class="p">):</span>
-		<span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">codecs</span><span class="o">.</span><span class="n">BOM_UTF8</span><span class="p">):]</span>
 	<span class="k">try</span><span class="p">:</span>
-		<span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)</span>
-	<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
-		<span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'latin-1'</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="write_inp_text">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.write_inp_text">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_inp_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">"""Write INP text as UTF-8, leaving line endings exactly as given."""</span>
-	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-		<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span></div>
-
-
-<span class="c1"># Regex for *INCLUDE, INPUT=... lines — captures prefix + filename for rewriting</span>
-<span class="n">_INCLUDE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'(\*INCLUDE\s*,\s*INPUT\s*=\s*)(\S+)'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">content</span> <span class="ow">in</span> <span class="n">resolution</span><span class="o">.</span><span class="n">materialized</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">write_inp_text</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">content</span><span class="p">)</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Materialized parameterized include: </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+		<span class="n">write_inp_text</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">resolution</span><span class="o">.</span><span class="n">root_text</span><span class="p">)</span>
+	<span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to write INP into job directory: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">False</span>
+	<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully created INP file: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+	<span class="k">return</span> <span class="kc">True</span>
 
 
 <span class="c1"># ======================== Preparation Strategies ========================</span>
@@ -321,7 +304,7 @@
 
 <span class="sd">	Subclasses</span>
 <span class="sd">	----------</span>
-<span class="sd">	InpModifyStrategy</span>
+<span class="sd">	InpPreparationStrategy</span>
 <span class="sd">		Template-based INP generation (``{{placeholder}}`` substitution).</span>
 <span class="sd">	ModelGenerationStrategy</span>
 <span class="sd">		Run an external script that produces the INP (requires CAE kernel).</span>
@@ -353,54 +336,195 @@
 
 
 
-<div class="viewcode-block" id="InpModifyStrategy">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">"""Replace ``{{placeholder}}`` tokens in a base INP template file.</span>
+<div class="viewcode-block" id="InpPreparationStrategy">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpPreparationStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InpPreparationStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">"""Turn an INP file — template or finished deck — into a runnable job directory.</span>
 
-<span class="sd">	Performs coverage validation: if the INP references a placeholder that</span>
-<span class="sd">	is missing from *data_params*, preparation fails.  If *data_params*</span>
-<span class="sd">	contains keys that are not used in the INP, a warning is emitted.</span>
+<span class="sd">	One pipeline serves both use cases, because they are the same pipeline with</span>
+<span class="sd">	a different amount of work in the first step::</span>
+
+<span class="sd">		substitute  -&gt;  validate  -&gt;  stage</span>
+
+<span class="sd">	*substitute* walks the ``*INCLUDE`` tree once, replacing ``{{placeholder}}``</span>
+<span class="sd">	tokens and rewriting every directive (see :mod:`ABQflow.core.inp_include`</span>
+<span class="sd">	for the per-file rules).  With ``params`` empty there is simply nothing to</span>
+<span class="sd">	substitute, which is exactly the "pre-existing INP" case — it is not a</span>
+<span class="sd">	separate strategy, just this one with an empty parameter set.</span>
+
+<span class="sd">	*validate* checks the resolved tree, never the root alone: a modular deck</span>
+<span class="sd">	legitimately keeps its ``*STEP`` — or a ``{{placeholder}}`` — in an included</span>
+<span class="sd">	fragment, so a root-only check gives the wrong answer on exactly the decks</span>
+<span class="sd">	this class exists to support.</span>
+
+<span class="sd">	*stage* writes the result into the job directory.  Nothing is written until</span>
+<span class="sd">	validation passes, so a rejected deck leaves no half-built job behind.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	base_inp_path : str</span>
-<span class="sd">		Path to the template INP file containing ``{{key}}`` placeholders.</span>
-<span class="sd">	data_params : dict</span>
-<span class="sd">		Mapping of placeholder names to substitution values.</span>
+<span class="sd">	source_path : str</span>
+<span class="sd">		Template or finished INP to prepare.</span>
+<span class="sd">	params : dict</span>
+<span class="sd">		``{{placeholder}}`` substitutions, applied across the whole tree.  Empty</span>
+<span class="sd">		or ``None`` means "this deck is already finished".</span>
+<span class="sd">	resolve_includes : bool</span>
+<span class="sd">		If ``True`` (default), walk and rewrite the ``*INCLUDE`` tree.  Set to</span>
+<span class="sd">		``False`` to leave the directives exactly as authored.</span>
+<span class="sd">	assert_finished : bool</span>
+<span class="sd">		If ``True``, a leftover placeholder is reported as "this is a template,</span>
+<span class="sd">		you meant to pass params" rather than as a missing parameter.  Set by</span>
+<span class="sd">		the ``existing_inp`` preset, whose whole point is that assertion.</span>
+<span class="sd">	include_staging : str</span>
+<span class="sd">		What to do with the *static* includes — the ones no parameter touches.</span>
+<span class="sd">		``'reference'`` (default and, today, the only implemented value) leaves</span>
+<span class="sd">		them where they are and points the deck at their absolute paths, so a</span>
+<span class="sd">		shared mesh is never copied.  See :meth:`_check_include_staging` for</span>
+<span class="sd">		why this axis is not the same thing as the old ``staging_mode``.</span>
 <span class="sd">	"""</span>
 
-	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_inp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span> <span class="o">=</span> <span class="n">base_inp_path</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">data_params</span> <span class="o">=</span> <span class="n">data_params</span>
+	<span class="c1">#: Values ``include_staging`` may take today, and what each would mean.</span>
+	<span class="c1"># TODO</span>
+	<span class="n">_STAGING_PLANNED</span> <span class="o">=</span> <span class="p">{</span>
+		<span class="s1">'reference'</span><span class="p">:</span> <span class="s1">'leave static includes in place, reference them by absolute path'</span><span class="p">,</span>
+		<span class="s1">'copy'</span><span class="p">:</span> <span class="s1">'copy static includes into the job directory (not implemented yet)'</span><span class="p">,</span>
+	<span class="p">}</span>
 
-<div class="viewcode-block" id="InpModifyStrategy.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy.prepare">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+		<span class="bp">self</span><span class="p">,</span>
+		<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+		<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+		<span class="o">*</span><span class="p">,</span>
+		<span class="n">resolve_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+		<span class="n">assert_finished</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+		<span class="n">include_staging</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'reference'</span><span class="p">,</span>
+	<span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">source_path</span> <span class="o">=</span> <span class="n">source_path</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="ow">or</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">resolve_includes</span> <span class="o">=</span> <span class="n">resolve_includes</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">assert_finished</span> <span class="o">=</span> <span class="n">assert_finished</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span> <span class="o">=</span> <span class="n">include_staging</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_check_include_staging</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Reject an ``include_staging`` value that is named but not built yet.</span>
+
+<span class="sd">		This axis replaces the old ``staging_mode``, which asked whether the</span>
+<span class="sd">		*job's deck* should be copied, linked or run in place.  That question</span>
+<span class="sd">		has no single answer any more: a parameterised file's content exists</span>
+<span class="sd">		nowhere on disk, so it *must* be written into the job directory, while</span>
+<span class="sd">		a static include is already "in place" and merely gets pointed at.  The</span>
+<span class="sd">		only remaining choice is what happens to the static ones.</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span> <span class="o">==</span> <span class="s1">'reference'</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">True</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_STAGING_PLANNED</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">"include_staging='</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span><span class="si">}</span><span class="s2">' is planned but not implemented "</span>
+				<span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_STAGING_PLANNED</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span><span class="p">]</span><span class="si">}</span><span class="s2">). Use 'reference'."</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+				<span class="sa">f</span><span class="s2">"Unknown include_staging: '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">include_staging</span><span class="si">}</span><span class="s2">'. "</span>
+				<span class="sa">f</span><span class="s2">"Known values: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_STAGING_PLANNED</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="InpPreparationStrategy.prepare">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpPreparationStrategy.prepare">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [InpModify]: Based on INP file '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
-		<span class="k">try</span><span class="p">:</span>
-			<span class="n">content</span> <span class="o">=</span> <span class="n">read_inp_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_inp_path</span><span class="p">)</span>
-		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [InpModify] failed reading INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+		<span class="n">kind</span> <span class="o">=</span> <span class="s1">'ExistingInp'</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assert_finished</span> <span class="k">else</span> <span class="s1">'InpModify'</span>
+		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">]: Based on INP file '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_path</span><span class="p">:</span>
+			<span class="c1"># Left empty for a generator that never ran, or simply forgotten.</span>
+			<span class="c1"># Naming both exits beats "file '' not found".</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+				<span class="s2">"PreparationSpec.source_path is empty. Either set it, or build the "</span>
+				<span class="s2">"specs with generate_from_inp_files(), which fills it in per file."</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_path</span><span class="p">):</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source INP not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_include_staging</span><span class="p">(</span><span class="n">logger</span><span class="p">):</span>
 			<span class="k">return</span> <span class="kc">False</span>
 
-		<span class="c1"># B8: detect missing/unused placeholders</span>
-		<span class="n">found</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">content</span><span class="p">))</span>
-		<span class="n">given</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+		<span class="c1"># ---- substitute ----</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">resolution</span> <span class="o">=</span> <span class="n">resolve_include_tree</span><span class="p">(</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+				<span class="n">reserved_names</span><span class="o">=</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">),),</span>
+				<span class="n">follow_includes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve_includes</span><span class="p">,</span>
+				<span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
+			<span class="p">)</span>
+		<span class="k">except</span> <span class="n">IncludeResolutionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to resolve INCLUDE tree: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to read source INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+
+		<span class="c1"># ---- validate ----</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+			<span class="k">return</span> <span class="kc">False</span>
+
+		<span class="c1"># ---- stage ----</span>
+		<span class="k">return</span> <span class="n">_stage_resolved</span><span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">logger</span><span class="p">)</span></div>
+
+
+	<span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolution</span><span class="p">:</span> <span class="n">ResolvedInp</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Check the resolved tree; log the reason and return ``False`` on failure."""</span>
+		<span class="c1"># A deck with no *STEP anywhere cannot solve. Checked for templates too:</span>
+		<span class="c1"># it turns an opaque solver error into a clear preparation error, and a</span>
+		<span class="c1"># template that produces an unsolvable deck is broken either way.</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">resolution</span><span class="o">.</span><span class="n">has_step</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"INP contains no *STEP — not a valid Abaqus input file"</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
+
+		<span class="c1"># B8: placeholder coverage, across the tree rather than the root.</span>
+		<span class="n">found</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">placeholders</span><span class="p">)</span>
+		<span class="n">given</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 		<span class="k">if</span> <span class="n">missing</span> <span class="o">:=</span> <span class="n">found</span> <span class="o">-</span> <span class="n">given</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INP placeholders missing parameters: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assert_finished</span><span class="p">:</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+					<span class="s2">"INP contains {{placeholder}} markers — this looks like a template, "</span>
+					<span class="s2">"not a finished INP. Use kind='inp_based' with params instead. "</span>
+					<span class="sa">f</span><span class="s2">"Unresolved: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INP placeholders missing parameters: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 			<span class="k">return</span> <span class="kc">False</span>
 		<span class="k">if</span> <span class="n">unused</span> <span class="o">:=</span> <span class="n">given</span> <span class="o">-</span> <span class="n">found</span><span class="p">:</span>
 			<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Parameters not used in INP: </span><span class="si">{</span><span class="n">unused</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-		<span class="n">content</span> <span class="o">=</span> <span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
-			<span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_params</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)]),</span> <span class="n">content</span><span class="p">)</span>
-
-		<span class="n">write_inp_text</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully created INP file: </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 		<span class="k">return</span> <span class="kc">True</span></div>
-</div>
+
+
+
+<div class="viewcode-block" id="InpModifyStrategy">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.InpModifyStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InpModifyStrategy</span><span class="p">(</span><span class="n">InpPreparationStrategy</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">"""Preset of :class:`InpPreparationStrategy` that substitutes parameters.</span>
+
+<span class="sd">	Backs ``kind='inp_based'``.  Kept as its own name because the two presets</span>
+<span class="sd">	state different intents at the call site — this one says "this deck is a</span>
+<span class="sd">	template".</span>
+
+<span class="sd">	Attributes</span>
+<span class="sd">	----------</span>
+<span class="sd">	source_path : str</span>
+<span class="sd">		Template INP containing ``{{key}}`` placeholders.</span>
+<span class="sd">	params : dict</span>
+<span class="sd">		Mapping of placeholder names to substitution values.</span>
+<span class="sd">	"""</span>
+
+	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+		<span class="bp">self</span><span class="p">,</span>
+		<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+		<span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+		<span class="n">resolve_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+		<span class="n">include_staging</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'reference'</span>
+	<span class="p">):</span>
+		<span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span>
+						<span class="n">resolve_includes</span><span class="o">=</span><span class="n">resolve_includes</span><span class="p">,</span>
+						<span class="n">assert_finished</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+						<span class="n">include_staging</span><span class="o">=</span><span class="n">include_staging</span><span class="p">)</span></div>
 
 
 
@@ -430,6 +554,9 @@
 	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
 				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub Strategy [ModelGeneration]: Run script '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">:</span>
+			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"PreparationSpec.source_path is empty — nothing to run."</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">False</span>
 		<span class="c1"># Model generation needs CAE kernel (mdb) → needs_cae_kernel=True (B6 fix)</span>
 		<span class="n">cmd</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">_base_command</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_script_path</span><span class="p">,</span> <span class="n">needs_cae_kernel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 		<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -451,108 +578,37 @@
 
 <div class="viewcode-block" id="ExistingInpStrategy">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExistingInpStrategy">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ExistingInpStrategy</span><span class="p">(</span><span class="n">PreparationStrategy</span><span class="p">):</span>
-<span class="w">	</span><span class="sd">"""Use a pre-existing INP file directly — no generation or modification.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExistingInpStrategy</span><span class="p">(</span><span class="n">InpPreparationStrategy</span><span class="p">):</span>
+<span class="w">	</span><span class="sd">"""Preset of :class:`InpPreparationStrategy` that asserts the deck is finished.</span>
 
-<span class="sd">	This strategy satisfies the preparation contract ("ensure an INP at</span>
-<span class="sd">	``ctx.inp_path``") by copying an already-complete INP file.  It is the</span>
-<span class="sd">	entry point for the UC-03 "pre-existing INP batch" use case.</span>
-
-<span class="sd">	Key features beyond a plain file copy:</span>
-
-<span class="sd">	* **INCLUDE resolution**: scans for ``*INCLUDE, INPUT=...`` lines and</span>
-<span class="sd">	  rewrites relative paths to absolute paths so Abaqus can find referenced</span>
-<span class="sd">	  files regardless of the working directory.</span>
-<span class="sd">	* **Template detection**: rejects INPs that still contain ``{{...}}``</span>
-<span class="sd">	  placeholders, steering the user toward ``kind='inp_based'`` instead.</span>
-<span class="sd">	* **STEP presence check**: confirms the file contains at least one</span>
-<span class="sd">	  ``*STEP`` keyword.</span>
+<span class="sd">	Backs ``kind='existing_inp'``, the UC-03 "pre-existing INP batch" case.</span>
+<span class="sd">	Mechanically it is the parent with an empty parameter set; what it adds is</span>
+<span class="sd">	an *assertion*: a ``{{placeholder}}`` anywhere in the tree is reported as</span>
+<span class="sd">	"you handed a template to a batch of finished decks", which is the mistake</span>
+<span class="sd">	actually being made, rather than as a missing parameter.</span>
 
 <span class="sd">	Attributes</span>
 <span class="sd">	----------</span>
-<span class="sd">	source_inp_path : str</span>
+<span class="sd">	source_path : str</span>
 <span class="sd">		Absolute or relative path to the existing INP file.</span>
-<span class="sd">	staging_mode : str</span>
-<span class="sd">		``'copy'`` (default) — copy the INP (with resolved paths) to output_dir.</span>
 <span class="sd">	resolve_includes : bool</span>
 <span class="sd">		If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use</span>
-<span class="sd">		absolute paths resolved against the source INP's directory.</span>
+<span class="sd">		absolute paths resolved against the referencing file's directory.</span>
+<span class="sd">	include_staging : str</span>
+<span class="sd">		See :class:`InpPreparationStrategy`.  Replaces the old ``staging_mode``,</span>
+<span class="sd">		which asked a per-job question that no longer has one answer.</span>
 <span class="sd">	"""</span>
 
 	<span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 		<span class="bp">self</span><span class="p">,</span>
-		<span class="n">source_inp_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-		<span class="n">staging_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'copy'</span><span class="p">,</span>
+		<span class="n">source_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 		<span class="n">resolve_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+		<span class="n">include_staging</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'reference'</span><span class="p">,</span>
 	<span class="p">):</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span> <span class="o">=</span> <span class="n">source_inp_path</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span> <span class="o">=</span> <span class="n">staging_mode</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">resolve_includes</span> <span class="o">=</span> <span class="n">resolve_includes</span>
-
-<div class="viewcode-block" id="ExistingInpStrategy.prepare">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.ExistingInpStrategy.prepare">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">JobContext</span><span class="p">,</span> <span class="n">runner</span><span class="p">:</span> <span class="n">AbaqusRunner</span><span class="p">,</span>
-				<span class="n">logger</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">Logger</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-		<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sub strategy [ExistingInp]: Using pre-existing INP '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
-
-		<span class="c1"># 1. Existence &amp; readability check</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Source INP not found: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="c1"># 2. Read content</span>
-		<span class="k">try</span><span class="p">:</span>
-			<span class="n">content</span> <span class="o">=</span> <span class="n">read_inp_text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">)</span>
-		<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to read source INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="c1"># 3. Lightweight content checks</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^\*STEP'</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"INP contains no *STEP — not a valid Abaqus input file"</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="k">if</span> <span class="n">_PLACEHOLDER_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
-				<span class="s2">"INP contains {{placeholder}} markers — this looks like a template, "</span>
-				<span class="s2">"not a finished INP. Use kind='inp_based' with params instead."</span>
-			<span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="c1"># 4. Resolve *INCLUDE paths to absolute paths</span>
-		<span class="c1"># TODO: 目前还是要求两个INP之间的相对路径是准确的, 而不是直接使用source_inp_path做替换</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_includes</span><span class="p">:</span>
-			<span class="n">source_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_inp_path</span><span class="p">))</span>
-
-			<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_include</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">Match</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-				<span class="n">prefix</span><span class="p">,</span> <span class="n">rel_path</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-				<span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">source_dir</span><span class="p">,</span> <span class="n">rel_path</span><span class="p">))</span>
-				<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">abs_path</span><span class="p">):</span>
-					<span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">abs_path</span><span class="p">)</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Resolved INCLUDE: </span><span class="si">{</span><span class="n">rel_path</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-				<span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">abs_path</span><span class="si">}</span><span class="s2">"</span>
-
-			<span class="k">try</span><span class="p">:</span>
-				<span class="n">content</span> <span class="o">=</span> <span class="n">_INCLUDE_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">_resolve_include</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
-			<span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"INCLUDE file not found: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-				<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="c1"># 5. Write the (possibly rewritten) INP to ctx.inp_path</span>
-		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span> <span class="o">==</span> <span class="s1">'copy'</span><span class="p">:</span>
-			<span class="k">try</span><span class="p">:</span>
-				<span class="n">write_inp_text</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Wrote INP to </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-			<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-				<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to write INP: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-				<span class="k">return</span> <span class="kc">False</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="c1"># ponytail: link/in_place deferred (S5), copy covers all MVP needs</span>
-			<span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported staging_mode: '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">staging_mode</span><span class="si">}</span><span class="s2">'. Only 'copy' is implemented."</span><span class="p">)</span>
-			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="k">return</span> <span class="kc">True</span></div>
-</div>
+		<span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+						<span class="n">resolve_includes</span><span class="o">=</span><span class="n">resolve_includes</span><span class="p">,</span>
+						<span class="n">assert_finished</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+						<span class="n">include_staging</span><span class="o">=</span><span class="n">include_staging</span><span class="p">)</span></div>
 
 
 

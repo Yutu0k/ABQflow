@@ -254,7 +254,7 @@
 <span class="sd">framework code.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobSpec</span><span class="p">,</span> <span class="n">PreparationSpec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 	<span class="n">ExistingInpStrategy</span><span class="p">,</span>
 	<span class="n">InpModifyStrategy</span><span class="p">,</span>
@@ -267,17 +267,48 @@
 	<span class="n">SubroutineCompileStrategy</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="c1"># Option keys the INP-based kinds understand.  Shared by both because they are</span>
+<span class="c1"># two presets over one strategy.</span>
+<span class="n">_INP_OPTIONS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">'resolve_includes'</span><span class="p">,</span> <span class="s1">'include_staging'</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_checked_options</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="n">PreparationSpec</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Reject option keys the strategy would otherwise ignore in silence.</span>
+
+<span class="sd">	``PreparationSpec.options`` is an untyped dict, so a key that belongs to</span>
+<span class="sd">	another kind — or a typo — used to be dropped without a word, and the run</span>
+<span class="sd">	proceeded with a setting the user believed was in effect.  Failing here</span>
+<span class="sd">	costs one clear exception instead of a silently mis-configured batch.</span>
+<span class="sd">	"""</span>
+	<span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="o">-</span> <span class="n">allowed</span>
+	<span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">"Unknown preparation option(s) for kind='</span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span><span class="si">}</span><span class="s2">. "</span>
+			<span class="sa">f</span><span class="s2">"Known options: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">allowed</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">options</span>
+
+
 <span class="c1"># ---- Preparation strategy factories ----</span>
 <span class="n">PREPARATION_REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">callable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
 	<span class="c1"># Each factory receives a PreparationSpec and returns a PreparationStrategy.</span>
 	<span class="c1"># Add new entries via register_preparation() to keep the framework closed</span>
 	<span class="c1"># for modification but open for extension.</span>
-	<span class="s1">'inp_based'</span><span class="p">:</span>        <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">InpModifyStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
+	<span class="c1">#</span>
+	<span class="c1"># 'inp_based' and 'existing_inp' are two presets over one implementation</span>
+	<span class="c1"># (InpPreparationStrategy): the second is the first with an empty parameter</span>
+	<span class="c1"># set plus an assertion that none was needed.  Both names are kept because</span>
+	<span class="c1"># they state different intents at the call site.</span>
+	<span class="s1">'inp_based'</span><span class="p">:</span>        <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">InpModifyStrategy</span><span class="p">(</span>
+		<span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
+		<span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+		<span class="n">resolve_includes</span><span class="o">=</span><span class="n">_checked_options</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_INP_OPTIONS</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resolve_includes'</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+		<span class="n">include_staging</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'include_staging'</span><span class="p">,</span> <span class="s1">'reference'</span><span class="p">),</span>
+	<span class="p">),</span>
 	<span class="s1">'model_generation'</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ModelGenerationStrategy</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">params</span><span class="p">),</span>
 	<span class="s1">'existing_inp'</span><span class="p">:</span>     <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ExistingInpStrategy</span><span class="p">(</span>
 		<span class="n">s</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
-		<span class="n">staging_mode</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'staging_mode'</span><span class="p">,</span> <span class="s1">'copy'</span><span class="p">),</span>
-		<span class="n">resolve_includes</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resolve_includes'</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+		<span class="n">resolve_includes</span><span class="o">=</span><span class="n">_checked_options</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_INP_OPTIONS</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'resolve_includes'</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+		<span class="n">include_staging</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'include_staging'</span><span class="p">,</span> <span class="s1">'reference'</span><span class="p">),</span>
 	<span class="p">),</span>
 <span class="p">}</span>
 

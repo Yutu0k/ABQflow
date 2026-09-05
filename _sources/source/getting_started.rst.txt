@@ -154,10 +154,9 @@ Every job returns a :class:`~ABQflow.JobOutcome` dataclass:
        results: dict | None   # extracted data keyed by result_name
        error:   str | None    # traceback if something went wrong
 
-Converter helpers are available:
+Iterate the list directly, or build ``{oc.job_name: oc for oc in outcomes}``
+when you need it keyed by name.  One converter helper is available:
 
-* :func:`~ABQflow.outcomes_to_list` -- ``list[dict]`` format.
-* :func:`~ABQflow.outcomes_to_dict` -- ``{job_name: dict}`` format.
 * :func:`~ABQflow.degenerate_from_array` -- ``numpy.ndarray`` from batch results.
 
 Configuration Reference

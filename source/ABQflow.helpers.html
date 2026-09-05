@@ -432,9 +432,12 @@ use case.  Each INP file becomes a spec with <code class="docutils literal notra
 <dl>
 <dt>inp_files<span class="classifier">list[str] or str</span></dt><dd><p>List of INP paths, or a glob pattern (e.g. <code class="docutils literal notranslate"><span class="pre">'./legacy/*.inp'</span></code>).</p>
 </dd>
-<dt>base_spec<span class="classifier">JobSpec or dict</span></dt><dd><p>Template spec whose <code class="docutils literal notranslate"><span class="pre">workflow</span></code>, extraction hooks, and other
-non-preparation fields are copied.  The <code class="docutils literal notranslate"><span class="pre">preparation</span></code> field is
-<strong>overwritten</strong> for each generated spec.</p>
+<dt>base_spec<span class="classifier">JobSpec</span></dt><dd><p>Template spec whose <code class="docutils literal notranslate"><span class="pre">workflow</span></code>, extraction hooks, <code class="docutils literal notranslate"><span class="pre">options</span></code> and
+other non-preparation fields are copied.  <code class="docutils literal notranslate"><span class="pre">preparation.kind</span></code>,
+<code class="docutils literal notranslate"><span class="pre">.source_path</span></code> and <code class="docutils literal notranslate"><span class="pre">.params</span></code> are <strong>supplied by this function</strong> —
+leave them unset in the base spec; setting them anyway earns a warning
+saying the values were discarded.  <code class="docutils literal notranslate"><span class="pre">meta</span></code> is merged, not replaced, so
+your own keys survive alongside <code class="docutils literal notranslate"><span class="pre">'source_inp'</span></code>.</p>
 </dd>
 <dt>naming<span class="classifier">str</span></dt><dd><p>Job-name generation rule:</p>
 <ul class="simple">
@@ -490,7 +493,10 @@ NumPy internally.</p>
 </dd>
 <dt>param_names<span class="classifier">list[str]</span></dt><dd><p>Length-D list of parameter names.</p>
 </dd>
-<dt>base_spec<span class="classifier">JobSpec or dict</span></dt><dd><p>Template spec.  Dicts are upgraded via <code class="xref py py-meth docutils literal notranslate"><span class="pre">JobSpec.from_dict()</span></code>.</p>
+<dt>base_spec<span class="classifier">JobSpec</span></dt><dd><p>Template spec.  Its <code class="docutils literal notranslate"><span class="pre">job_name</span></code> becomes the prefix for the generated
+names, and <code class="docutils literal notranslate"><span class="pre">preparation.source_path</span></code> is the template every job is
+built from.  <code class="docutils literal notranslate"><span class="pre">params</span></code> is <strong>supplied by this function</strong> — leave it
+unset; setting it anyway earns a warning saying it was discarded.</p>
 </dd>
 </dl>
 </section>
@@ -553,72 +559,6 @@ encountered.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.5)"><em>ndarray</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ABQflow.helpers.convert.outcomes_to_list">
-<span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#outcomes_to_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.outcomes_to_list" title="Link to this definition">¶</a></dt>
-<dd><p>Convert a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> objects to a list of plain dicts.</p>
-<p>Convenience for callers that prefer the legacy list-of-dicts shape.</p>
-<section id="id14">
-<h3>Parameters<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
-</dd>
-</dl>
-</section>
-<section id="id15">
-<h3>Returns<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>list[dict]</dt><dd><p>Each dict contains <code class="docutils literal notranslate"><span class="pre">'job_name'</span></code>, <code class="docutils literal notranslate"><span class="pre">'status'</span></code>, flattened results,
-and optionally <code class="docutils literal notranslate"><span class="pre">'error'</span></code>.</p>
-</dd>
-</dl>
-</section>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outcomes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="ABQflow.helpers.convert.outcomes_to_dict">
-<span class="sig-prename descclassname"><span class="pre">ABQflow.helpers.convert.</span></span><span class="sig-name descname"><span class="pre">outcomes_to_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outcomes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/helpers/convert.html#outcomes_to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.helpers.convert.outcomes_to_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Convert a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code> objects to a <code class="docutils literal notranslate"><span class="pre">{job_name:</span> <span class="pre">{...}}</span></code> dict.</p>
-<section id="id16">
-<h3>Parameters<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>outcomes<span class="classifier">list[JobOutcome]</span></dt><dd><p>Outcomes from <code class="xref py py-meth docutils literal notranslate"><span class="pre">BatchAbaqusProcessor.run_batch()</span></code>.</p>
-</dd>
-</dl>
-</section>
-<section id="id17">
-<h3>Returns<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>dict[str, dict]</dt><dd><p>Each value dict contains <code class="docutils literal notranslate"><span class="pre">'status'</span></code>, flattened results, and
-optionally <code class="docutils literal notranslate"><span class="pre">'error'</span></code>.</p>
-</dd>
-</dl>
-</section>
-<section id="id18">
-<h3>Raises<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>ValueError</dt><dd><p>If two outcomes share the same <code class="docutils literal notranslate"><span class="pre">job_name</span></code>.</p>
-</dd>
-</dl>
-</section>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>outcomes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -695,8 +635,6 @@ optionally <code class="docutils literal notranslate"><span class="pre">'error'<
 <li><a class="reference internal" href="#ABQflow.helpers.convert.generate_from_inp_files"><code class="docutils literal notranslate"><span class="pre">generate_from_inp_files()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.generate_from_array"><code class="docutils literal notranslate"><span class="pre">generate_from_array()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.helpers.convert.degenerate_from_array"><code class="docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a></li>
-<li><a class="reference internal" href="#ABQflow.helpers.convert.outcomes_to_list"><code class="docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a></li>
-<li><a class="reference internal" href="#ABQflow.helpers.convert.outcomes_to_dict"><code class="docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-ABQflow.helpers">Module contents</a></li>

@@ -538,6 +538,33 @@
 
 <span class="c1"># ======================== Array generation / degeneration ========================</span>
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_warn_discarded</span><span class="p">(</span><span class="n">discarded</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">generator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Warn about base_spec settings *generator* is about to overwrite.</span>
+
+<span class="sd">	A generator fills some fields in for you, and anything you set there is</span>
+<span class="sd">	thrown away.  Silently is the wrong way to do that: the failure mode is a</span>
+<span class="sd">	batch that runs to completion with a source file or a parameter set the</span>
+<span class="sd">	user is convinced is in effect, and nothing in the results says otherwise.</span>
+
+<span class="sd">	Warned once per call rather than once per generated spec — the same</span>
+<span class="sd">	mistake repeated N times is still one mistake.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	discarded : dict</span>
+<span class="sd">		``{field label: value the user set}``.  Falsy values are skipped, since</span>
+<span class="sd">		an unset field is exactly what a generator expects to find.</span>
+<span class="sd">	generator : str</span>
+<span class="sd">		Name of the calling generator, for the message.</span>
+<span class="sd">	"""</span>
+	<span class="n">named</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">=</span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s1">'</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">discarded</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span><span class="p">]</span>
+	<span class="k">if</span> <span class="n">named</span><span class="p">:</span>
+		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">generator</span><span class="si">}</span><span class="s2">() supplies these itself; the base_spec values you set are "</span>
+			<span class="sa">f</span><span class="s2">"ignored: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">named</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
+			<span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="generate_from_inp_files">
 <a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.generate_from_inp_files">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_from_inp_files</span><span class="p">(</span>
@@ -555,10 +582,13 @@
 <span class="sd">	----------</span>
 <span class="sd">	inp_files : list[str] or str</span>
 <span class="sd">		List of INP paths, or a glob pattern (e.g. ``'./legacy/*.inp'``).</span>
-<span class="sd">	base_spec : JobSpec or dict</span>
-<span class="sd">		Template spec whose ``workflow``, extraction hooks, and other</span>
-<span class="sd">		non-preparation fields are copied.  The ``preparation`` field is</span>
-<span class="sd">		**overwritten** for each generated spec.</span>
+<span class="sd">	base_spec : JobSpec</span>
+<span class="sd">		Template spec whose ``workflow``, extraction hooks, ``options`` and</span>
+<span class="sd">		other non-preparation fields are copied.  ``preparation.kind``,</span>
+<span class="sd">		``.source_path`` and ``.params`` are **supplied by this function** —</span>
+<span class="sd">		leave them unset in the base spec; setting them anyway earns a warning</span>
+<span class="sd">		saying the values were discarded.  ``meta`` is merged, not replaced, so</span>
+<span class="sd">		your own keys survive alongside ``'source_inp'``.</span>
 <span class="sd">	naming : str</span>
 <span class="sd">		Job-name generation rule:</span>
 
@@ -593,9 +623,16 @@
 	<span class="k">if</span> <span class="n">sort</span><span class="p">:</span>
 		<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">_natural_key</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">p</span><span class="p">)))</span>
 
-	<span class="c1"># 3. Normalise base_spec (check for dict, not JobSpec — autoreload-safe)</span>
-	<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_spec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-		<span class="n">base_spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">base_spec</span><span class="p">)</span>
+	<span class="c1"># 3. Tell the caller once about anything this function is about to discard.</span>
+	<span class="n">prep</span> <span class="o">=</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span>
+	<span class="k">if</span> <span class="n">prep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">_warn_discarded</span><span class="p">({</span>
+			<span class="c1"># A kind of 'existing_inp' is what this function produces anyway,</span>
+			<span class="c1"># so only a *different* one is worth reporting.</span>
+			<span class="s1">'preparation.kind'</span><span class="p">:</span> <span class="n">prep</span><span class="o">.</span><span class="n">kind</span> <span class="k">if</span> <span class="n">prep</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s1">'existing_inp'</span> <span class="k">else</span> <span class="s1">''</span><span class="p">,</span>
+			<span class="s1">'preparation.source_path'</span><span class="p">:</span> <span class="n">prep</span><span class="o">.</span><span class="n">source_path</span><span class="p">,</span>
+			<span class="s1">'preparation.params'</span><span class="p">:</span> <span class="n">prep</span><span class="o">.</span><span class="n">params</span><span class="p">,</span>
+		<span class="p">},</span> <span class="s1">'generate_from_inp_files'</span><span class="p">)</span>
 
 	<span class="c1"># 4. Generate specs</span>
 	<span class="n">specs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -624,19 +661,15 @@
 		<span class="k">else</span><span class="p">:</span>
 			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown naming mode: '</span><span class="si">{</span><span class="n">naming</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
 
-		<span class="c1"># Overwrite preparation (warn if base_spec already had one)</span>
-		<span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">preparation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">s</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'existing_inp'</span><span class="p">,</span> <span class="s1">''</span><span class="p">):</span>
-			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-				<span class="sa">f</span><span class="s2">"Overwriting base_spec.preparation (kind='</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">') "</span>
-				<span class="sa">f</span><span class="s2">"with kind='existing_inp' for file '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
-
 		<span class="n">s</span><span class="o">.</span><span class="n">preparation</span> <span class="o">=</span> <span class="n">PreparationSpec</span><span class="p">(</span>
 			<span class="n">kind</span><span class="o">=</span><span class="s1">'existing_inp'</span><span class="p">,</span>
 			<span class="n">source_path</span><span class="o">=</span><span class="n">abspath</span><span class="p">,</span>
 			<span class="n">params</span><span class="o">=</span><span class="p">{},</span>
 			<span class="n">options</span><span class="o">=</span><span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span><span class="o">.</span><span class="n">options</span> <span class="k">if</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span> <span class="k">else</span> <span class="p">{}</span>
 		<span class="p">)</span>
-		<span class="n">s</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'source_inp'</span><span class="p">:</span> <span class="n">abspath</span><span class="p">}</span>		<span class="c1"># 把源 INP 文件路径存储在 meta 中</span>
+		<span class="c1"># Merge, don't replace: base_spec.meta belongs to the caller, and</span>
+		<span class="c1"># dropping it would silently lose whatever they track the batch by.</span>
+		<span class="n">s</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">s</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="s1">'source_inp'</span><span class="p">:</span> <span class="n">abspath</span><span class="p">}</span>		<span class="c1"># 源 INP 路径存进 meta</span>
 
 		<span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
@@ -659,8 +692,11 @@
 <span class="sd">		NumPy internally.</span>
 <span class="sd">	param_names : list[str]</span>
 <span class="sd">		Length-D list of parameter names.</span>
-<span class="sd">	base_spec : JobSpec or dict</span>
-<span class="sd">		Template spec.  Dicts are upgraded via :meth:`JobSpec.from_dict`.</span>
+<span class="sd">	base_spec : JobSpec</span>
+<span class="sd">		Template spec.  Its ``job_name`` becomes the prefix for the generated</span>
+<span class="sd">		names, and ``preparation.source_path`` is the template every job is</span>
+<span class="sd">		built from.  ``params`` is **supplied by this function** — leave it</span>
+<span class="sd">		unset; setting it anyway earns a warning saying it was discarded.</span>
 
 <span class="sd">	Returns</span>
 <span class="sd">	-------</span>
@@ -679,8 +715,19 @@
 	<span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_names</span><span class="p">):</span>
 		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dimension mismatch: array has </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> cols, param_names has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">param_names</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-	<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_spec</span><span class="p">,</span> <span class="n">JobSpec</span><span class="p">):</span>
-		<span class="n">base_spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">base_spec</span><span class="p">)</span>
+	<span class="n">prep</span> <span class="o">=</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">preparation</span>
+	<span class="k">if</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">workflow</span> <span class="o">==</span> <span class="s1">'monolithic'</span><span class="p">:</span>
+		<span class="n">_warn_discarded</span><span class="p">({</span><span class="s1">'monolithic_params'</span><span class="p">:</span> <span class="n">base_spec</span><span class="o">.</span><span class="n">monolithic_params</span><span class="p">},</span>
+						<span class="s1">'generate_from_array'</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">prep</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">_warn_discarded</span><span class="p">({</span><span class="s1">'preparation.params'</span><span class="p">:</span> <span class="n">prep</span><span class="o">.</span><span class="n">params</span><span class="p">},</span> <span class="s1">'generate_from_array'</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">prep</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">'existing_inp'</span><span class="p">:</span>
+			<span class="c1"># Not a discarded value but a dead sweep: existing_inp substitutes</span>
+			<span class="c1"># nothing, so every job in the batch would run the identical deck.</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+				<span class="s2">"generate_from_array() with kind='existing_inp' produces N identical "</span>
+				<span class="s2">"jobs — that kind performs no substitution, so the parameter array has "</span>
+				<span class="s2">"no effect. Use kind='inp_based' with a template."</span><span class="p">)</span>
 
 	<span class="n">specs</span> <span class="o">=</span> <span class="p">[]</span>
 	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
@@ -756,73 +803,6 @@
 		<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2"> jobs not COMPLETED, rows contain default values: </span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 	<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span></div>
-
-
-
-<span class="c1"># ======================== Result conversion ========================</span>
-
-<div class="viewcode-block" id="outcomes_to_list">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.outcomes_to_list">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_list</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-<span class="w">	</span><span class="sd">"""Convert a list of :class:`JobOutcome` objects to a list of plain dicts.</span>
-
-<span class="sd">	Convenience for callers that prefer the legacy list-of-dicts shape.</span>
-
-<span class="sd">	Parameters</span>
-<span class="sd">	----------</span>
-<span class="sd">	outcomes : list[JobOutcome]</span>
-<span class="sd">		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.</span>
-
-<span class="sd">	Returns</span>
-<span class="sd">	-------</span>
-<span class="sd">	list[dict]</span>
-<span class="sd">		Each dict contains ``'job_name'``, ``'status'``, flattened results,</span>
-<span class="sd">		and optionally ``'error'``.</span>
-<span class="sd">	"""</span>
-	<span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-	<span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>
-		<span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">results</span> <span class="ow">or</span> <span class="p">{}),</span> <span class="s1">'status'</span><span class="p">:</span> <span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="s1">'job_name'</span><span class="p">:</span> <span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="p">}</span>
-		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-			<span class="n">d</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span> <span class="o">=</span> <span class="n">oc</span><span class="o">.</span><span class="n">error</span>
-		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
-			<span class="n">d</span><span class="p">[</span><span class="s1">'diagnostics'</span><span class="p">]</span> <span class="o">=</span> <span class="n">oc</span><span class="o">.</span><span class="n">diagnostics</span>
-		<span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-	<span class="k">return</span> <span class="n">out</span></div>
-
-
-
-<div class="viewcode-block" id="outcomes_to_dict">
-<a class="viewcode-back" href="../../../source/ABQflow.helpers.html#ABQflow.outcomes_to_dict">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">outcomes_to_dict</span><span class="p">(</span><span class="n">outcomes</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">	</span><span class="sd">"""Convert a list of :class:`JobOutcome` objects to a ``{job_name: {...}}`` dict.</span>
-
-<span class="sd">	Parameters</span>
-<span class="sd">	----------</span>
-<span class="sd">	outcomes : list[JobOutcome]</span>
-<span class="sd">		Outcomes from :meth:`BatchAbaqusProcessor.run_batch`.</span>
-
-<span class="sd">	Returns</span>
-<span class="sd">	-------</span>
-<span class="sd">	dict[str, dict]</span>
-<span class="sd">		Each value dict contains ``'status'``, flattened results, and</span>
-<span class="sd">		optionally ``'error'``.</span>
-
-<span class="sd">	Raises</span>
-<span class="sd">	------</span>
-<span class="sd">	ValueError</span>
-<span class="sd">		If two outcomes share the same ``job_name``.</span>
-<span class="sd">	"""</span>
-	<span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
-	<span class="k">for</span> <span class="n">oc</span> <span class="ow">in</span> <span class="n">outcomes</span><span class="p">:</span>
-		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">job_name</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate job_name in dict output: </span><span class="si">{</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-		<span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="p">(</span><span class="n">oc</span><span class="o">.</span><span class="n">results</span> <span class="ow">or</span> <span class="p">{}),</span> <span class="s1">'status'</span><span class="p">:</span> <span class="n">oc</span><span class="o">.</span><span class="n">status</span><span class="p">}</span>
-		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
-			<span class="n">d</span><span class="p">[</span><span class="s1">'error'</span><span class="p">]</span> <span class="o">=</span> <span class="n">oc</span><span class="o">.</span><span class="n">error</span>
-		<span class="k">if</span> <span class="n">oc</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
-			<span class="n">d</span><span class="p">[</span><span class="s1">'diagnostics'</span><span class="p">]</span> <span class="o">=</span> <span class="n">oc</span><span class="o">.</span><span class="n">diagnostics</span>
-		<span class="n">out</span><span class="p">[</span><span class="n">oc</span><span class="o">.</span><span class="n">job_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
-	<span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>
         </article>

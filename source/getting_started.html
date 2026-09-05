@@ -398,10 +398,9 @@ that get replaced per job.</p>
     <span class="n">error</span><span class="p">:</span>   <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>    <span class="c1"># traceback if something went wrong</span>
 </pre></div>
 </div>
-<p>Converter helpers are available:</p>
+<p>Iterate the list directly, or build <code class="docutils literal notranslate"><span class="pre">{oc.job_name:</span> <span class="pre">oc</span> <span class="pre">for</span> <span class="pre">oc</span> <span class="pre">in</span> <span class="pre">outcomes}</span></code>
+when you need it keyed by name.  One converter helper is available:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_list" title="ABQflow.outcomes_to_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> format.</p></li>
-<li><p><a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_dict" title="ABQflow.outcomes_to_dict"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">{job_name:</span> <span class="pre">dict}</span></code> format.</p></li>
 <li><p><a class="reference internal" href="ABQflow.html#ABQflow.degenerate_from_array" title="ABQflow.degenerate_from_array"><code class="xref py py-func docutils literal notranslate"><span class="pre">degenerate_from_array()</span></code></a> – <code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code> from batch results.</p></li>
 </ul>
 </section>

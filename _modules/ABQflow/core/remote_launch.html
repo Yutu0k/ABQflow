@@ -272,20 +272,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.inp_include</span><span class="w"> </span><span class="kn">import</span> <span class="n">INCLUDE_RE</span> <span class="k">as</span> <span class="n">_INCLUDE_RE</span>
 
 <span class="c1"># Grace-period bounds, matching AbaqusRunner's local ladder so the two stay</span>
 <span class="c1"># comparable.</span>
 <span class="n">_GRACE_MIN</span> <span class="o">=</span> <span class="mi">30</span>
 <span class="n">_GRACE_MAX</span> <span class="o">=</span> <span class="mi">300</span>
-
-<span class="c1"># Same directive shape ExistingInpStrategy matches; Abaqus accepts INPUT= with</span>
-<span class="c1"># or without quotes and the keyword is case-insensitive.</span>
-<span class="n">_INCLUDE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
-	<span class="sa">r</span><span class="s1">'(^\s*\*INCLUDE\s*,\s*INPUT\s*=\s*)(["</span><span class="se">\'</span><span class="s1">]?)([^"</span><span class="se">\'</span><span class="s1">\r\n]+)\2'</span><span class="p">,</span>
-	<span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
-<span class="p">)</span>
 
 
 <div class="viewcode-block" id="find_includes">
@@ -333,33 +327,6 @@
 		<span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">replacement</span>
 
 	<span class="k">return</span> <span class="n">_INCLUDE_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">_sub</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="flatten_includes">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.remote_launch.flatten_includes">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">flatten_includes</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">	</span><span class="sd">"""Rewrite every ``*INCLUDE, INPUT=`` to a bare filename.</span>
-
-<span class="sd">	Abaqus resolves a bare include filename against the job's working</span>
-<span class="sd">	directory, so this makes a deck self-contained once its targets sit</span>
-<span class="sd">	beside it.  Use it when the referenced files genuinely belong to one job;</span>
-<span class="sd">	:meth:`AbaqusRunner.stage_inputs` instead points them at a shared</span>
-<span class="sd">	directory, so a large mesh is uploaded once per machine rather than once</span>
-<span class="sd">	per job.</span>
-
-<span class="sd">	Returns</span>
-<span class="sd">	-------</span>
-<span class="sd">	tuple[str, list[str]]</span>
-<span class="sd">		``(rewritten_text, original_paths)``.</span>
-<span class="sd">	"""</span>
-	<span class="n">originals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-	<span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-		<span class="n">originals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'/'</span><span class="p">))</span>
-
-	<span class="k">return</span> <span class="n">rewrite_includes</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">_resolve</span><span class="p">),</span> <span class="n">originals</span></div>
 
 
 

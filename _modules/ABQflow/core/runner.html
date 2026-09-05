@@ -263,13 +263,29 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..helpers.constant</span><span class="w"> </span><span class="kn">import</span> <span class="n">RESULT_BEGIN</span><span class="p">,</span> <span class="n">RESULT_END</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">JobContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDiagnostics</span><span class="p">,</span> <span class="n">SolverResult</span><span class="p">,</span> <span class="n">apply_truth_table</span><span class="p">,</span> <span class="n">diagnose</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.inp_include</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_target</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubroutineSpec</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_file_digest</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Content address for a file that needs no rewriting.</span>
+
+<span class="sd">	Read in chunks: an unrewritten include is typically the batch's shared</span>
+<span class="sd">	mesh, and that is exactly the file that has no business being held in</span>
+<span class="sd">	memory in one piece.</span>
+<span class="sd">	"""</span>
+	<span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk</span><span class="p">),</span> <span class="sa">b</span><span class="s1">''</span><span class="p">):</span>
+			<span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Path to hookkit.py (staged into job output dir so hooks can import it)</span>
@@ -312,10 +328,11 @@
 <span class="w">	</span><span class="sd">"""Extract a JSON object from subprocess stdout.</span>
 
 <span class="sd">	Protocol: the script wraps its JSON payload between sentinel markers</span>
-<span class="sd">	``===ABQ_RESULT_BEGIN===`` and ``===ABQ_RESULT_END===``.  If both are</span>
-<span class="sd">	present the payload between them is parsed directly.  Otherwise falls</span>
-<span class="sd">	back to a legacy brace-scan that searches from the *end* of the output</span>
-<span class="sd">	(useful when Abaqus prints a banner before user code runs).</span>
+<span class="sd">	``===ABQ_RESULT_BEGIN===`` and ``===ABQ_RESULT_END===``.  Only that form is</span>
+<span class="sd">	accepted — Abaqus prints a banner before user code runs and hooks are free</span>
+<span class="sd">	to print whatever they like, so guessing at an unmarked payload picks up</span>
+<span class="sd">	whichever brace happens to come last.  :mod:`ABQflow.hookkit` emits the</span>
+<span class="sd">	markers for you.</span>
 
 <span class="sd">	Parameters</span>
 <span class="sd">	----------</span>
@@ -330,28 +347,16 @@
 <span class="sd">	Raises</span>
 <span class="sd">	------</span>
 <span class="sd">	ValueError</span>
-<span class="sd">		If no JSON object can be found or parsed.</span>
+<span class="sd">		If the sentinel markers are absent, or the payload is not valid JSON.</span>
 <span class="sd">	"""</span>
-	<span class="k">if</span> <span class="n">RESULT_BEGIN</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">and</span> <span class="n">RESULT_END</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
-		<span class="n">payload</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">RESULT_BEGIN</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">RESULT_END</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-		<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-	<span class="k">return</span> <span class="n">_legacy_brace_scan</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+	<span class="k">if</span> <span class="n">RESULT_BEGIN</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span> <span class="ow">or</span> <span class="n">RESULT_END</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+			<span class="sa">f</span><span class="s2">"No </span><span class="si">{</span><span class="n">RESULT_BEGIN</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">RESULT_END</span><span class="si">}</span><span class="s2"> markers in output — a hook must emit "</span>
+			<span class="sa">f</span><span class="s2">"its results through hookkit.run(), which writes them. "</span>
+			<span class="sa">f</span><span class="s2">"Output tail: '</span><span class="si">{</span><span class="n">text</span><span class="p">[</span><span class="o">-</span><span class="mi">200</span><span class="p">:]</span><span class="si">}</span><span class="s2">'"</span><span class="p">)</span>
+	<span class="n">payload</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">RESULT_BEGIN</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">RESULT_END</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span></div>
 
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_legacy_brace_scan</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">	</span><span class="sd">"""Scan from the *end* for the last complete JSON object (Abaqus banner is at the front)."""</span>
-	<span class="c1"># Find last '{' and try to parse balanced braces from there</span>
-	<span class="n">last_brace</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">'{'</span><span class="p">)</span>
-	<span class="k">if</span> <span class="n">last_brace</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No '{' found in output."</span><span class="p">)</span>
-	<span class="n">candidate</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">last_brace</span><span class="p">:]</span>
-	<span class="k">try</span><span class="p">:</span>
-		<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
-	<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-		<span class="k">try</span><span class="p">:</span>
-			<span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">candidate</span><span class="p">[:</span><span class="n">e</span><span class="o">.</span><span class="n">pos</span><span class="p">])</span>
-		<span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
-			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to parse JSON from output: '</span><span class="si">{</span><span class="n">candidate</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">...'"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="AbaqusRunner">
@@ -456,62 +461,150 @@
 		<span class="c1"># directory, which still shares across jobs in the same work root.</span>
 		<span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">/'</span><span class="p">))</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">_abqflow_shared'</span>
 
-	<span class="k">def</span><span class="w"> </span><span class="nf">_stage_include_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-							<span class="n">source_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">		</span><span class="sd">"""Upload each ``*INCLUDE`` target once per machine; return the mapping.</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">_upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">remote</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Send *local_path* to *remote*, or *content* when it was rewritten.</span>
 
-<span class="sd">		Include targets are usually a shared mesh or geometry, often far</span>
-<span class="sd">		larger than the deck referencing them, and identical across every job</span>
-<span class="sd">		in a batch.  Copying one into each job directory would make upload —</span>
-<span class="sd">		not solving — the dominant cost of a parameter sweep, so they go to</span>
-<span class="sd">		:attr:`HostSpec.shared_dir` instead and the directive is rewritten to</span>
-<span class="sd">		that absolute remote path.</span>
+<span class="sd">		``content is None`` means "nothing in this file changed", and the</span>
+<span class="sd">		original is sent straight from disk.  That matters for the shared</span>
+<span class="sd">		mesh: it is the largest file in the tree and almost never the one</span>
+<span class="sd">		being rewritten, so copying it through a temp file first would double</span>
+<span class="sd">		the local I/O for nothing.</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="c1"># Into the job directory, not beside the source: a rewritten file</span>
+			<span class="c1"># can now be a shared fragment living anywhere on disk, and that</span>
+			<span class="c1"># tree — a read-only mesh library, say — is not ours to write to.</span>
+			<span class="n">fd</span><span class="p">,</span> <span class="n">staged</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s1">'.staged'</span><span class="p">)</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+					<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+				<span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
+			<span class="k">finally</span><span class="p">:</span>
+				<span class="k">try</span><span class="p">:</span>
+					<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
+				<span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+					<span class="k">pass</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Staged </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes)"</span><span class="p">,</span> <span class="n">remote</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
-<span class="sd">		Names are content-addressed (``&lt;sha256[:12]&gt;_&lt;basename&gt;``), which buys</span>
-<span class="sd">		three things at once: the same file is uploaded once no matter how</span>
-<span class="sd">		many jobs or batches reference it, two different files that happen to</span>
-<span class="sd">		share a basename cannot collide, and "already present remotely" is</span>
-<span class="sd">		exactly equivalent to "identical content" — so the existence check is</span>
-<span class="sd">		a correct cache check, not a guess.  Hashing reads the file once from</span>
-<span class="sd">		local disk, which is cheap next to sending it over SFTP.</span>
+	<span class="k">def</span><span class="w"> </span><span class="nf">_rewrite_deck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+					<span class="n">stack</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">		</span><span class="sd">"""Stage everything *local_path* includes; return its own rewritten bytes.</span>
+
+<span class="sd">		Recursive, because an include tree is a tree: the flat single-pass</span>
+<span class="sd">		version staged only the directives in the job's own INP, so a mesh</span>
+<span class="sd">		that itself included a second fragment left that fragment behind and</span>
+<span class="sd">		the remote solve died in preprocessing with nothing pointing at why.</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
-<span class="sd">		dict[str, str] or None</span>
-<span class="sd">			``{original_path: remote_absolute_path}``, or ``None`` if any</span>
-<span class="sd">			target is missing locally.</span>
+<span class="sd">		tuple[bool, bytes or None]</span>
+<span class="sd">			``(ok, content)``.  ``content is None`` on success means the file</span>
+<span class="sd">			needs no rewriting and can be uploaded as it sits on disk.</span>
 <span class="sd">		"""</span>
-		<span class="k">if</span> <span class="ow">not</span> <span class="n">includes</span><span class="p">:</span>
-			<span class="k">return</span> <span class="p">{}</span>
+		<span class="kn">from</span><span class="w"> </span><span class="nn">.remote_launch</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_includes</span><span class="p">,</span> <span class="n">rewrite_includes</span>
 
-		<span class="n">shared_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared_dir</span><span class="p">()</span>
-		<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">shared_dir</span><span class="p">)</span>
+		<span class="n">key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stack</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"*INCLUDE cycle detected: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+							<span class="s1">' -&gt; '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stack</span> <span class="o">+</span> <span class="p">(</span><span class="n">key</span><span class="p">,)))</span>
+			<span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span>
 
+		<span class="c1"># Read as bytes, not text: Python's default encoding follows the</span>
+		<span class="c1"># machine's locale (GBK on a Chinese Windows), so a plain open() in</span>
+		<span class="c1"># text mode fails on any deck whose bytes that codec rejects — a</span>
+		<span class="c1"># UTF-8 BOM is enough.  latin-1 is the byte-preserving fallback, and</span>
+		<span class="c1"># *INCLUDE directives are ASCII either way.</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">raw</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">text</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="s1">'utf-8'</span>
+		<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+			<span class="n">text</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'latin-1'</span><span class="p">),</span> <span class="s1">'latin-1'</span>
+
+		<span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
 		<span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-		<span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">includes</span><span class="p">:</span>
-			<span class="k">if</span> <span class="n">raw</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">directive</span> <span class="ow">in</span> <span class="n">find_includes</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">directive</span> <span class="ow">in</span> <span class="n">mapping</span><span class="p">:</span>
 				<span class="k">continue</span>
-			<span class="n">candidate</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-				<span class="n">source_dir</span><span class="p">,</span> <span class="n">raw</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
-			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">candidate</span><span class="p">):</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"*INCLUDE target not found locally: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
-				<span class="k">return</span> <span class="kc">None</span>
+			<span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage_include</span><span class="p">(</span><span class="n">directive</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">,</span> <span class="n">stack</span> <span class="o">+</span> <span class="p">(</span><span class="n">key</span><span class="p">,))</span>
+			<span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span>
+			<span class="n">mapping</span><span class="p">[</span><span class="n">directive</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
 
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-				<span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span>
-			<span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'/'</span><span class="p">))</span>
-			<span class="n">remote</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">shared_dir</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">'</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">mapping</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">None</span>
+		<span class="n">rewritten</span> <span class="o">=</span> <span class="n">rewrite_includes</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">(</span><span class="kc">None</span> <span class="k">if</span> <span class="n">rewritten</span> <span class="o">==</span> <span class="n">text</span> <span class="k">else</span> <span class="n">rewritten</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">))</span>
 
+	<span class="k">def</span><span class="w"> </span><span class="nf">_stage_include</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">directive</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+					<span class="n">stack</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Upload one ``*INCLUDE`` target and its subtree; return its remote reference.</span>
+
+<span class="sd">		Which tier a target belongs to is read off the directive's *shape*,</span>
+<span class="sd">		which is the convention :mod:`ABQflow.core.inp_include` establishes</span>
+<span class="sd">		when it resolves the tree locally — so preparation and staging agree</span>
+<span class="sd">		without a manifest threaded between them:</span>
+
+<span class="sd">		**A bare filename** is a file preparation materialised beside the job's</span>
+<span class="sd">		own INP because a parameter touched it.  Its content is unique to this</span>
+<span class="sd">		job, so sharing it would be wrong even if it were cheap: it goes into</span>
+<span class="sd">		the remote job directory under the same name, and the directive is</span>
+<span class="sd">		left alone (Abaqus resolves a bare include against the working</span>
+<span class="sd">		directory).</span>
+
+<span class="sd">		**Anything else** — an absolute path, or a relative one left as</span>
+<span class="sd">		authored by ``resolve_includes=False`` — is static and identical</span>
+<span class="sd">		across the batch.  It goes to :attr:`HostSpec.shared_dir` under a</span>
+<span class="sd">		content-addressed name (``&lt;sha256[:12]&gt;_&lt;basename&gt;``), which buys</span>
+<span class="sd">		three things at once: the same file uploads once no matter how many</span>
+<span class="sd">		jobs reference it, two different files sharing a basename cannot</span>
+<span class="sd">		collide, and "already present remotely" becomes exactly equivalent to</span>
+<span class="sd">		"identical content" — so the existence check is a correct cache check</span>
+<span class="sd">		rather than a guess.</span>
+
+<span class="sd">		Returns ``None`` if the target is missing locally or its subtree fails.</span>
+<span class="sd">		"""</span>
+		<span class="n">local</span> <span class="o">=</span> <span class="n">resolve_target</span><span class="p">(</span><span class="n">directive</span><span class="p">,</span> <span class="n">base_dir</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"*INCLUDE target not found locally: </span><span class="si">%s</span><span class="s2"> (from '</span><span class="si">%s</span><span class="s2">')"</span><span class="p">,</span>
+							<span class="n">local</span><span class="p">,</span> <span class="n">directive</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">None</span>
+
+		<span class="n">key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normcase</span><span class="p">(</span><span class="n">local</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staged_includes</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_staged_includes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+		<span class="n">ok</span><span class="p">,</span> <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_deck</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">stack</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+
+		<span class="n">normalised</span> <span class="o">=</span> <span class="n">directive</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'/'</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">'/'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">normalised</span><span class="p">:</span>
+			<span class="c1"># Per-job file: ships with the job, keeps its name, directive stays.</span>
+			<span class="n">remote</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">normalised</span><span class="si">}</span><span class="s1">'</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">_upload</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
+			<span class="n">ref</span> <span class="o">=</span> <span class="n">normalised</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">shared_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shared_dir</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">shared_dir</span><span class="p">)</span>
+			<span class="c1"># Hash what actually gets uploaded, not what is on disk: a shared</span>
+			<span class="c1"># file whose own includes were rewritten no longer has its</span>
+			<span class="c1"># original bytes, and addressing it by them would let two</span>
+			<span class="c1"># different rewrites of one source collide in the cache.</span>
+			<span class="n">digest</span> <span class="o">=</span> <span class="p">(</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span> <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+					<span class="k">else</span> <span class="n">_file_digest</span><span class="p">(</span><span class="n">local</span><span class="p">))</span>
+			<span class="n">remote</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">shared_dir</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">normalised</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span>
 			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">remote</span><span class="p">):</span>
 				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Include target already on </span><span class="si">%s</span><span class="s2">, reusing: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
 								<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
 			<span class="k">else</span><span class="p">:</span>
-				<span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Uploaded include target to shared dir: </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> bytes)"</span><span class="p">,</span>
-								<span class="n">remote</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
-			<span class="n">mapping</span><span class="p">[</span><span class="n">raw</span><span class="p">]</span> <span class="o">=</span> <span class="n">remote</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">_upload</span><span class="p">(</span><span class="n">local</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">remote</span><span class="p">)</span>
+			<span class="n">ref</span> <span class="o">=</span> <span class="n">remote</span>
 
-		<span class="k">return</span> <span class="n">mapping</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_staged_includes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref</span>
+		<span class="k">return</span> <span class="n">ref</span>
 
 <div class="viewcode-block" id="AbaqusRunner.stage_inputs">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.AbaqusRunner.stage_inputs">[docs]</a>
@@ -519,12 +612,12 @@
 <span class="w">		</span><span class="sd">"""Upload everything the solver needs onto the executing machine.</span>
 
 <span class="sd">		Handles the ``*INCLUDE`` problem found during the remote spike: the</span>
-<span class="sd">		directives point at local absolute paths that cannot exist on the far</span>
-<span class="sd">		side, so any deck with an include fails remotely with an opaque</span>
-<span class="sd">		preprocessing error.  Targets are uploaded to the machine's shared</span>
-<span class="sd">		directory — once per machine, not once per job — and the directives</span>
-<span class="sd">		are rewritten to that absolute remote path.  See</span>
-<span class="sd">		:meth:`_stage_include_targets`.</span>
+<span class="sd">		directives point at local paths that cannot exist on the far side, so</span>
+<span class="sd">		any deck with an include fails remotely with an opaque preprocessing</span>
+<span class="sd">		error.  The whole tree is walked — see :meth:`_rewrite_deck` — and each</span>
+<span class="sd">		target is placed by tier: per-job files travel with the job, static</span>
+<span class="sd">		ones land in the machine's shared directory, once per machine rather</span>
+<span class="sd">		than once per job.  See :meth:`_stage_include`.</span>
 
 <span class="sd">		Returns</span>
 <span class="sd">		-------</span>
@@ -541,8 +634,6 @@
 			<span class="c1"># wrong way to pay for that safety.</span>
 			<span class="k">return</span> <span class="kc">True</span>
 
-		<span class="kn">from</span><span class="w"> </span><span class="nn">.remote_launch</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_includes</span><span class="p">,</span> <span class="n">rewrite_includes</span>
-
 		<span class="n">local_inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">inp_path</span>
 		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">local_inp</span><span class="p">):</span>
 			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Cannot stage: INP not found at </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">local_inp</span><span class="p">)</span>
@@ -550,42 +641,15 @@
 
 		<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
 
-		<span class="c1"># Read as bytes, not text: Python's default encoding follows the</span>
-		<span class="c1"># machine's locale (GBK on a Chinese Windows), so a plain open() in</span>
-		<span class="c1"># text mode fails on any deck whose bytes that codec rejects — a</span>
-		<span class="c1"># UTF-8 BOM is enough.  latin-1 is the byte-preserving fallback, and</span>
-		<span class="c1"># *INCLUDE directives are ASCII either way.</span>
-		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_inp</span><span class="p">,</span> <span class="s1">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-			<span class="n">raw</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-		<span class="k">try</span><span class="p">:</span>
-			<span class="n">text</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">),</span> <span class="s1">'utf-8'</span>
-		<span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
-			<span class="n">text</span><span class="p">,</span> <span class="n">encoding</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'latin-1'</span><span class="p">),</span> <span class="s1">'latin-1'</span>
+		<span class="c1"># Memoised per runner, i.e. per job: a file included twice in one deck</span>
+		<span class="c1"># uploads once.  Reuse *across* jobs is the shared dir's existence</span>
+		<span class="c1"># check, which is content-addressed and therefore survives the process.</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_staged_includes</span> <span class="o">=</span> <span class="p">{}</span>
 
-		<span class="c1"># Resolve and upload the *INCLUDE targets first, then rewrite the deck</span>
-		<span class="c1"># to point at wherever they ended up.  I/O stays out of the pure</span>
-		<span class="c1"># substitution helper.</span>
-		<span class="n">source_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">local_inp</span><span class="p">))</span>
-		<span class="n">mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stage_include_targets</span><span class="p">(</span><span class="n">find_includes</span><span class="p">(</span><span class="n">text</span><span class="p">),</span> <span class="n">source_dir</span><span class="p">)</span>
-		<span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">ok</span><span class="p">,</span> <span class="n">content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_deck</span><span class="p">(</span><span class="n">local_inp</span><span class="p">,</span> <span class="p">())</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">ok</span><span class="p">:</span>
 			<span class="k">return</span> <span class="kc">False</span>
-
-		<span class="n">flattened</span> <span class="o">=</span> <span class="n">rewrite_includes</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">mapping</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
-
-		<span class="k">if</span> <span class="n">flattened</span> <span class="o">==</span> <span class="n">text</span><span class="p">:</span>
-			<span class="c1"># Nothing rewritten — upload the original bytes untouched.</span>
-			<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">local_inp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
-		<span class="k">else</span><span class="p">:</span>
-			<span class="n">staged</span> <span class="o">=</span> <span class="n">local_inp</span> <span class="o">+</span> <span class="s1">'.staged'</span>
-			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-				<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">flattened</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">encoding</span><span class="p">))</span>
-			<span class="k">try</span><span class="p">:</span>
-				<span class="bp">self</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
-			<span class="k">finally</span><span class="p">:</span>
-				<span class="k">try</span><span class="p">:</span>
-					<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">staged</span><span class="p">)</span>
-				<span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-					<span class="k">pass</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_upload</span><span class="p">(</span><span class="n">local_inp</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exec_ctx</span><span class="o">.</span><span class="n">inp_path</span><span class="p">)</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">user_subroutine</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">user_subroutine</span><span class="p">):</span>
 			<span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctx</span><span class="o">.</span><span class="n">user_subroutine</span><span class="p">)</span>

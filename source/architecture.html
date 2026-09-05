@@ -446,19 +446,19 @@ analysis).</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">jobs</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">'job_name'</span><span class="p">:</span> <span class="s1">'x'</span><span class="p">,</span> <span class="s1">'type'</span><span class="p">:</span> <span class="s1">'inp_based'</span><span class="p">,</span> <span class="s1">'base_inp_path'</span><span class="p">:</span> <span class="s1">'...'</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}}]</span>
 </pre></div>
 </div>
-<p>New (compatible — <code class="docutils literal notranslate"><span class="pre">from_dict</span></code> bridge):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s1">'job_name'</span><span class="p">:</span> <span class="s1">'x'</span><span class="p">,</span> <span class="s1">'type'</span><span class="p">:</span> <span class="s1">'inp_based'</span><span class="p">,</span> <span class="s1">'base_inp_path'</span><span class="p">:</span> <span class="s1">'...'</span><span class="p">,</span> <span class="s1">'params'</span><span class="p">:</span> <span class="p">{</span><span class="o">...</span><span class="p">}})</span>
-</pre></div>
-</div>
-<p>New (native):</p>
+<p>New:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span> <span class="o">=</span> <span class="n">JobSpec</span><span class="p">(</span><span class="n">job_name</span><span class="o">=</span><span class="s1">'x'</span><span class="p">,</span> <span class="n">preparation</span><span class="o">=</span><span class="n">PreparationSpec</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">'inp_based'</span><span class="p">,</span> <span class="n">source_path</span><span class="o">=</span><span class="s1">'...'</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">}))</span>
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">JobSpec.from_dict</span></code> bridge that accepted the old shape has been removed;
+<code class="docutils literal notranslate"><span class="pre">batch_data</span></code> now rejects anything that is not a <code class="xref py py-class docutils literal notranslate"><span class="pre">JobSpec</span></code>.</p>
 <p><strong>Batch result format:</strong></p>
 <p>Old: <code class="docutils literal notranslate"><span class="pre">run_batch()</span></code> returned <code class="docutils literal notranslate"><span class="pre">list[dict]</span></code> or <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">dict]</span></code>.
-New: returns <code class="docutils literal notranslate"><span class="pre">list[JobOutcome]</span></code>.  Use
-<a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_list" title="ABQflow.outcomes_to_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_list()</span></code></a> or
-<a class="reference internal" href="ABQflow.html#ABQflow.outcomes_to_dict" title="ABQflow.outcomes_to_dict"><code class="xref py py-func docutils literal notranslate"><span class="pre">outcomes_to_dict()</span></code></a> for the old format.</p>
+New: returns <code class="docutils literal notranslate"><span class="pre">list[JobOutcome]</span></code>.  The <code class="docutils literal notranslate"><span class="pre">outcomes_to_list</span></code> /
+<code class="docutils literal notranslate"><span class="pre">outcomes_to_dict</span></code> converters have been removed — a <code class="xref py py-class docutils literal notranslate"><span class="pre">JobOutcome</span></code>
+already exposes <code class="docutils literal notranslate"><span class="pre">job_name</span></code>, <code class="docutils literal notranslate"><span class="pre">status</span></code>, <code class="docutils literal notranslate"><span class="pre">results</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code> and
+<code class="docutils literal notranslate"><span class="pre">diagnostics</span></code>, so iterate the list directly, or build
+<code class="docutils literal notranslate"><span class="pre">{oc.job_name:</span> <span class="pre">oc</span> <span class="pre">for</span> <span class="pre">oc</span> <span class="pre">in</span> <span class="pre">outcomes}</span></code> when you need it keyed.</p>
 <p><strong>Strategy signatures:</strong></p>
 <p>Custom strategies that subclasses <code class="docutils literal notranslate"><span class="pre">PreparationStrategy</span></code> / <code class="docutils literal notranslate"><span class="pre">ExtractionStrategy</span></code> /
 <code class="docutils literal notranslate"><span class="pre">JobWorkflowStrategy</span></code> must change their method signatures from
