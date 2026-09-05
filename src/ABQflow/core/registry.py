@@ -5,7 +5,7 @@ strategies at runtime via :func:`register_preparation` without modifying
 framework code.
 """
 
-from .spec import JobSpec
+from .spec import JobSpec, PreparationSpec
 from .strategies import (
 	ExistingInpStrategy,
 	InpModifyStrategy,
@@ -18,17 +18,48 @@ from .strategies import (
 	SubroutineCompileStrategy,
 )
 
+# Option keys the INP-based kinds understand.  Shared by both because they are
+# two presets over one strategy.
+_INP_OPTIONS = frozenset({'resolve_includes', 'include_staging'})
+
+
+def _checked_options(spec: PreparationSpec, allowed: frozenset) -> dict:
+	"""Reject option keys the strategy would otherwise ignore in silence.
+
+	``PreparationSpec.options`` is an untyped dict, so a key that belongs to
+	another kind — or a typo — used to be dropped without a word, and the run
+	proceeded with a setting the user believed was in effect.  Failing here
+	costs one clear exception instead of a silently mis-configured batch.
+	"""
+	unknown = set(spec.options) - allowed
+	if unknown:
+		raise ValueError(
+			f"Unknown preparation option(s) for kind='{spec.kind}': {sorted(unknown)}. "
+			f"Known options: {sorted(allowed)}.")
+	return spec.options
+
+
 # ---- Preparation strategy factories ----
 PREPARATION_REGISTRY: dict[str, callable] = {
 	# Each factory receives a PreparationSpec and returns a PreparationStrategy.
 	# Add new entries via register_preparation() to keep the framework closed
 	# for modification but open for extension.
-	'inp_based':        lambda s: InpModifyStrategy(s.source_path, s.params),
+	#
+	# 'inp_based' and 'existing_inp' are two presets over one implementation
+	# (InpPreparationStrategy): the second is the first with an empty parameter
+	# set plus an assertion that none was needed.  Both names are kept because
+	# they state different intents at the call site.
+	'inp_based':        lambda s: InpModifyStrategy(
+		s.source_path,
+		s.params,
+		resolve_includes=_checked_options(s, _INP_OPTIONS).get('resolve_includes', True),
+		include_staging=s.options.get('include_staging', 'reference'),
+	),
 	'model_generation': lambda s: ModelGenerationStrategy(s.source_path, s.params),
 	'existing_inp':     lambda s: ExistingInpStrategy(
 		s.source_path,
-		staging_mode=s.options.get('staging_mode', 'copy'),
-		resolve_includes=s.options.get('resolve_includes', True),
+		resolve_includes=_checked_options(s, _INP_OPTIONS).get('resolve_includes', True),
+		include_staging=s.options.get('include_staging', 'reference'),
 	),
 }
 

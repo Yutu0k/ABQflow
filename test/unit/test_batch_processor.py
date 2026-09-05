@@ -21,8 +21,6 @@ from ABQflow import (
 	PreparationSpec,
 	SubroutineCompileStrategy,
 	SubroutineSpec,
-	outcomes_to_dict,
-	outcomes_to_list,
 )
 
 
@@ -135,14 +133,11 @@ def test_job_outcome_diagnostics():
 	assert oc2.diagnostics['sta_verdict'] == 'NOT_COMPLETED'
 
 
-def test_outcomes_serialization_diagnostics():
+def test_job_outcome_carries_results_alongside_diagnostics():
 	oc = JobOutcome('j1', 'FAILED', error='err',
 					diagnostics={'sta_verdict': 'ABORTED'},
 					results={'x': 1.0})
 
-	lst = outcomes_to_list([oc])
-	assert lst[0]['diagnostics'] == {'sta_verdict': 'ABORTED'}
-	assert lst[0]['x'] == 1.0
-
-	dct = outcomes_to_dict([oc])
-	assert dct['j1']['diagnostics'] == {'sta_verdict': 'ABORTED'}
+	assert oc.diagnostics == {'sta_verdict': 'ABORTED'}
+	assert oc.results == {'x': 1.0}
+	assert oc.error == 'err'

@@ -406,7 +406,7 @@ class BatchAbaqusProcessor:
 
 	def __init__(
 		self,
-		batch_data: list[dict] | list[JobSpec],
+		batch_data: list[JobSpec],
 		base_output_dir: str,
 		cpus_per_job: int,
 		abaqus_exe: str = 'abaqus',
@@ -419,9 +419,10 @@ class BatchAbaqusProcessor:
 		"""
 		Parameters
 		----------
-		batch_data : list[dict] or list[JobSpec]
-			Job configs as dicts or :class:`JobSpec` objects.  Dicts are
-			converted via :meth:`JobSpec.from_dict`.
+		batch_data : list[JobSpec]
+			Job configs.  Build them directly, or with
+			:func:`~ABQflow.helpers.convert.generate_from_array` /
+			:func:`~ABQflow.helpers.convert.generate_from_inp_files`.
 		base_output_dir : str
 			**Absolute** directory where all job subdirectories will be created.
 		cpus_per_job : int
@@ -465,11 +466,13 @@ class BatchAbaqusProcessor:
 		self.timeout = timeout
 		self.preflight_only = preflight_only
 
-		# Normalize: accept both dicts and JobSpecs
-		if batch_data and isinstance(batch_data[0], JobSpec):
-			self.specs: list[JobSpec] = batch_data
-		else:
-			self.specs = [JobSpec.from_dict(d) for d in batch_data]
+		bad = [i for i, s in enumerate(batch_data) if not isinstance(s, JobSpec)]
+		if bad:
+			raise TypeError(
+				f"batch_data must contain JobSpec objects; entries {bad[:5]} are "
+				f"{type(batch_data[bad[0]]).__name__}. Build them with JobSpec(...), "
+				f"generate_from_array() or generate_from_inp_files().")
+		self.specs: list[JobSpec] = list(batch_data)
 
 		# Validate: no duplicate names (fix B14)
 		names = [s.job_name for s in self.specs]

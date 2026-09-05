@@ -14,13 +14,29 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import uuid
 from dataclasses import dataclass, field
 
 from ..helpers.constant import RESULT_BEGIN, RESULT_END
 from .context import JobContext
 from .diagnostics import SolverDiagnostics, SolverResult, apply_truth_table, diagnose
+from .inp_include import resolve_target
 from .spec import SubroutineSpec
+
+
+def _file_digest(path: str, chunk: int = 1 << 20) -> str:
+	"""Content address for a file that needs no rewriting.
+
+	Read in chunks: an unrewritten include is typically the batch's shared
+	mesh, and that is exactly the file that has no business being held in
+	memory in one piece.
+	"""
+	h = hashlib.sha256()
+	with open(path, 'rb') as f:
+		for block in iter(lambda: f.read(chunk), b''):
+			h.update(block)
+	return h.hexdigest()[:12]
 
 # ---------------------------------------------------------------------------
 # Path to hookkit.py (staged into job output dir so hooks can import it)
@@ -58,10 +74,11 @@ def extract_json(text: str) -> dict:
 	"""Extract a JSON object from subprocess stdout.
 
 	Protocol: the script wraps its JSON payload between sentinel markers
-	``===ABQ_RESULT_BEGIN===`` and ``===ABQ_RESULT_END===``.  If both are
-	present the payload between them is parsed directly.  Otherwise falls
-	back to a legacy brace-scan that searches from the *end* of the output
-	(useful when Abaqus prints a banner before user code runs).
+	``===ABQ_RESULT_BEGIN===`` and ``===ABQ_RESULT_END===``.  Only that form is
+	accepted — Abaqus prints a banner before user code runs and hooks are free
+	to print whatever they like, so guessing at an unmarked payload picks up
+	whichever brace happens to come last.  :mod:`ABQflow.hookkit` emits the
+	markers for you.
 
 	Parameters
 	----------
@@ -76,27 +93,15 @@ def extract_json(text: str) -> dict:
 	Raises
 	------
 	ValueError
-		If no JSON object can be found or parsed.
+		If the sentinel markers are absent, or the payload is not valid JSON.
 	"""
-	if RESULT_BEGIN in text and RESULT_END in text:
-		payload = text.split(RESULT_BEGIN, 1)[1].split(RESULT_END, 1)[0]
-		return json.loads(payload)
-	return _legacy_brace_scan(text)
-
-def _legacy_brace_scan(text: str) -> dict:
-	"""Scan from the *end* for the last complete JSON object (Abaqus banner is at the front)."""
-	# Find last '{' and try to parse balanced braces from there
-	last_brace = text.rfind('{')
-	if last_brace == -1:
-		raise ValueError("No '{' found in output.")
-	candidate = text[last_brace:]
-	try:
-		return json.loads(candidate)
-	except json.JSONDecodeError as e:
-		try:
-			return json.loads(candidate[:e.pos])
-		except json.JSONDecodeError:
-			raise ValueError(f"Failed to parse JSON from output: '{candidate[:100]}...'")
+	if RESULT_BEGIN not in text or RESULT_END not in text:
+		raise ValueError(
+			f"No {RESULT_BEGIN}/{RESULT_END} markers in output — a hook must emit "
+			f"its results through hookkit.run(), which writes them. "
+			f"Output tail: '{text[-200:]}'")
+	payload = text.split(RESULT_BEGIN, 1)[1].split(RESULT_END, 1)[0]
+	return json.loads(payload)
 
 
 class AbaqusRunner:
@@ -136,6 +141,8 @@ class AbaqusRunner:
 		self.host = host
 		self.backend = backend
 		self._local_backend = None
+		# {normcased local path: remote reference} for this job's include tree.
+		self._staged_includes: dict[str, str] = {}
 
 		# Context as seen by the executing machine.  Identical to ``ctx`` for
 		# LocalBackend; rewritten to the remote job directory (and that
@@ -195,73 +202,161 @@ class AbaqusRunner:
 		# directory, which still shares across jobs in the same work root.
 		return os.path.dirname(self.exec_ctx.output_dir.rstrip('\\/')) + '\\_abqflow_shared'
 
-	def _stage_include_targets(self, includes: list[str],
-							source_dir: str) -> dict[str, str] | None:
-		"""Upload each ``*INCLUDE`` target once per machine; return the mapping.
+	def _upload(self, local_path: str, content: bytes | None, remote: str) -> None:
+		"""Send *local_path* to *remote*, or *content* when it was rewritten.
 
-		Include targets are usually a shared mesh or geometry, often far
-		larger than the deck referencing them, and identical across every job
-		in a batch.  Copying one into each job directory would make upload —
-		not solving — the dominant cost of a parameter sweep, so they go to
-		:attr:`HostSpec.shared_dir` instead and the directive is rewritten to
-		that absolute remote path.
+		``content is None`` means "nothing in this file changed", and the
+		original is sent straight from disk.  That matters for the shared
+		mesh: it is the largest file in the tree and almost never the one
+		being rewritten, so copying it through a temp file first would double
+		the local I/O for nothing.
+		"""
+		if content is None:
+			size = self.backend.put(local_path, remote)
+		else:
+			# Into the job directory, not beside the source: a rewritten file
+			# can now be a shared fragment living anywhere on disk, and that
+			# tree — a read-only mesh library, say — is not ours to write to.
+			fd, staged = tempfile.mkstemp(dir=self.ctx.output_dir, suffix='.staged')
+			try:
+				with os.fdopen(fd, 'wb') as f:
+					f.write(content)
+				size = self.backend.put(staged, remote)
+			finally:
+				try:
+					os.remove(staged)
+				except OSError:
+					pass
+		self.logger.info("Staged %s (%d bytes)", remote, size)
 
-		Names are content-addressed (``<sha256[:12]>_<basename>``), which buys
-		three things at once: the same file is uploaded once no matter how
-		many jobs or batches reference it, two different files that happen to
-		share a basename cannot collide, and "already present remotely" is
-		exactly equivalent to "identical content" — so the existence check is
-		a correct cache check, not a guess.  Hashing reads the file once from
-		local disk, which is cheap next to sending it over SFTP.
+	def _rewrite_deck(self, local_path: str,
+					stack: tuple[str, ...]) -> tuple[bool, bytes | None]:
+		"""Stage everything *local_path* includes; return its own rewritten bytes.
+
+		Recursive, because an include tree is a tree: the flat single-pass
+		version staged only the directives in the job's own INP, so a mesh
+		that itself included a second fragment left that fragment behind and
+		the remote solve died in preprocessing with nothing pointing at why.
 
 		Returns
 		-------
-		dict[str, str] or None
-			``{original_path: remote_absolute_path}``, or ``None`` if any
-			target is missing locally.
+		tuple[bool, bytes or None]
+			``(ok, content)``.  ``content is None`` on success means the file
+			needs no rewriting and can be uploaded as it sits on disk.
 		"""
-		if not includes:
-			return {}
+		from .remote_launch import find_includes, rewrite_includes
 
-		shared_dir = self._shared_dir()
-		self.backend.makedirs(shared_dir)
+		key = os.path.normcase(os.path.abspath(local_path))
+		if key in stack:
+			self.logger.error("*INCLUDE cycle detected: %s",
+							' -> '.join(stack + (key,)))
+			return False, None
 
+		# Read as bytes, not text: Python's default encoding follows the
+		# machine's locale (GBK on a Chinese Windows), so a plain open() in
+		# text mode fails on any deck whose bytes that codec rejects — a
+		# UTF-8 BOM is enough.  latin-1 is the byte-preserving fallback, and
+		# *INCLUDE directives are ASCII either way.
+		with open(local_path, 'rb') as f:
+			raw = f.read()
+		try:
+			text, encoding = raw.decode('utf-8'), 'utf-8'
+		except UnicodeDecodeError:
+			text, encoding = raw.decode('latin-1'), 'latin-1'
+
+		base_dir = os.path.dirname(os.path.abspath(local_path))
 		mapping: dict[str, str] = {}
-		for raw in includes:
-			if raw in mapping:
+		for directive in find_includes(text):
+			if directive in mapping:
 				continue
-			candidate = os.path.join(
-				source_dir, raw.replace('/', os.sep).replace('\\', os.sep))
-			if not os.path.isfile(candidate):
-				self.logger.error("*INCLUDE target not found locally: %s", candidate)
-				return None
+			ref = self._stage_include(directive, base_dir, stack + (key,))
+			if ref is None:
+				return False, None
+			mapping[directive] = ref
 
-			with open(candidate, 'rb') as f:
-				digest = hashlib.sha256(f.read()).hexdigest()[:12]
-			base = os.path.basename(raw.replace('\\', '/'))
-			remote = f'{shared_dir}\\{digest}_{base}'
+		if not mapping:
+			return True, None
+		rewritten = rewrite_includes(text, mapping.get)
+		return True, (None if rewritten == text else rewritten.encode(encoding))
 
+	def _stage_include(self, directive: str, base_dir: str,
+					stack: tuple[str, ...]) -> str | None:
+		"""Upload one ``*INCLUDE`` target and its subtree; return its remote reference.
+
+		Which tier a target belongs to is read off the directive's *shape*,
+		which is the convention :mod:`ABQflow.core.inp_include` establishes
+		when it resolves the tree locally — so preparation and staging agree
+		without a manifest threaded between them:
+
+		**A bare filename** is a file preparation materialised beside the job's
+		own INP because a parameter touched it.  Its content is unique to this
+		job, so sharing it would be wrong even if it were cheap: it goes into
+		the remote job directory under the same name, and the directive is
+		left alone (Abaqus resolves a bare include against the working
+		directory).
+
+		**Anything else** — an absolute path, or a relative one left as
+		authored by ``resolve_includes=False`` — is static and identical
+		across the batch.  It goes to :attr:`HostSpec.shared_dir` under a
+		content-addressed name (``<sha256[:12]>_<basename>``), which buys
+		three things at once: the same file uploads once no matter how many
+		jobs reference it, two different files sharing a basename cannot
+		collide, and "already present remotely" becomes exactly equivalent to
+		"identical content" — so the existence check is a correct cache check
+		rather than a guess.
+
+		Returns ``None`` if the target is missing locally or its subtree fails.
+		"""
+		local = resolve_target(directive, base_dir)
+		if not os.path.isfile(local):
+			self.logger.error("*INCLUDE target not found locally: %s (from '%s')",
+							local, directive)
+			return None
+
+		key = os.path.normcase(local)
+		if key in self._staged_includes:
+			return self._staged_includes[key]
+
+		ok, content = self._rewrite_deck(local, stack)
+		if not ok:
+			return None
+
+		normalised = directive.strip().replace('\\', '/')
+		if '/' not in normalised:
+			# Per-job file: ships with the job, keeps its name, directive stays.
+			remote = f'{self.exec_ctx.output_dir}\\{normalised}'
+			self._upload(local, content, remote)
+			ref = normalised
+		else:
+			shared_dir = self._shared_dir()
+			self.backend.makedirs(shared_dir)
+			# Hash what actually gets uploaded, not what is on disk: a shared
+			# file whose own includes were rewritten no longer has its
+			# original bytes, and addressing it by them would let two
+			# different rewrites of one source collide in the cache.
+			digest = (hashlib.sha256(content).hexdigest()[:12] if content is not None
+					else _file_digest(local))
+			remote = f'{shared_dir}\\{digest}_{os.path.basename(normalised)}'
 			if self.backend.exists(remote):
 				self.logger.info("Include target already on %s, reusing: %s",
 								self.backend.name, remote)
 			else:
-				size = self.backend.put(candidate, remote)
-				self.logger.info("Uploaded include target to shared dir: %s (%d bytes)",
-								remote, size)
-			mapping[raw] = remote
+				self._upload(local, content, remote)
+			ref = remote
 
-		return mapping
+		self._staged_includes[key] = ref
+		return ref
 
 	def stage_inputs(self) -> bool | None:
 		"""Upload everything the solver needs onto the executing machine.
 
 		Handles the ``*INCLUDE`` problem found during the remote spike: the
-		directives point at local absolute paths that cannot exist on the far
-		side, so any deck with an include fails remotely with an opaque
-		preprocessing error.  Targets are uploaded to the machine's shared
-		directory — once per machine, not once per job — and the directives
-		are rewritten to that absolute remote path.  See
-		:meth:`_stage_include_targets`.
+		directives point at local paths that cannot exist on the far side, so
+		any deck with an include fails remotely with an opaque preprocessing
+		error.  The whole tree is walked — see :meth:`_rewrite_deck` — and each
+		target is placed by tier: per-job files travel with the job, static
+		ones land in the machine's shared directory, once per machine rather
+		than once per job.  See :meth:`_stage_include`.
 
 		Returns
 		-------
@@ -272,8 +367,6 @@ class AbaqusRunner:
 		if not self.is_remote:
 			return None
 
-		from .remote_launch import find_includes, rewrite_includes
-
 		local_inp = self.ctx.inp_path
 		if not os.path.isfile(local_inp):
 			self.logger.error("Cannot stage: INP not found at %s", local_inp)
@@ -281,42 +374,15 @@ class AbaqusRunner:
 
 		self.backend.makedirs(self.exec_ctx.output_dir)
 
-		# Read as bytes, not text: Python's default encoding follows the
-		# machine's locale (GBK on a Chinese Windows), so a plain open() in
-		# text mode fails on any deck whose bytes that codec rejects — a
-		# UTF-8 BOM is enough.  latin-1 is the byte-preserving fallback, and
-		# *INCLUDE directives are ASCII either way.
-		with open(local_inp, 'rb') as f:
-			raw = f.read()
-		try:
-			text, encoding = raw.decode('utf-8'), 'utf-8'
-		except UnicodeDecodeError:
-			text, encoding = raw.decode('latin-1'), 'latin-1'
+		# Memoised per runner, i.e. per job: a file included twice in one deck
+		# uploads once.  Reuse *across* jobs is the shared dir's existence
+		# check, which is content-addressed and therefore survives the process.
+		self._staged_includes = {}
 
-		# Resolve and upload the *INCLUDE targets first, then rewrite the deck
-		# to point at wherever they ended up.  I/O stays out of the pure
-		# substitution helper.
-		source_dir = os.path.dirname(os.path.abspath(local_inp))
-		mapping = self._stage_include_targets(find_includes(text), source_dir)
-		if mapping is None:
+		ok, content = self._rewrite_deck(local_inp, ())
+		if not ok:
 			return False
-
-		flattened = rewrite_includes(text, mapping.get)
-
-		if flattened == text:
-			# Nothing rewritten — upload the original bytes untouched.
-			self.backend.put(local_inp, self.exec_ctx.inp_path)
-		else:
-			staged = local_inp + '.staged'
-			with open(staged, 'wb') as f:
-				f.write(flattened.encode(encoding))
-			try:
-				self.backend.put(staged, self.exec_ctx.inp_path)
-			finally:
-				try:
-					os.remove(staged)
-				except OSError:
-					pass
+		self._upload(local_inp, content, self.exec_ctx.inp_path)
 
 		if self.ctx.user_subroutine and os.path.isfile(self.ctx.user_subroutine):
 			base = os.path.basename(self.ctx.user_subroutine)
