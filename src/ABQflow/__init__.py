@@ -52,11 +52,18 @@ from .core.hosts import (
 	summarise_assignment,
 	total_capacity,
 )
-from .core.registry import PREPARATION_REGISTRY, build_workflow, register_preparation
+from .core.registry import (
+	EXTRACTION_REGISTRY,
+	PREPARATION_REGISTRY,
+	build_workflow,
+	register_extraction,
+	register_preparation,
+)
 from .core.runner import AbaqusRunner, CommandRecord, extract_json
-from .core.spec import HookSpec, JobSpec, PreparationSpec, SubroutineSpec
+from .core.spec import HOOK_SOURCES, HookSpec, JobSpec, PreparationSpec, SubroutineSpec
 from .core.status import JobStatus, JobStatusManager
 from .core.strategies import (
+	DatExtractionStrategy,
 	ExistingInpStrategy,
 	ExtractionStrategy,
 	InpModifyStrategy,
@@ -87,6 +94,8 @@ from .helpers.convert import (
 )
 
 __all__ = [
+	"EXTRACTION_REGISTRY",
+	"HOOK_SOURCES",
 	"PREPARATION_REGISTRY",
 	"RESULT_BEGIN",
 	"RESULT_END",
@@ -95,6 +104,7 @@ __all__ = [
 	"AbaqusRunner",
 	"BatchAbaqusProcessor",
 	"CommandRecord",
+	"DatExtractionStrategy",
 	# Core — execution backends (remote is opt-in)
 	"ExecResult",
 	"ExecutionBackend",
@@ -150,6 +160,7 @@ __all__ = [
 	"parse_sta",
 	# Core — resource planning
 	"plan_parallelism",
+	"register_extraction",
 	"register_preparation",
 	"resolve_sidecar",
 	"sanitize_job_name",

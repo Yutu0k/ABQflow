@@ -11,6 +11,11 @@ import warnings
 from dataclasses import dataclass, field
 
 
+# Artifacts a post-extraction hook can read.  Module-level rather than a class
+# attribute: an annotated attribute on a dataclass becomes a field.
+HOOK_SOURCES = ('odb', 'dat')
+
+
 @dataclass
 class HookSpec:
 	"""Description of one extraction/pre-extraction hook script and its tasks.
@@ -22,9 +27,26 @@ class HookSpec:
 	tasks : list[dict]
 		List of task descriptors; each dict typically contains
 		``result_name``, ``script_path``, and task-specific parameters.
+	source : str
+		Which artifact the hook reads — ``'odb'`` (default) or ``'dat'``.
+		Consulted for ``post_extraction`` only; ``pre_extraction`` always
+		reads the INP through the CAE kernel.
+
+		``'dat'`` selects
+		:class:`~ABQflow.core.strategies.DatExtractionStrategy`, which runs
+		the hook under the host Python instead of ``abaqus python``: a
+		``.dat`` is plain text, so reading it needs neither the solver nor a
+		license token.  Use it for values written by ``*NODE PRINT`` /
+		``*EL PRINT`` when the ODB is too large to open.
 	"""
 	script_path: str
 	tasks: list[dict] = field(default_factory=list)
+	source: str = 'odb'
+
+	def __post_init__(self):
+		if self.source not in HOOK_SOURCES:
+			raise ValueError(
+				f"HookSpec.source must be one of {HOOK_SOURCES}; got '{self.source}'.")
 
 
 @dataclass
@@ -117,7 +139,10 @@ class JobSpec:
 	pre_extraction : list[HookSpec]
 		Hooks run *before* the solver (e.g. model property extraction).
 	post_extraction : list[HookSpec]
-		Hooks run *after* the solver (e.g. ODB result extraction).
+		Hooks run *after* the solver.  Each entry's
+		:attr:`HookSpec.source` picks the artifact it reads — ``'odb'``
+		(default) or ``'dat'`` — and hooks execute in declaration order
+		whether or not they read the same one.
 	subroutine : SubroutineSpec or None
 		User subroutine to compile and pass via ``user=`` to the solver
 		(modular workflow only; ignored for ``workflow='monolithic'``).

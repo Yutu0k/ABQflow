@@ -592,19 +592,27 @@ class BatchAbaqusProcessor:
 				cmds.append(CommandRecord('solver', AbaqusRunner.build_solver_command(ctx), out_dir))
 
 			# Hook commands — pre-extraction needs the CAE kernel (mdb), like
-			# ModelPropertiesExtractionStrategy; post-extraction only needs
-			# odbAccess, like OdbExtractionStrategy.
+			# ModelPropertiesExtractionStrategy; post-extraction reads either
+			# the ODB via odbAccess (OdbExtractionStrategy) or the plain-text
+			# .dat under the host Python (DatExtractionStrategy).
 			for hook in spec.pre_extraction or []:
 				cmd = AbaqusRunner.build_script_command(
 					hook.script_path, needs_cae_kernel=True,
 					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy)
-				cmd += ['--job_name', spec.job_name, '--tasks_json', '<generated-at-runtime>']
+				cmd += ['--inp_path', ctx.inp_path,
+						'--job_name', spec.job_name,
+						'--tasks_json', '<generated-at-runtime>']
 				cmds.append(CommandRecord(f'hook:{hook.script_path}', cmd, out_dir))
 			for hook in spec.post_extraction or []:
+				is_dat = (hook.source == 'dat')
 				cmd = AbaqusRunner.build_script_command(
 					hook.script_path, needs_cae_kernel=False,
-					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy)
-				cmd += ['--job_name', spec.job_name, '--tasks_json', '<generated-at-runtime>']
+					abaqus_exe=self.abaqus_exe, has_abqpy=has_abqpy,
+					interpreter='host' if is_dat else 'abaqus')
+				cmd += ['--dat_path' if is_dat else '--odb_path',
+						ctx.dat_path if is_dat else ctx.odb_path,
+						'--job_name', spec.job_name,
+						'--tasks_json', '<generated-at-runtime>']
 				cmds.append(CommandRecord(f'hook:{hook.script_path}', cmd, out_dir))
 
 			# Monolithic workflow

@@ -3766,4 +3766,8 @@ _PickedSurf4, P, -{{load_magnitude}}
 ** HISTORY OUTPUT: H-Output-1
 ** 
 *Output, history, variable=PRESELECT
+
+*EL PRINT, ELSET=ALL, FREQUENCY=9999, POSITION=INTEGRATION POINTS, SUMMARY=YES
+MISES
+
 *End Step

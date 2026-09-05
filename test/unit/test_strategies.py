@@ -10,12 +10,15 @@ Run: pytest test/unit/test_strategies.py -v
 """
 
 import os
+import shutil
+import sys
 
 import pytest
 
 from ABQflow import (
 	AbaqusCalculation,
 	AbaqusRunner,
+	DatExtractionStrategy,
 	HookSpec,
 	JobContext,
 	JobSpec,
@@ -25,10 +28,15 @@ from ABQflow import (
 	OdbExtractionStrategy,
 	PreparationSpec,
 	PreparationStrategy,
+	RecordingBackend,
 	SubroutineCompileStrategy,
 	SubroutineSpec,
 	build_workflow,
 )
+
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_DAT_HOOK = os.path.join(_REPO, 'examples', 'extraction_scripts', 'get_dat_results.py')
+_DAT_FIXTURE = os.path.join(_REPO, 'test', 'fixtures', 'dat', 'el_print_mixed.dat')
 
 
 class _FakePrep(PreparationStrategy):
@@ -220,3 +228,129 @@ def test_subroutine_compile_strategy_failure_stops_pipeline(tmp_path, dummy_logg
 	results = wf.execute(ctx, runner, dummy_logger)
 	assert results['status'] == JobStatus.SUBROUTINE_COMPILE_FAILED
 	assert not os.path.isfile(ctx.inp_path)  # preparation never ran
+
+
+# ============================================================
+# HookSpec.source -> extraction strategy wiring
+# ============================================================
+
+def _spec(post_extraction):
+	return JobSpec('j', preparation=PreparationSpec(kind='existing_inp',
+													source_path='d.inp'),
+					post_extraction=post_extraction)
+
+
+def test_build_workflow_all_odb_hooks_stay_one_strategy():
+	"""Regression guard: grouping by source must not change specs that predate it."""
+	wf = build_workflow(_spec([HookSpec('a.py', [{'result_name': 'a'}]),
+								HookSpec('b.py', [{'result_name': 'b'}])]))
+	assert len(wf.post_extraction_strategies) == 1
+	strategy = wf.post_extraction_strategies[0]
+	assert isinstance(strategy, OdbExtractionStrategy)
+	assert [h.script_path for h in strategy.hooks] == ['a.py', 'b.py']
+
+
+def test_build_workflow_groups_consecutive_dat_hooks():
+	wf = build_workflow(_spec([HookSpec('d1.py', [{'result_name': 'a'}], source='dat'),
+								HookSpec('d2.py', [{'result_name': 'b'}], source='dat')]))
+	assert len(wf.post_extraction_strategies) == 1
+	strategy = wf.post_extraction_strategies[0]
+	assert isinstance(strategy, DatExtractionStrategy)
+	assert [h.script_path for h in strategy.hooks] == ['d1.py', 'd2.py']
+
+
+def test_build_workflow_preserves_declaration_order_when_sources_are_mixed():
+	"""Bucketing would reorder the user's hooks; consecutive runs do not.
+
+	Order is observable — a later hook can overwrite an earlier result name.
+	"""
+	wf = build_workflow(_spec([
+		HookSpec('odb1.py', [{'result_name': 'a'}]),
+		HookSpec('dat1.py', [{'result_name': 'b'}], source='dat'),
+		HookSpec('odb2.py', [{'result_name': 'c'}]),
+	]))
+	assert [type(s) for s in wf.post_extraction_strategies] == [
+		OdbExtractionStrategy, DatExtractionStrategy, OdbExtractionStrategy]
+	assert [s.hooks[0].script_path for s in wf.post_extraction_strategies] == [
+		'odb1.py', 'dat1.py', 'odb2.py']
+
+
+def test_build_workflow_without_post_extraction_has_no_strategies():
+	assert build_workflow(_spec([])).post_extraction_strategies == []
+
+
+# ============================================================
+# DatExtractionStrategy
+# ============================================================
+
+def test_dat_extraction_missing_dat_fails_every_task(tmp_path, dummy_logger):
+	out_dir = str(tmp_path / 'jobD1')
+	os.makedirs(out_dir, exist_ok=True)
+	ctx = JobContext(job_name='jobD1', output_dir=out_dir, cpus=1)
+	runner = AbaqusRunner(ctx, dummy_logger, record_only=True)
+	post = [DatExtractionStrategy([HookSpec('dat_hook.py',
+											[{'result_name': 'u2'}], source='dat')])]
+	wf = ModularWorkflowStrategy(_FakePrep(), [], post)
+
+	results, _sm = wf.extract_only(ctx, runner, dummy_logger)
+	assert results['status'] == JobStatus.EXTRACTION_FAILED
+	assert results['u2'] is None
+
+
+def test_dat_extraction_uses_the_host_interpreter(tmp_path, dummy_logger):
+	"""No Abaqus in the command line at all — that is the point of source='dat'."""
+	out_dir = str(tmp_path / 'jobD2')
+	os.makedirs(out_dir, exist_ok=True)
+	ctx = JobContext(job_name='jobD2', output_dir=out_dir, cpus=1,
+					abaqus_exe='abaqus')
+	shutil.copy2(_DAT_FIXTURE, ctx.dat_path)
+	runner = AbaqusRunner(ctx, dummy_logger, record_only=True)
+
+	DatExtractionStrategy([HookSpec(_DAT_HOOK, [{'result_name': 'u2'}],
+									source='dat')]).extract(ctx, runner, dummy_logger)
+
+	cmd = runner.command_log[-1].cmd
+	assert cmd[0] == sys.executable
+	assert 'abaqus' not in cmd
+	assert cmd[cmd.index('--dat_path') + 1] == ctx.dat_path
+
+
+def test_dat_extraction_end_to_end_without_abaqus(tmp_path, dummy_logger):
+	out_dir = str(tmp_path / 'jobD3')
+	os.makedirs(out_dir, exist_ok=True)
+	ctx = JobContext(job_name='jobD3', output_dir=out_dir, cpus=1)
+	shutil.copy2(_DAT_FIXTURE, ctx.dat_path)
+	runner = AbaqusRunner(ctx, dummy_logger)
+	post = [DatExtractionStrategy([HookSpec(_DAT_HOOK, [
+		{'result_name': 'max_stress_mises'},
+		{'result_name': 'mises_field', 'output': 'file'},
+	], source='dat')])]
+	wf = ModularWorkflowStrategy(_FakePrep(), [], post)
+
+	results, _sm = wf.extract_only(ctx, runner, dummy_logger)
+	assert results['status'] == JobStatus.COMPLETED
+	assert results['max_stress_mises'] == pytest.approx(4473.0)
+	assert results['mises_field']['shape'] == [13, 3]
+	assert os.path.isfile(os.path.join(out_dir, 'jobD3_mises_field.csv'))
+
+
+def test_dat_extraction_fetches_the_dat_before_parsing_it(tmp_path, dummy_logger):
+	"""On a remote backend the .dat lives there; it must come home first, and
+	the hook must then run *here* rather than on the solver machine."""
+	out_dir = str(tmp_path / 'jobD4')
+	os.makedirs(out_dir, exist_ok=True)
+	ctx = JobContext(job_name='jobD4', output_dir=out_dir, cpus=1)
+
+	backend = RecordingBackend(work_root=str(tmp_path / 'remote'))
+	runner = AbaqusRunner(ctx, dummy_logger, backend=backend)
+	# Seed the remote in-memory filesystem with the solver's .dat.
+	backend.put(_DAT_FIXTURE, runner._remote_path(ctx.dat_path))
+	assert not os.path.exists(ctx.dat_path)
+
+	results = DatExtractionStrategy([HookSpec(_DAT_HOOK, [
+		{'result_name': 'max_stress_mises'},
+	], source='dat')]).extract(ctx, runner, dummy_logger)
+
+	assert os.path.isfile(ctx.dat_path)                  # fetched
+	assert results['max_stress_mises'] == pytest.approx(4473.0)
+	assert backend.command_log == []                     # nothing ran remotely

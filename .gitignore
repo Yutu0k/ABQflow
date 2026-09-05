@@ -28,6 +28,10 @@ __pycache__/
 *.deps
 *.odb
 *.log
+
+# ...but datkit's parser fixtures are source, not solver output: they are
+# hand-written miniatures whose exact whitespace is the thing under test.
+!test/fixtures/dat/*.dat
 abaqus.rpy.[0-9]*
 abaqus.rpy
 
