@@ -278,7 +278,7 @@
 
 
 <div class="viewcode-block" id="physical_cores">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.physical_cores">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.physical_cores">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">physical_cores</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Physical core count of *this* machine, with a safe fallback.</span>
 
@@ -299,7 +299,7 @@
 
 
 <div class="viewcode-block" id="solver_tokens">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.solver_tokens">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.solver_tokens">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">solver_tokens</span><span class="p">(</span><span class="n">n_cpus</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Estimate Abaqus license tokens needed for *n_cpus* cores.</span>
 
@@ -313,7 +313,7 @@
 
 
 <div class="viewcode-block" id="HostSpec">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HostSpec</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""A machine that can execute Abaqus jobs.</span>
@@ -353,7 +353,11 @@
 <span class="sd">		which is what keeps a homogeneous batch simple.</span>
 <span class="sd">	cpus_total : int or None</span>
 <span class="sd">		Physical cores.  Used to derive :meth:`capacity` when</span>
-<span class="sd">		*max_concurrent* is not given.</span>
+<span class="sd">		*max_concurrent* is not given, and to report CPU oversubscription.</span>
+<span class="sd">		``None`` enables probe: the local machine is read directly, and</span>
+<span class="sd">		a remote machine is probed over SSH once per batch</span>
+<span class="sd">		(:meth:`~ABQflow.core.backends.base.ExecutionBackend.probe_cores`).</span>
+<span class="sd">		Setting it explicitly skips the probe.</span>
 <span class="sd">	license_tokens : int or None</span>
 <span class="sd">		Token budget for this machine.  A **hard** cap on concurrency —</span>
 <span class="sd">		Abaqus refuses to start a job it cannot license, whereas</span>
@@ -443,7 +447,7 @@
 			<span class="p">)</span>
 
 <div class="viewcode-block" id="HostSpec.local">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.local">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.local">[docs]</a>
 	<span class="nd">@classmethod</span>
 	<span class="k">def</span><span class="w"> </span><span class="nf">local</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">'local'</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HostSpec</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""This machine, as a pool member.</span>
@@ -485,7 +489,7 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_root</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">/'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\\</span><span class="s1">_abqflow_shared'</span>
 
 <div class="viewcode-block" id="HostSpec.job_dir">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.job_dir">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.job_dir">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">job_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Working directory for *job_name* on this machine.</span>
 
@@ -497,14 +501,14 @@
 
 
 <div class="viewcode-block" id="HostSpec.resolved_cpus">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.resolved_cpus">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.resolved_cpus">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">resolved_cpus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_default</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""``cpus=`` for jobs on this machine, falling back to the batch value."""</span>
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_per_job</span> <span class="k">else</span> <span class="n">batch_default</span></div>
 
 
 <div class="viewcode-block" id="HostSpec.resolved_abaqus_exe">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.resolved_abaqus_exe">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.resolved_abaqus_exe">[docs]</a>
 	<span class="k">def</span><span class="w"> </span><span class="nf">resolved_abaqus_exe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_default</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Abaqus command for this machine, falling back to the batch value.</span>
 
@@ -514,9 +518,39 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">abaqus_exe</span> <span class="ow">or</span> <span class="n">batch_default</span></div>
 
 
+<div class="viewcode-block" id="HostSpec.resolved_cores">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.resolved_cores">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">resolved_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Physical cores on this machine, or ``None`` when unknown.</span>
+
+<span class="sd">		Order: an explicit *cpus_total* always wins, then a value *probed*</span>
+<span class="sd">		from the machine itself, then — for the local host only — a direct</span>
+<span class="sd">		measurement.  A remote host with neither a configured nor a probed</span>
+<span class="sd">		count is genuinely unknown, and saying so beats guessing.</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_total</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_total</span>
+		<span class="k">if</span> <span class="n">probed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">probed</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_remote</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">physical_cores</span><span class="p">()</span>
+		<span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="HostSpec.usable_cores">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.usable_cores">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">usable_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">probed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Cores available to jobs, i.e. :meth:`resolved_cores` less the reserve."""</span>
+		<span class="n">total</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_cores</span><span class="p">(</span><span class="n">probed</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserve_cores</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="HostSpec.capacity">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.capacity">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.capacity">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+				<span class="n">probed_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""How many jobs may run here at once.</span>
 
 <span class="sd">		Resolution order:</span>
@@ -526,22 +560,28 @@
 <span class="sd">		   and cores advisory.</span>
 
 <span class="sd">		Always at least 1: a machine worth configuring can run one job.</span>
+
+<span class="sd">		Parameters</span>
+<span class="sd">		----------</span>
+<span class="sd">		batch_cpus_per_job : int</span>
+<span class="sd">			Batch default used when this host does not set ``cpus_per_job``.</span>
+<span class="sd">		probed_cores : int or None</span>
+<span class="sd">			Core count measured on the machine itself, used when</span>
+<span class="sd">			``cpus_total`` was left unset.  See :meth:`resolved_cores`.</span>
 <span class="sd">		"""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_concurrent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_concurrent</span>
 
 		<span class="n">cpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved_cpus</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">)</span>
 
-		<span class="c1"># For this machine the core count is knowable, so an unset cpus_total</span>
-		<span class="c1"># is measured rather than assumed — otherwise the local host would</span>
-		<span class="c1"># fall back to a capacity of 1 and be starved next to the remotes.</span>
-		<span class="n">total</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpus_total</span>
-		<span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_remote</span><span class="p">:</span>
-			<span class="n">total</span> <span class="o">=</span> <span class="n">physical_cores</span><span class="p">()</span>
+		<span class="c1"># An unset cpus_total is measured rather than assumed — otherwise a</span>
+		<span class="c1"># host would fall back to a capacity of 1 and be starved next to the</span>
+		<span class="c1"># others.  Local reads its own cores; remote is probed by the caller.</span>
+		<span class="n">usable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">usable_cores</span><span class="p">(</span><span class="n">probed_cores</span><span class="p">)</span>
 
 		<span class="n">by_cores</span> <span class="o">=</span> <span class="mi">1</span>
-		<span class="k">if</span> <span class="n">total</span><span class="p">:</span>
-			<span class="n">by_cores</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reserve_cores</span><span class="p">)</span> <span class="o">//</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cpus</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">usable</span><span class="p">:</span>
+			<span class="n">by_cores</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">usable</span> <span class="o">//</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cpus</span><span class="p">))</span>
 
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">license_tokens</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">return</span> <span class="n">by_cores</span>
@@ -550,8 +590,9 @@
 
 
 <div class="viewcode-block" id="HostSpec.allocation_weight">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostSpec.allocation_weight">[docs]</a>
-	<span class="k">def</span><span class="w"> </span><span class="nf">allocation_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostSpec.allocation_weight">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">allocation_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+						<span class="n">probed_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">		</span><span class="sd">"""Share of the batch this machine should receive.</span>
 
 <span class="sd">		An explicit *weight* wins.  Otherwise the machine's concurrency</span>
@@ -560,8 +601,50 @@
 <span class="sd">		"""</span>
 		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 			<span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
-		<span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">))</span></div>
+		<span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">,</span> <span class="n">probed_cores</span><span class="p">))</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="oversubscription_note">
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.oversubscription_note">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">oversubscription_note</span><span class="p">(</span><span class="n">host</span><span class="p">:</span> <span class="n">HostSpec</span><span class="p">,</span> <span class="n">concurrency</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+						<span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+						<span class="n">probed_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">	</span><span class="sd">"""Describe CPU oversubscription on *host*, or ``None`` when the work fits.</span>
+
+<span class="sd">	Cores are **advisory**, never a cap: a small job rarely saturates a core,</span>
+<span class="sd">	and Abaqus will happily run oversubscribed — only licence tokens can stop</span>
+<span class="sd">	it starting.  So this returns a message for the caller to log and then</span>
+<span class="sd">	proceed, matching what :func:`~ABQflow.core.abaqus_automation.plan_parallelism`</span>
+<span class="sd">	does for a host-less batch.  ``None`` is also returned when the core count</span>
+<span class="sd">	is unknown, since there is nothing to compare against.</span>
+
+<span class="sd">	Parameters</span>
+<span class="sd">	----------</span>
+<span class="sd">	host : HostSpec</span>
+<span class="sd">		Machine being checked.</span>
+<span class="sd">	concurrency : int</span>
+<span class="sd">		Jobs that will run there at once — normally :meth:`HostSpec.capacity`.</span>
+<span class="sd">	batch_cpus_per_job : int</span>
+<span class="sd">		Batch default used when *host* does not set ``cpus_per_job``.</span>
+<span class="sd">	probed_cores : int or None</span>
+<span class="sd">		Core count measured on the machine, when ``cpus_total`` was not set.</span>
+<span class="sd">	"""</span>
+	<span class="n">usable</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">usable_cores</span><span class="p">(</span><span class="n">probed_cores</span><span class="p">)</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">usable</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">None</span>
+	<span class="n">cpus</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">resolved_cpus</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">)</span>
+	<span class="n">wanted</span> <span class="o">=</span> <span class="n">concurrency</span> <span class="o">*</span> <span class="n">cpus</span>
+	<span class="k">if</span> <span class="n">wanted</span> <span class="o">&lt;=</span> <span class="n">usable</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">None</span>
+	<span class="n">total</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">resolved_cores</span><span class="p">(</span><span class="n">probed_cores</span><span class="p">)</span>
+	<span class="k">return</span> <span class="p">(</span>
+		<span class="sa">f</span><span class="s2">"Host </span><span class="si">{</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> oversubscribes its CPUs: </span><span class="si">{</span><span class="n">concurrency</span><span class="si">}</span><span class="s2"> concurrent "</span>
+		<span class="sa">f</span><span class="s2">"job(s) x </span><span class="si">{</span><span class="n">cpus</span><span class="si">}</span><span class="s2"> cpus = </span><span class="si">{</span><span class="n">wanted</span><span class="si">}</span><span class="s2"> cores requested, but only </span><span class="si">{</span><span class="n">usable</span><span class="si">}</span><span class="s2"> "</span>
+		<span class="sa">f</span><span class="s2">"usable physical core(s) (</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> total - </span><span class="si">{</span><span class="n">host</span><span class="o">.</span><span class="n">reserve_cores</span><span class="si">}</span><span class="s2"> "</span>
+		<span class="sa">f</span><span class="s2">"reserved); proceeding anyway."</span>
+	<span class="p">)</span></div>
 
 
 
@@ -570,7 +653,7 @@
 
 
 <div class="viewcode-block" id="HostAssignment">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.HostAssignment">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.HostAssignment">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">HostAssignment</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""One job placed on one machine."""</span>
@@ -581,7 +664,7 @@
 
 
 <div class="viewcode-block" id="assign_hosts">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.assign_hosts">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.assign_hosts">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">assign_hosts</span><span class="p">(</span><span class="n">job_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">],</span>
 				<span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">]:</span>
 <span class="w">	</span><span class="sd">"""Distribute *job_names* over *hosts* in proportion to their weights.</span>
@@ -637,7 +720,7 @@
 
 
 <div class="viewcode-block" id="summarise_assignment">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.summarise_assignment">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.summarise_assignment">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_assignment</span><span class="p">(</span><span class="n">assignment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">HostSpec</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">	</span><span class="sd">"""Group an assignment into ``{host_name: [job_name, ...]}`` for logging."""</span>
 	<span class="n">grouped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -648,7 +731,7 @@
 
 
 <div class="viewcode-block" id="total_capacity">
-<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.hosts.total_capacity">[docs]</a>
+<a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.total_capacity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">total_capacity</span><span class="p">(</span><span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">HostSpec</span><span class="p">],</span> <span class="n">batch_cpus_per_job</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">	</span><span class="sd">"""Sum of every machine's concurrency capacity."""</span>
 	<span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">capacity</span><span class="p">(</span><span class="n">batch_cpus_per_job</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">)</span></div>

@@ -530,19 +530,68 @@ is data, returned in <a class="reference internal" href="#ABQflow.core.backends.
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="ABQflow.core.backends.base.ExecutionBackend.wait">
-<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.base.ExecutionBackend.wait" title="Link to this definition">¶</a></dt>
-<dd><p>Block until <em>handle</em> finishes or <em>timeout_s</em> elapses.</p>
-<p>The default polls <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.poll" title="ABQflow.core.backends.base.ExecutionBackend.poll"><code class="xref py py-meth docutils literal notranslate"><span class="pre">poll()</span></code></a> with exponential backoff, which is what
-a remote backend needs — the answer lives in a file on another
-machine.  <code class="xref py py-class docutils literal notranslate"><span class="pre">LocalBackend</span></code> overrides this to wait on the real
-process handle instead, so running locally keeps its immediate
-wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
+<dt class="sig sig-object py" id="ABQflow.core.backends.base.ExecutionBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.base.ExecutionBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the launched process still exists on the executing machine.</p>
 <section id="returns">
 <h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
 <dl class="simple">
+<dt>bool or None</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when liveness cannot be
+determined (no PID was reported, or the query itself failed).
+<code class="docutils literal notranslate"><span class="pre">None</span></code> must never be read as “dead” — an unanswerable question
+is not a negative answer, and killing a healthy multi-hour job
+over a transient query failure would be far worse than waiting.</p>
+</dd>
+</dl>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.base.ExecutionBackend.wait">
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settle_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.base.ExecutionBackend.wait" title="Link to this definition">¶</a></dt>
+<dd><p>Block until <em>handle</em> finishes, dies, or <em>timeout_s</em> elapses.</p>
+<p>Two independent signals are consulted, because neither alone is
+sufficient:</p>
+<p><strong>The rc sentinel</strong> is authoritative for <em>completion</em> — the launcher
+writes it only after the solver has exited — but it says nothing when
+the process is killed before reaching that line (a reboot, an OOM
+kill, someone else’s <code class="docutils literal notranslate"><span class="pre">taskkill</span></code>).  On its own it would leave the
+poll loop waiting out the entire timeout for a job that died minutes
+in, which is precisely the wrong trade for jobs measured in hours.</p>
+<p><strong>Process liveness</strong> covers that gap, and deliberately does <em>not</em>
+impose a deadline: a job that is still running is still running, no
+matter how long it has taken.  A single direct-solver factorization
+can occupy an hour writing nothing at all, so elapsed time and file
+growth are both useless as health signals here — only the process
+itself is trustworthy.</p>
+<p>The two race: the solver can exit between the rc read and the
+liveness check, so an apparent death is confirmed by re-reading the
+sentinel after <em>settle_s</em> rather than reported immediately.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>timeout_s<span class="classifier">float or None</span></dt><dd><p>Wall-clock cap.  <code class="docutils literal notranslate"><span class="pre">None</span></code> means none — with liveness detection
+in place that is a reasonable default for long solves, since a
+dead job is caught within one poll interval regardless.</p>
+</dd>
+<dt>settle_s<span class="classifier">float</span></dt><dd><p>Grace given to a just-finished launcher to flush its sentinel
+before “the process is gone” is treated as a death.</p>
+</dd>
+</dl>
+</section>
+<section id="id2">
+<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<dl class="simple">
 <dt>tuple[str, int | None, float]</dt><dd><p><code class="docutils literal notranslate"><span class="pre">(verdict,</span> <span class="pre">returncode,</span> <span class="pre">elapsed)</span></code> with <em>verdict</em> one of
-<code class="docutils literal notranslate"><span class="pre">'finished'</span></code> / <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">'finished'</span></code> / <code class="docutils literal notranslate"><span class="pre">'died'</span></code> / <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
 </dd>
 </dl>
 </section>
@@ -553,6 +602,7 @@ wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
 <li><p><strong>timeout_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>max_interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>settle_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -681,6 +731,22 @@ wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.base.ExecutionBackend.probe_cores">
+<span class="sig-name descname"><span class="pre">probe_cores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.probe_cores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.base.ExecutionBackend.probe_cores" title="Link to this definition">¶</a></dt>
+<dd><p>Physical core count of the executing machine, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown.</p>
+<p>Only ever advisory: it fills in an unset <code class="docutils literal notranslate"><span class="pre">HostSpec.cpus_total</span></code> so a
+pooled batch can size concurrency and report oversubscription for a
+remote machine the same way it already does for the local one.  A
+backend that cannot answer returns <code class="docutils literal notranslate"><span class="pre">None</span></code> rather than guessing —
+the caller then asks the user for <code class="docutils literal notranslate"><span class="pre">cpus_total</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.base.ExecutionBackend.read_text">
 <span class="sig-name descname"><span class="pre">read_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bytes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">65536</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.read_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.base.ExecutionBackend.read_text" title="Link to this definition">¶</a></dt>
 <dd><p>Read a small file on the executing machine, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if absent.</p>
@@ -736,8 +802,8 @@ path-joining bugs are actually caught.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.local.</span></span><span class="sig-name descname"><span class="pre">LocalBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.LocalBackend" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend" title="ABQflow.core.backends.base.ExecutionBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionBackend</span></code></a></p>
 <p>Execute on this machine via <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#module-subprocess" title="(in Python v3.14)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">subprocess</span></code></a>.</p>
-<section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>work_root<span class="classifier">str or None</span></dt><dd><p>When given, contexts are remapped to <code class="docutils literal notranslate"><span class="pre">&lt;work_root&gt;/&lt;job_name&gt;</span></code>
 instead of running in place.  Used by tests to exercise the staging
@@ -774,6 +840,18 @@ the remote ones.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.local.LocalBackend.probe_cores">
+<span class="sig-name descname"><span class="pre">probe_cores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.probe_cores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.LocalBackend.probe_cores" title="Link to this definition">¶</a></dt>
+<dd><p>Physical cores on this machine — the same measurement a host-less
+batch has always used, so both paths report the same number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -837,8 +915,25 @@ written so both backends expose the same completion signal.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.local.LocalBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.LocalBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the launched process is still running.</p>
+<p>Answered from the live <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Popen</span></code></a> when this backend
+started it.  Without one — a resumed session, say — liveness is
+genuinely unknown, and <code class="docutils literal notranslate"><span class="pre">None</span></code> says so rather than guessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.local.LocalBackend.wait">
-<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.LocalBackend.wait" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settle_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.LocalBackend.wait" title="Link to this definition">¶</a></dt>
 <dd><p>Block on the real process handle rather than polling a file.</p>
 <p>Locally we own a live <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Popen</span></code></a>, so waiting on it
 returns the instant the solver exits.  Falling back to the base
@@ -851,6 +946,7 @@ per job for no benefit.</p>
 <li><p><strong>timeout_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>max_interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>settle_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1049,8 +1145,8 @@ the caller can report it verbatim.</p>
 <span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.local.</span></span><span class="sig-name descname"><span class="pre">wait_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#wait_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.local.wait_for" title="Link to this definition">¶</a></dt>
 <dd><p>Poll <em>handle</em> until it finishes or <em>timeout_s</em> elapses.</p>
 <p>Shared by both backends so the completion semantics cannot drift.</p>
-<section id="id2">
-<h3>Returns<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<section id="id4">
+<h3>Returns<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>tuple[str, int | None, float]</dt><dd><p><code class="docutils literal notranslate"><span class="pre">(verdict,</span> <span class="pre">returncode,</span> <span class="pre">elapsed)</span></code> where <em>verdict</em> is <code class="docutils literal notranslate"><span class="pre">'finished'</span></code>
 or <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
@@ -1082,11 +1178,11 @@ loop, fetch, diagnose — is exercisable in a unit test.</p>
 dry-run is useful to users for the same reason <code class="docutils literal notranslate"><span class="pre">record_only</span></code> is.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.recording.</span></span><span class="sig-name descname"><span class="pre">RecordingBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'recording'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.recording.</span></span><span class="sig-name descname"><span class="pre">RecordingBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'recording'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alive_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend" title="ABQflow.core.backends.base.ExecutionBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionBackend</span></code></a></p>
 <p>Record every command and file operation; execute nothing.</p>
-<section id="id3">
-<h3>Parameters<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id5">
+<h3>Parameters<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>work_root<span class="classifier">str or None</span></dt><dd><p>When set, contexts are remapped under it, so path mapping is
 exercised exactly as a remote backend would.</p>
@@ -1106,6 +1202,21 @@ means every poll reports success immediately.</p>
 into it and results fetched back.  True for any remote backend, and
 also for a <code class="xref py py-class docutils literal notranslate"><span class="pre">LocalBackend</span></code> given an explicit <code class="docutils literal notranslate"><span class="pre">work_root</span></code>.</p>
 </dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.command_log">
+<span class="sig-name descname"><span class="pre">command_log</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.CommandRecord" title="ABQflow.core.runner.CommandRecord"><span class="pre">CommandRecord</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.command_log" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.files">
+<span class="sig-name descname"><span class="pre">files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bytes" title="(in Python v3.14)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.files" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.fetched">
+<span class="sig-name descname"><span class="pre">fetched</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.fetched" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.map_context">
@@ -1179,6 +1290,20 @@ network.  Set <code class="docutils literal notranslate"><span class="pre">hook_
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.recording.RecordingBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.recording.RecordingBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Hand out the next scripted liveness answer; the last one persists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1359,6 +1484,7 @@ network.  Set <code class="docutils literal notranslate"><span class="pre">hook_
 <li><p><strong>poll_sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>hook_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>alive_sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -1386,8 +1512,8 @@ into a <code class="docutils literal notranslate"><span class="pre">ProcessPoolE
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.ssh.</span></span><span class="sig-name descname"><span class="pre">SshBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/ssh.html#SshBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ssh.SshBackend" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend" title="ABQflow.core.backends.base.ExecutionBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionBackend</span></code></a></p>
 <p>Execute on a remote Windows machine described by a <code class="xref py py-class docutils literal notranslate"><span class="pre">HostSpec</span></code>.</p>
-<section id="id4">
-<h3>Parameters<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id6">
+<h3>Parameters<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>host<span class="classifier">HostSpec</span></dt><dd><p>Target machine.  Must have <code class="docutils literal notranslate"><span class="pre">hostname</span></code> and <code class="docutils literal notranslate"><span class="pre">work_root</span></code> set.</p>
 </dd>
@@ -1453,6 +1579,25 @@ derived path on <code class="xref py py-class docutils literal notranslate"><spa
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="ABQflow.core.html#ABQflow.core.context.JobContext" title="ABQflow.core.context.JobContext"><em>JobContext</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.ssh.SshBackend.probe_cores">
+<span class="sig-name descname"><span class="pre">probe_cores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/ssh.html#SshBackend.probe_cores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ssh.SshBackend.probe_cores" title="Link to this definition">¶</a></dt>
+<dd><p>Physical cores on the remote machine, measured over SSH.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Win32_Processor.NumberOfCores</span></code> summed over sockets is the physical
+count, matching what <code class="docutils literal notranslate"><span class="pre">psutil.cpu_count(logical=False)</span></code> reports
+locally so the two paths are comparable.  <code class="docutils literal notranslate"><span class="pre">NUMBER_OF_PROCESSORS</span></code> is
+the fallback: it counts <em>logical</em> processors and so over-estimates on
+an SMT machine, which is the harmless direction — core counts are
+advisory here, and licence tokens are the hard cap.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> when neither answers, leaving the caller to insist on
+an explicit <code class="docutils literal notranslate"><span class="pre">HostSpec.cpus_total</span></code> rather than run on a guess.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1527,6 +1672,28 @@ losing the connection costs nothing but a retry.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.ssh.SshBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/ssh.html#SshBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ssh.SshBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the launcher process still exists on the remote machine.</p>
+<p>Queried with <code class="docutils literal notranslate"><span class="pre">tasklist</span> <span class="pre">/FI</span> <span class="pre">&quot;PID</span> <span class="pre">eq</span> <span class="pre">&lt;pid&gt;&quot;</span></code>, which prints a header
+and the matching row, or an “INFO: No tasks” line when nothing
+matches.  The PID is the <code class="docutils literal notranslate"><span class="pre">cmd.exe</span></code> running the launcher script, so
+its disappearance means the script will never reach the line that
+writes the rc sentinel — the job is over whether or not it succeeded.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> when the launcher reported no PID, or when the query
+itself fails: a connection hiccup must not be mistaken for a dead job
+and cut short a solve that has been running for hours.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1680,7 +1847,7 @@ unmodified <code class="docutils literal notranslate"><span class="pre">.sta</sp
 </section>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>host</strong> (<a class="reference internal" href="ABQflow.core.html#ABQflow.core.hosts.HostSpec" title="ABQflow.core.hosts.HostSpec"><em>HostSpec</em></a>)</p>
+<dd class="field-odd"><p><strong>host</strong> (<a class="reference internal" href="ABQflow.html#ABQflow.HostSpec" title="ABQflow.HostSpec"><em>HostSpec</em></a>)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1699,8 +1866,8 @@ a local-only installation without <code class="docutils literal notranslate"><sp
 <p>Deliberately shaped like <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.CompletedProcess" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">subprocess.CompletedProcess</span></code></a> — same
 three attribute names — so call sites in
 <a class="reference internal" href="ABQflow.core.html#ABQflow.core.runner.AbaqusRunner" title="ABQflow.core.runner.AbaqusRunner"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbaqusRunner</span></code></a> need no restructuring.</p>
-<section id="id5">
-<h3>Attributes<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Attributes<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>returncode<span class="classifier">int or None</span></dt><dd><p>Exit code; <code class="docutils literal notranslate"><span class="pre">None</span></code> when the command timed out or never launched.</p>
 </dd>
@@ -1829,6 +1996,31 @@ these first.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.ExecutionBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ExecutionBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the launched process still exists on the executing machine.</p>
+<section id="id8">
+<h3>Returns<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>bool or None</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code>/<code class="docutils literal notranslate"><span class="pre">False</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> when liveness cannot be
+determined (no PID was reported, or the query itself failed).
+<code class="docutils literal notranslate"><span class="pre">None</span></code> must never be read as “dead” — an unanswerable question
+is not a negative answer, and killing a healthy multi-hour job
+over a transient query failure would be far worse than waiting.</p>
+</dd>
+</dl>
+</section>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ABQflow.core.backends.ExecutionBackend.is_remote">
 <span class="sig-name descname"><span class="pre">is_remote</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#ABQflow.core.backends.ExecutionBackend.is_remote" title="Link to this definition">¶</a></dt>
@@ -1887,6 +2079,22 @@ changes at all, and <code class="xref py py-class docutils literal notranslate">
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.ExecutionBackend.probe_cores">
+<span class="sig-name descname"><span class="pre">probe_cores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.probe_cores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ExecutionBackend.probe_cores" title="Link to this definition">¶</a></dt>
+<dd><p>Physical core count of the executing machine, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown.</p>
+<p>Only ever advisory: it fills in an unset <code class="docutils literal notranslate"><span class="pre">HostSpec.cpus_total</span></code> so a
+pooled batch can size concurrency and report oversubscription for a
+remote machine the same way it already does for the local one.  A
+backend that cannot answer returns <code class="docutils literal notranslate"><span class="pre">None</span></code> rather than guessing —
+the caller then asks the user for <code class="docutils literal notranslate"><span class="pre">cpus_total</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2014,18 +2222,42 @@ is data, returned in <a class="reference internal" href="#ABQflow.core.backends.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.ExecutionBackend.wait">
-<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ExecutionBackend.wait" title="Link to this definition">¶</a></dt>
-<dd><p>Block until <em>handle</em> finishes or <em>timeout_s</em> elapses.</p>
-<p>The default polls <a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.poll" title="ABQflow.core.backends.ExecutionBackend.poll"><code class="xref py py-meth docutils literal notranslate"><span class="pre">poll()</span></code></a> with exponential backoff, which is what
-a remote backend needs — the answer lives in a file on another
-machine.  <a class="reference internal" href="#ABQflow.core.backends.LocalBackend" title="ABQflow.core.backends.LocalBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalBackend</span></code></a> overrides this to wait on the real
-process handle instead, so running locally keeps its immediate
-wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
-<section id="id6">
-<h3>Returns<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settle_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/base.html#ExecutionBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.ExecutionBackend.wait" title="Link to this definition">¶</a></dt>
+<dd><p>Block until <em>handle</em> finishes, dies, or <em>timeout_s</em> elapses.</p>
+<p>Two independent signals are consulted, because neither alone is
+sufficient:</p>
+<p><strong>The rc sentinel</strong> is authoritative for <em>completion</em> — the launcher
+writes it only after the solver has exited — but it says nothing when
+the process is killed before reaching that line (a reboot, an OOM
+kill, someone else’s <code class="docutils literal notranslate"><span class="pre">taskkill</span></code>).  On its own it would leave the
+poll loop waiting out the entire timeout for a job that died minutes
+in, which is precisely the wrong trade for jobs measured in hours.</p>
+<p><strong>Process liveness</strong> covers that gap, and deliberately does <em>not</em>
+impose a deadline: a job that is still running is still running, no
+matter how long it has taken.  A single direct-solver factorization
+can occupy an hour writing nothing at all, so elapsed time and file
+growth are both useless as health signals here — only the process
+itself is trustworthy.</p>
+<p>The two race: the solver can exit between the rc read and the
+liveness check, so an apparent death is confirmed by re-reading the
+sentinel after <em>settle_s</em> rather than reported immediately.</p>
+<section id="id9">
+<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>timeout_s<span class="classifier">float or None</span></dt><dd><p>Wall-clock cap.  <code class="docutils literal notranslate"><span class="pre">None</span></code> means none — with liveness detection
+in place that is a reasonable default for long solves, since a
+dead job is caught within one poll interval regardless.</p>
+</dd>
+<dt>settle_s<span class="classifier">float</span></dt><dd><p>Grace given to a just-finished launcher to flush its sentinel
+before “the process is gone” is treated as a death.</p>
+</dd>
+</dl>
+</section>
+<section id="id10">
+<h3>Returns<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>tuple[str, int | None, float]</dt><dd><p><code class="docutils literal notranslate"><span class="pre">(verdict,</span> <span class="pre">returncode,</span> <span class="pre">elapsed)</span></code> with <em>verdict</em> one of
-<code class="docutils literal notranslate"><span class="pre">'finished'</span></code> / <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">'finished'</span></code> / <code class="docutils literal notranslate"><span class="pre">'died'</span></code> / <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
 </dd>
 </dl>
 </section>
@@ -2036,6 +2268,7 @@ wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
 <li><p><strong>timeout_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>max_interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>settle_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2054,8 +2287,8 @@ wake-up rather than inheriting up to <em>max_interval</em> of poll latency.</p>
 <p>Plain data only, so a poll loop can be resumed after a dropped
 connection: every completion signal lives in a file on the executing
 machine, never in this object.</p>
-<section id="id7">
-<h3>Attributes<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="id11">
+<h3>Attributes<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>job_name<span class="classifier">str</span></dt><dd><p>Abaqus job name.</p>
 </dd>
@@ -2140,8 +2373,8 @@ does not exist for the first few seconds after launch.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.</span></span><span class="sig-name descname"><span class="pre">LocalBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.LocalBackend" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend" title="ABQflow.core.backends.base.ExecutionBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionBackend</span></code></a></p>
 <p>Execute on this machine via <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#module-subprocess" title="(in Python v3.14)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">subprocess</span></code></a>.</p>
-<section id="id8">
-<h3>Parameters<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<section id="id12">
+<h3>Parameters<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>work_root<span class="classifier">str or None</span></dt><dd><p>When given, contexts are remapped to <code class="docutils literal notranslate"><span class="pre">&lt;work_root&gt;/&lt;job_name&gt;</span></code>
 instead of running in place.  Used by tests to exercise the staging
@@ -2208,6 +2441,23 @@ untouched, which is what production uses.</p>
 </dl>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.LocalBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.LocalBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Whether the launched process is still running.</p>
+<p>Answered from the live <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Popen</span></code></a> when this backend
+started it.  Without one — a resumed session, say — liveness is
+genuinely unknown, and <code class="docutils literal notranslate"><span class="pre">None</span></code> says so rather than guessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="ABQflow.core.backends.LocalBackend.is_remote">
 <span class="sig-name descname"><span class="pre">is_remote</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#ABQflow.core.backends.LocalBackend.is_remote" title="Link to this definition">¶</a></dt>
@@ -2264,6 +2514,18 @@ the remote ones.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.LocalBackend.probe_cores">
+<span class="sig-name descname"><span class="pre">probe_cores</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.probe_cores"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.LocalBackend.probe_cores" title="Link to this definition">¶</a></dt>
+<dd><p>Physical cores on this machine — the same measurement a host-less
+batch has always used, so both paths report the same number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2396,7 +2658,7 @@ written so both backends expose the same completion signal.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="ABQflow.core.backends.LocalBackend.wait">
-<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.LocalBackend.wait" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settle_s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#LocalBackend.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.LocalBackend.wait" title="Link to this definition">¶</a></dt>
 <dd><p>Block on the real process handle rather than polling a file.</p>
 <p>Locally we own a live <a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Popen</span></code></a>, so waiting on it
 returns the instant the solver exits.  Falling back to the base
@@ -2409,6 +2671,7 @@ per job for no benefit.</p>
 <li><p><strong>timeout_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 <li><p><strong>max_interval</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
+<li><p><strong>settle_s</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -2427,11 +2690,11 @@ per job for no benefit.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="ABQflow.core.backends.RecordingBackend">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.</span></span><span class="sig-name descname"><span class="pre">RecordingBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'recording'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.RecordingBackend" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.</span></span><span class="sig-name descname"><span class="pre">RecordingBackend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">work_root</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'recording'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alive_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.RecordingBackend" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend" title="ABQflow.core.backends.base.ExecutionBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExecutionBackend</span></code></a></p>
 <p>Record every command and file operation; execute nothing.</p>
-<section id="id9">
-<h3>Parameters<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<section id="id13">
+<h3>Parameters<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>work_root<span class="classifier">str or None</span></dt><dd><p>When set, contexts are remapped under it, so path mapping is
 exercised exactly as a remote backend would.</p>
@@ -2513,6 +2776,20 @@ means every poll reports success immediately.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ABQflow.core.backends.RecordingBackend.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">handle</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/recording.html#RecordingBackend.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.RecordingBackend.is_alive" title="Link to this definition">¶</a></dt>
+<dd><p>Hand out the next scripted liveness answer; the last one persists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>handle</strong> (<a class="reference internal" href="#ABQflow.core.backends.base.JobHandle" title="ABQflow.core.backends.base.JobHandle"><em>JobHandle</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a> | None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2719,6 +2996,7 @@ network.  Set <code class="docutils literal notranslate"><span class="pre">hook_
 <li><p><strong>poll_sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>hook_results</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>alive_sequence</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em> | </em><em>None</em><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2731,8 +3009,8 @@ network.  Set <code class="docutils literal notranslate"><span class="pre">hook_
 <p><code class="docutils literal notranslate"><span class="pre">None</span></code>, or a <a class="reference internal" href="ABQflow.core.html#ABQflow.core.hosts.HostSpec" title="ABQflow.core.hosts.HostSpec"><code class="xref py py-class docutils literal notranslate"><span class="pre">HostSpec</span></code></a> with no hostname,
 yields a <a class="reference internal" href="#ABQflow.core.backends.LocalBackend" title="ABQflow.core.backends.LocalBackend"><code class="xref py py-class docutils literal notranslate"><span class="pre">LocalBackend</span></code></a> — so the remote code path is unreachable
 unless a remote host is explicitly configured.</p>
-<section id="id10">
-<h3>Parameters<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<section id="id14">
+<h3>Parameters<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>host<span class="classifier">HostSpec or None</span></dt><dd><p>Target machine.</p>
 </dd>
@@ -2752,8 +3030,8 @@ unless a remote host is explicitly configured.</p>
 <span class="sig-prename descclassname"><span class="pre">ABQflow.core.backends.</span></span><span class="sig-name descname"><span class="pre">wait_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ABQflow/core/backends/local.html#wait_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ABQflow.core.backends.wait_for" title="Link to this definition">¶</a></dt>
 <dd><p>Poll <em>handle</em> until it finishes or <em>timeout_s</em> elapses.</p>
 <p>Shared by both backends so the completion semantics cannot drift.</p>
-<section id="id11">
-<h3>Returns<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<section id="id15">
+<h3>Returns<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
 <dl class="simple">
 <dt>tuple[str, int | None, float]</dt><dd><p><code class="docutils literal notranslate"><span class="pre">(verdict,</span> <span class="pre">returncode,</span> <span class="pre">elapsed)</span></code> where <em>verdict</em> is <code class="docutils literal notranslate"><span class="pre">'finished'</span></code>
 or <code class="docutils literal notranslate"><span class="pre">'timeout'</span></code>.</p>
@@ -2868,6 +3146,7 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.submit_detached"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.submit_detached()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.poll"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.poll()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.terminate"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.terminate()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.wait"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.wait()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.exists"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.makedirs()</span></code></a></li>
@@ -2877,6 +3156,7 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.glob_get"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.glob_get()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.remove"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.remove()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.close"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.close()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.probe_cores"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.probe_cores()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.read_text"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.read_text()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.base.ExecutionBackend.clear_sentinels"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.clear_sentinels()</span></code></a></li>
 </ul>
@@ -2888,9 +3168,11 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.name"><code class="docutils literal notranslate"><span class="pre">LocalBackend.name</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">LocalBackend.is_remote</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.map_context"><code class="docutils literal notranslate"><span class="pre">LocalBackend.map_context()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.probe_cores"><code class="docutils literal notranslate"><span class="pre">LocalBackend.probe_cores()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.run"><code class="docutils literal notranslate"><span class="pre">LocalBackend.run()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.submit_detached"><code class="docutils literal notranslate"><span class="pre">LocalBackend.submit_detached()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.poll"><code class="docutils literal notranslate"><span class="pre">LocalBackend.poll()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">LocalBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.wait"><code class="docutils literal notranslate"><span class="pre">LocalBackend.wait()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.terminate"><code class="docutils literal notranslate"><span class="pre">LocalBackend.terminate()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.local.LocalBackend.exists"><code class="docutils literal notranslate"><span class="pre">LocalBackend.exists()</span></code></a></li>
@@ -2911,10 +3193,14 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#module-ABQflow.core.backends.recording">ABQflow.core.backends.recording module</a><ul>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend"><code class="docutils literal notranslate"><span class="pre">RecordingBackend</span></code></a><ul>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.is_remote</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.command_log"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.command_log</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.files"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.files</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.fetched"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.fetched</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.map_context"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.map_context()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.run"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.run()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.submit_detached"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.submit_detached()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.poll"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.poll()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.terminate"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.terminate()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.exists"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.recording.RecordingBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.makedirs()</span></code></a></li>
@@ -2938,10 +3224,12 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.reconnect"><code class="docutils literal notranslate"><span class="pre">SshBackend.reconnect()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.close"><code class="docutils literal notranslate"><span class="pre">SshBackend.close()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.map_context"><code class="docutils literal notranslate"><span class="pre">SshBackend.map_context()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.probe_cores"><code class="docutils literal notranslate"><span class="pre">SshBackend.probe_cores()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.run"><code class="docutils literal notranslate"><span class="pre">SshBackend.run()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.run_powershell"><code class="docutils literal notranslate"><span class="pre">SshBackend.run_powershell()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.submit_detached"><code class="docutils literal notranslate"><span class="pre">SshBackend.submit_detached()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.poll"><code class="docutils literal notranslate"><span class="pre">SshBackend.poll()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">SshBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.terminate"><code class="docutils literal notranslate"><span class="pre">SshBackend.terminate()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.exists"><code class="docutils literal notranslate"><span class="pre">SshBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ssh.SshBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">SshBackend.makedirs()</span></code></a></li>
@@ -2969,11 +3257,13 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.exists"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.get"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.get()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.glob_get"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.glob_get()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.is_remote</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.makedirs()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.map_context"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.map_context()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.name"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.name</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.poll"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.poll()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.probe_cores"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.probe_cores()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.put"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.put()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.put_text"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.put_text()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.ExecutionBackend.read_text"><code class="docutils literal notranslate"><span class="pre">ExecutionBackend.read_text()</span></code></a></li>
@@ -3001,11 +3291,13 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.exists"><code class="docutils literal notranslate"><span class="pre">LocalBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.get"><code class="docutils literal notranslate"><span class="pre">LocalBackend.get()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.glob_get"><code class="docutils literal notranslate"><span class="pre">LocalBackend.glob_get()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">LocalBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">LocalBackend.is_remote</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">LocalBackend.makedirs()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.map_context"><code class="docutils literal notranslate"><span class="pre">LocalBackend.map_context()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.name"><code class="docutils literal notranslate"><span class="pre">LocalBackend.name</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.poll"><code class="docutils literal notranslate"><span class="pre">LocalBackend.poll()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.probe_cores"><code class="docutils literal notranslate"><span class="pre">LocalBackend.probe_cores()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.put"><code class="docutils literal notranslate"><span class="pre">LocalBackend.put()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.put_text"><code class="docutils literal notranslate"><span class="pre">LocalBackend.put_text()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.LocalBackend.read_text"><code class="docutils literal notranslate"><span class="pre">LocalBackend.read_text()</span></code></a></li>
@@ -3022,6 +3314,7 @@ or <code class="docutils literal notranslate"><span class="pre">'timeout'</span>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.exists"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.exists()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.get"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.get()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.glob_get"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.glob_get()</span></code></a></li>
+<li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.is_alive"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.is_alive()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.is_remote"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.is_remote</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.makedirs"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.makedirs()</span></code></a></li>
 <li><a class="reference internal" href="#ABQflow.core.backends.RecordingBackend.map_context"><code class="docutils literal notranslate"><span class="pre">RecordingBackend.map_context()</span></code></a></li>

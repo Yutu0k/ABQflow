@@ -281,6 +281,11 @@
 <span class="n">_GRACE_MIN</span> <span class="o">=</span> <span class="mi">30</span>
 <span class="n">_GRACE_MAX</span> <span class="o">=</span> <span class="mi">300</span>
 
+<span class="c1">#: Return code the launcher writes when it cannot enter the working directory.</span>
+<span class="c1">#: Deliberately outside the range Abaqus itself uses, so the sentinel says</span>
+<span class="c1">#: *which* failure happened rather than just "non-zero".</span>
+<span class="n">WORKDIR_FAILED_RC</span> <span class="o">=</span> <span class="mi">250</span>
+
 
 <div class="viewcode-block" id="find_includes">
 <a class="viewcode-back" href="../../../source/ABQflow.core.html#ABQflow.core.remote_launch.find_includes">[docs]</a>
@@ -347,16 +352,35 @@
 <span class="sd">	   in it.  Wrapping the echo in a command block keeps any digit away from</span>
 <span class="sd">	   the redirection operator.  This was observed in practice, not theory.</span>
 <span class="sd">	"""</span>
+	<span class="n">base</span> <span class="o">=</span> <span class="n">work_dir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'</span><span class="se">\\</span><span class="s1">/'</span><span class="p">)</span>
+	<span class="n">rc_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1">.abqflow.rc'</span>
+	<span class="n">out_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="se">\\</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1">.abqflow.out'</span>
+
 	<span class="n">solver</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'call "</span><span class="si">{</span><span class="n">abaqus_exe</span><span class="si">}</span><span class="s1">" job=</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1"> input=</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1">.inp cpus=</span><span class="si">{</span><span class="n">cpus</span><span class="si">}</span><span class="s1">'</span>
 	<span class="k">if</span> <span class="n">user_subroutine</span><span class="p">:</span>
 		<span class="n">solver</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">' user="</span><span class="si">{</span><span class="n">user_subroutine</span><span class="si">}</span><span class="s1">"'</span>
-	<span class="n">solver</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">' interactive &gt; </span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1">.abqflow.out 2&gt;&amp;1'</span>
+	<span class="n">solver</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">' interactive &gt; "</span><span class="si">{</span><span class="n">out_file</span><span class="si">}</span><span class="s1">" 2&gt;&amp;1'</span>
 
+	<span class="c1"># `cd /d` is checked rather than assumed: if the working directory is</span>
+	<span class="c1"># missing or its drive is not mounted, an unguarded script would run the</span>
+	<span class="c1"># solver in whatever directory cmd happened to be in, and %ERRORLEVEL%</span>
+	<span class="c1"># would then describe the wrong thing entirely.  goto rather than a</span>
+	<span class="c1"># parenthesised block, because cmd parses a whole block up front and</span>
+	<span class="c1"># redirections inside one are easy to get subtly wrong.</span>
+	<span class="c1">#</span>
+	<span class="c1"># The sentinel and console-log paths are absolute for the same reason:</span>
+	<span class="c1"># they must land in the job directory no matter where cmd is standing.</span>
 	<span class="k">return</span> <span class="p">(</span>
 		<span class="s1">'@echo off</span><span class="se">\r\n</span><span class="s1">'</span>
-		<span class="sa">f</span><span class="s1">'cd /d "</span><span class="si">{</span><span class="n">work_dir</span><span class="si">}</span><span class="s1">"</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="sa">f</span><span class="s1">'cd /d "</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">"</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="s1">'if errorlevel 1 goto :abqflow_no_workdir</span><span class="se">\r\n</span><span class="s1">'</span>
 		<span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">solver</span><span class="si">}</span><span class="se">\r\n</span><span class="s1">'</span>
-		<span class="sa">f</span><span class="s1">'(echo %ERRORLEVEL%)&gt; </span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s1">.abqflow.rc</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="sa">f</span><span class="s1">'(echo %ERRORLEVEL%)&gt; "</span><span class="si">{</span><span class="n">rc_file</span><span class="si">}</span><span class="s1">"</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="s1">'exit /b 0</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="s1">':abqflow_no_workdir</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="sa">f</span><span class="s1">'(echo ABQFLOW: cannot enter working directory "</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s1">")&gt; "</span><span class="si">{</span><span class="n">out_file</span><span class="si">}</span><span class="s1">"</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="sa">f</span><span class="s1">'(echo </span><span class="si">{</span><span class="n">WORKDIR_FAILED_RC</span><span class="si">}</span><span class="s1">)&gt; "</span><span class="si">{</span><span class="n">rc_file</span><span class="si">}</span><span class="s1">"</span><span class="se">\r\n</span><span class="s1">'</span>
+		<span class="sa">f</span><span class="s1">'exit /b </span><span class="si">{</span><span class="n">WORKDIR_FAILED_RC</span><span class="si">}</span><span class="se">\r\n</span><span class="s1">'</span>
 	<span class="p">)</span></div>
 
 

@@ -269,6 +269,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">fnmatch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">posixpath</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">replace</span>
 
@@ -323,6 +324,7 @@
 		<span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_sftp</span> <span class="o">=</span> <span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># '' or '/', learned on first use</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># 0 once a probe has failed</span>
 
 	<span class="c1"># ---- connection ----</span>
 
@@ -434,6 +436,51 @@
 			<span class="n">cpus</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">resolved_cpus</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">cpus</span><span class="p">),</span>
 			<span class="n">user_subroutine</span><span class="o">=</span><span class="n">user_sub</span><span class="p">,</span>
 		<span class="p">)</span></div>
+
+
+	<span class="c1"># ---- machine facts ----</span>
+
+<div class="viewcode-block" id="SshBackend.probe_cores">
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.ssh.SshBackend.probe_cores">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">probe_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Physical cores on the remote machine, measured over SSH.</span>
+
+<span class="sd">		``Win32_Processor.NumberOfCores`` summed over sockets is the physical</span>
+<span class="sd">		count, matching what ``psutil.cpu_count(logical=False)`` reports</span>
+<span class="sd">		locally so the two paths are comparable.  ``NUMBER_OF_PROCESSORS`` is</span>
+<span class="sd">		the fallback: it counts *logical* processors and so over-estimates on</span>
+<span class="sd">		an SMT machine, which is the harmless direction — core counts are</span>
+<span class="sd">		advisory here, and licence tokens are the hard cap.</span>
+
+<span class="sd">		Returns ``None`` when neither answers, leaving the caller to insist on</span>
+<span class="sd">		an explicit ``HostSpec.cpus_total`` rather than run on a guess.</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cores</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cores</span> <span class="ow">or</span> <span class="kc">None</span>
+		<span class="n">script</span> <span class="o">=</span> <span class="p">(</span>
+			<span class="s2">"$n = 0</span><span class="se">\n</span><span class="s2">"</span>
+			<span class="s2">"try { $n = (Get-CimInstance Win32_Processor | "</span>
+			<span class="s2">"Measure-Object -Property NumberOfCores -Sum).Sum } catch { $n = 0 }</span><span class="se">\n</span><span class="s2">"</span>
+			<span class="s2">"if (-not $n) { $n = [int]$env:NUMBER_OF_PROCESSORS }</span><span class="se">\n</span><span class="s2">"</span>
+			<span class="s2">"Write-Output ([int]$n)</span><span class="se">\n</span><span class="s2">"</span>
+		<span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_cores</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c1"># provisional: a failed probe is not retried per job</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_powershell</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+		<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">'\d+'</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+					<span class="s2">"Could not read the core count of </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+					<span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">stderr</span> <span class="ow">or</span> <span class="n">res</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s1">''</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()[:</span><span class="mi">200</span><span class="p">])</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">_cores</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">())</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Host </span><span class="si">%s</span><span class="s2"> reports </span><span class="si">%d</span><span class="s2"> physical core(s)"</span><span class="p">,</span>
+							<span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cores</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cores</span> <span class="ow">or</span> <span class="kc">None</span></div>
 
 
 	<span class="c1"># ---- SFTP path convention ----</span>
@@ -567,6 +614,36 @@
 				<span class="k">raise</span>
 			<span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">rc_path</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
 		<span class="k">return</span> <span class="n">parse_rc_sentinel</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SshBackend.is_alive">
+<a class="viewcode-back" href="../../../../source/ABQflow.core.backends.html#ABQflow.core.backends.ssh.SshBackend.is_alive">[docs]</a>
+	<span class="k">def</span><span class="w"> </span><span class="nf">is_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle</span><span class="p">:</span> <span class="n">JobHandle</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">		</span><span class="sd">"""Whether the launcher process still exists on the remote machine.</span>
+
+<span class="sd">		Queried with ``tasklist /FI "PID eq &lt;pid&gt;"``, which prints a header</span>
+<span class="sd">		and the matching row, or an "INFO: No tasks" line when nothing</span>
+<span class="sd">		matches.  The PID is the ``cmd.exe`` running the launcher script, so</span>
+<span class="sd">		its disappearance means the script will never reach the line that</span>
+<span class="sd">		writes the rc sentinel — the job is over whether or not it succeeded.</span>
+
+<span class="sd">		Returns ``None`` when the launcher reported no PID, or when the query</span>
+<span class="sd">		itself fails: a connection hiccup must not be mistaken for a dead job</span>
+<span class="sd">		and cut short a solve that has been running for hours.</span>
+<span class="sd">		"""</span>
+		<span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">pid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s1">'tasklist'</span><span class="p">,</span> <span class="s1">'/FI'</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'PID eq </span><span class="si">{</span><span class="n">handle</span><span class="o">.</span><span class="n">pid</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span> <span class="s1">'/NH'</span><span class="p">],</span>
+					<span class="n">handle</span><span class="o">.</span><span class="n">work_dir</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="n">out</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">stdout</span> <span class="ow">or</span> <span class="s1">''</span>
+		<span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+			<span class="k">return</span> <span class="kc">True</span>
+		<span class="c1"># tasklist reports "INFO: No tasks are running..." on a filter miss,</span>
+		<span class="c1"># localised on a non-English Windows — so a *positive* PID match is</span>
+		<span class="c1"># the only thing read as alive, and anything else as gone.</span>
+		<span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="SshBackend.terminate">
