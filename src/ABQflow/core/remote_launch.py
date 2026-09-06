@@ -32,6 +32,11 @@ from .inp_include import INCLUDE_RE as _INCLUDE_RE
 _GRACE_MIN = 30
 _GRACE_MAX = 300
 
+#: Return code the launcher writes when it cannot enter the working directory.
+#: Deliberately outside the range Abaqus itself uses, so the sentinel says
+#: *which* failure happened rather than just "non-zero".
+WORKDIR_FAILED_RC = 250
+
 
 def find_includes(text: str) -> list[str]:
 	"""Return the raw ``INPUT=`` paths of every ``*INCLUDE`` in *text*."""
@@ -90,16 +95,35 @@ def build_launcher_bat(abaqus_exe: str, job_name: str, work_dir: str,
 	   in it.  Wrapping the echo in a command block keeps any digit away from
 	   the redirection operator.  This was observed in practice, not theory.
 	"""
+	base = work_dir.rstrip('\\/')
+	rc_file = f'{base}\\{job_name}.abqflow.rc'
+	out_file = f'{base}\\{job_name}.abqflow.out'
+
 	solver = f'call "{abaqus_exe}" job={job_name} input={job_name}.inp cpus={cpus}'
 	if user_subroutine:
 		solver += f' user="{user_subroutine}"'
-	solver += f' interactive > {job_name}.abqflow.out 2>&1'
+	solver += f' interactive > "{out_file}" 2>&1'
 
+	# `cd /d` is checked rather than assumed: if the working directory is
+	# missing or its drive is not mounted, an unguarded script would run the
+	# solver in whatever directory cmd happened to be in, and %ERRORLEVEL%
+	# would then describe the wrong thing entirely.  goto rather than a
+	# parenthesised block, because cmd parses a whole block up front and
+	# redirections inside one are easy to get subtly wrong.
+	#
+	# The sentinel and console-log paths are absolute for the same reason:
+	# they must land in the job directory no matter where cmd is standing.
 	return (
 		'@echo off\r\n'
-		f'cd /d "{work_dir}"\r\n'
+		f'cd /d "{base}"\r\n'
+		'if errorlevel 1 goto :abqflow_no_workdir\r\n'
 		f'{solver}\r\n'
-		f'(echo %ERRORLEVEL%)> {job_name}.abqflow.rc\r\n'
+		f'(echo %ERRORLEVEL%)> "{rc_file}"\r\n'
+		'exit /b 0\r\n'
+		':abqflow_no_workdir\r\n'
+		f'(echo ABQFLOW: cannot enter working directory "{base}")> "{out_file}"\r\n'
+		f'(echo {WORKDIR_FAILED_RC})> "{rc_file}"\r\n'
+		f'exit /b {WORKDIR_FAILED_RC}\r\n'
 	)
 
 

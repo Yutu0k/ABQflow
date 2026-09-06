@@ -338,6 +338,33 @@ class SshBackend(ExecutionBackend):
 			text = self.read_text(handle.rc_path, 64)
 		return parse_rc_sentinel(text)
 
+	def is_alive(self, handle: JobHandle) -> bool | None:
+		"""Whether the launcher process still exists on the remote machine.
+
+		Queried with ``tasklist /FI "PID eq <pid>"``, which prints a header
+		and the matching row, or an "INFO: No tasks" line when nothing
+		matches.  The PID is the ``cmd.exe`` running the launcher script, so
+		its disappearance means the script will never reach the line that
+		writes the rc sentinel — the job is over whether or not it succeeded.
+
+		Returns ``None`` when the launcher reported no PID, or when the query
+		itself fails: a connection hiccup must not be mistaken for a dead job
+		and cut short a solve that has been running for hours.
+		"""
+		if handle.pid is None:
+			return None
+		res = self.run(['tasklist', '/FI', f'PID eq {handle.pid}', '/NH'],
+					handle.work_dir, timeout=60)
+		if res.returncode != 0:
+			return None
+		out = res.stdout or ''
+		if str(handle.pid) in out:
+			return True
+		# tasklist reports "INFO: No tasks are running..." on a filter miss,
+		# localised on a non-English Windows — so a *positive* PID match is
+		# the only thing read as alive, and anything else as gone.
+		return False
+
 	def terminate(self, handle: JobHandle, abaqus_exe: str, grace_s: int) -> list[str]:
 		"""Remote mirror of the local escalation ladder."""
 		log: list[str] = []

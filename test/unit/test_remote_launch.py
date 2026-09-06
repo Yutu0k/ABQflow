@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 
 from ABQflow.core.remote_launch import (
+	WORKDIR_FAILED_RC,
 	build_cmd_line,
 	build_detach_script,
 	build_launcher_bat,
@@ -77,6 +78,49 @@ def test_bat_includes_user_subroutine_when_given():
 
 def test_bat_omits_user_when_absent():
 	assert 'user=' not in build_launcher_bat(ABQ, 'j', r'D:\w', 2)
+
+
+def test_bat_guards_the_cd_before_running_anything():
+	"""An unchecked ``cd /d`` would run the solver in the wrong directory.
+
+	If the working directory is missing — a stale path, an unmounted drive —
+	cmd carries on in whatever directory it happened to start in, the solver
+	writes its files somewhere unexpected, and ``%ERRORLEVEL%`` then reports
+	on the wrong thing entirely.
+	"""
+	bat = build_launcher_bat(ABQ, 'myjob', r'D:\w\myjob', 4)
+	assert 'if errorlevel 1 goto :abqflow_no_workdir' in bat
+	assert bat.index('cd /d') < bat.index('if errorlevel 1')
+	assert bat.index('if errorlevel 1') < bat.index('call "')
+
+
+def test_bat_reports_a_distinct_code_when_the_workdir_is_unusable():
+	"""The sentinel says *which* failure happened, not merely "non-zero"."""
+	bat = build_launcher_bat(ABQ, 'myjob', r'D:\w\myjob', 4)
+	assert f'(echo {WORKDIR_FAILED_RC})>' in bat
+	assert f'exit /b {WORKDIR_FAILED_RC}' in bat
+	assert WORKDIR_FAILED_RC > 128, "must not collide with an Abaqus exit code"
+
+
+def test_bat_sentinel_paths_are_absolute():
+	"""So they land in the job directory whatever cmd's cwd turns out to be."""
+	bat = build_launcher_bat(ABQ, 'myjob', r'D:\w\myjob', 4)
+	assert '"D:\\w\\myjob\\myjob.abqflow.rc"' in bat
+	assert '"D:\\w\\myjob\\myjob.abqflow.out"' in bat
+
+
+def test_bat_success_path_exits_before_the_failure_label():
+	"""Without the explicit exit, cmd would fall through into the handler."""
+	bat = build_launcher_bat(ABQ, 'myjob', r'D:\w\myjob', 4)
+	# The label *definition*, not the goto that jumps to it.
+	label = '\r\n:abqflow_no_workdir\r\n'
+	assert label in bat
+	assert bat.index('exit /b 0') < bat.index(label)
+
+
+def test_bat_trailing_separator_on_workdir_does_not_double_up():
+	bat = build_launcher_bat(ABQ, 'j', 'D:\\w\\', 2)
+	assert 'D:\\w\\\\' not in bat
 
 
 # ============================================================
