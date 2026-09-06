@@ -44,7 +44,8 @@ class RecordingBackend(ExecutionBackend):
 	def __init__(self, work_root: str | None = None,
 				poll_sequence: list[int | None] | None = None,
 				name: str = 'recording',
-				hook_results: dict | None = None):
+				hook_results: dict | None = None,
+				alive_sequence: list[bool | None] | None = None):
 		self.name = name
 		self.work_root = work_root
 		self.command_log: list[CommandRecord] = []
@@ -53,6 +54,12 @@ class RecordingBackend(ExecutionBackend):
 		self.hook_results = {} if hook_results is None else dict(hook_results)
 		self._poll_sequence = list(poll_sequence) if poll_sequence else [0]
 		self._poll_index = 0
+		# Scripted liveness, mirroring poll_sequence: [True, True, False]
+		# reproduces a process that vanishes without writing its sentinel.
+		# ``None`` (the default) means "cannot tell", which is what an
+		# unscripted test wants — it leaves wait() relying on the rc file.
+		self._alive_sequence = list(alive_sequence) if alive_sequence else [None]
+		self._alive_index = 0
 
 	# ---- context mapping ----
 
@@ -80,6 +87,7 @@ class RecordingBackend(ExecutionBackend):
 		self.command_log.append(CommandRecord('solver', list(cmd), cwd))
 		self.clear_sentinels(cwd, job_name)
 		self._poll_index = 0
+		self._alive_index = 0
 		return JobHandle(job_name, cwd, pid=4242, method='recording', launch_rc=0)
 
 	def poll(self, handle: JobHandle) -> int | None:
@@ -88,6 +96,15 @@ class RecordingBackend(ExecutionBackend):
 			self._poll_index += 1
 		else:
 			value = self._poll_sequence[-1]
+		return value
+
+	def is_alive(self, handle: JobHandle) -> bool | None:
+		"""Hand out the next scripted liveness answer; the last one persists."""
+		if self._alive_index < len(self._alive_sequence):
+			value = self._alive_sequence[self._alive_index]
+			self._alive_index += 1
+		else:
+			value = self._alive_sequence[-1]
 		return value
 
 	def terminate(self, handle: JobHandle, abaqus_exe: str, grace_s: int) -> list[str]:

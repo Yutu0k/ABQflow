@@ -65,6 +65,59 @@ def _host_python() -> str:
 _GRACE_MIN = 30    # minimum grace period for terminate to write ODB (s)
 _GRACE_MAX = 300   # maximum grace period (s) — beyond this terminate is stuck
 
+
+@dataclass(frozen=True)
+class Timeouts:
+	"""Per-stage time limits.
+
+	These were once a single number applied to five very different things —
+	the solver wait, preflight, subroutine compilation, hook scripts and
+	every other command.  That coupling made the obvious response to a long
+	solve ("raise the timeout") also hand a hung hook script the same many-
+	hour budget, so the stages are separated here.
+
+	``solver`` defaults to ``None`` — no wall-clock cap at all.  That is safe
+	because completion is no longer decided by elapsed time: the poll loop
+	watches the rc sentinel *and* process liveness, so a job that dies is
+	caught within a poll interval while one that is genuinely still solving
+	is left alone.  A solve is worth waiting for; a hung hook is not, which
+	is why the short stages keep finite defaults.
+
+	Attributes
+	----------
+	solver : float or None
+		Wall-clock cap on the solver run.  ``None`` means none.
+	preflight : float or None
+		Cap on ``syntaxcheck`` / ``datacheck``.  Generous, because
+		preprocessing a large deck legitimately takes minutes.
+	compile : float or None
+		Cap on ``abaqus make``.
+	hook : float or None
+		Cap on extraction hooks and any other command routed through
+		:meth:`AbaqusRunner._run`.
+	"""
+
+	solver: float | None = None
+	preflight: float | None = 1800
+	compile: float | None = 600
+	hook: float | None = 1800
+
+	@classmethod
+	def coerce(cls, value) -> Timeouts:
+		"""Build a :class:`Timeouts` from a scalar, a mapping, or itself.
+
+		A bare number keeps the historical meaning — the same limit
+		everywhere — so existing callers passing ``timeout=3600`` behave
+		exactly as before.  ``None`` selects the per-stage defaults above.
+		"""
+		if value is None:
+			return cls()
+		if isinstance(value, Timeouts):
+			return value
+		if isinstance(value, dict):
+			return cls(**value)
+		return cls(solver=value, preflight=value, compile=value, hook=value)
+
 # ---------------------------------------------------------------------------
 # IMP-05: dry-run data model
 # ---------------------------------------------------------------------------
@@ -143,7 +196,10 @@ class AbaqusRunner:
 				backend=None, host=None):
 		self.ctx = ctx
 		self.logger = logger
+		# Kept as given for backward compatibility (a scalar still means
+		# "this limit everywhere"); `timeouts` is the per-stage view.
 		self.timeout = timeout
+		self.timeouts = Timeouts.coerce(timeout)
 		self.record_only = record_only
 		self.command_log: list[CommandRecord] = []
 		self._has_abqpy = _check_abqpy_installed()
@@ -440,9 +496,9 @@ class AbaqusRunner:
 
 	def _grace_period(self) -> int:
 		"""Compute the grace period G = clamp(0.05 × T, 30, 300) seconds."""
-		if self.timeout is None:
+		if self.timeouts.solver is None:
 			return _GRACE_MAX
-		return max(_GRACE_MIN, min(int(0.05 * self.timeout), _GRACE_MAX))
+		return max(_GRACE_MIN, min(int(0.05 * self.timeouts.solver), _GRACE_MAX))
 
 	def _terminate_abaqus_job(self):
 		"""Level 1: send ``abaqus terminate job=<name>`` for graceful shutdown."""
@@ -745,7 +801,8 @@ class AbaqusRunner:
 
 		# ---- launch ----
 		handle = self.backend.submit_detached(
-			cmd, self.exec_ctx.output_dir, self.ctx.job_name, timeout=self.timeout)
+			cmd, self.exec_ctx.output_dir, self.ctx.job_name,
+			timeout=self.timeouts.solver)
 		if handle.launch_rc not in (0, None):
 			msg = f"Solver launch failed on {self.backend.name}: {handle.launch_output}"
 			self.logger.error(msg)
@@ -758,8 +815,9 @@ class AbaqusRunner:
 
 		# ---- wait, with the terminate escalation ladder on timeout ----
 		escalation_level = 0
-		T = self.timeout
-		verdict, returncode, _elapsed = self.backend.wait(handle, timeout_s=T)
+		T = self.timeouts.solver
+		verdict, returncode, elapsed = self.backend.wait(handle, timeout_s=T)
+		died = False
 
 		if verdict == 'timeout':
 			escalation_level = 1
@@ -769,6 +827,16 @@ class AbaqusRunner:
 			returncode = self.backend.poll(handle)
 			if returncode is None:
 				escalation_level = 3
+		elif verdict == 'died':
+			# The launcher vanished without writing its sentinel: a reboot,
+			# an out-of-memory kill, someone else's taskkill.  Nothing to
+			# terminate, and no point waiting out the rest of the budget —
+			# report it now, with whatever the solver managed to write.
+			died = True
+			self.logger.error(
+				"Solver process on %s disappeared after %.0fs without writing "
+				"its return-code sentinel (pid=%s)",
+				self.backend.name, elapsed, handle.pid)
 
 		# ---- bring the small artifacts home, then diagnose them locally ----
 		self.fetch_results()
@@ -789,6 +857,12 @@ class AbaqusRunner:
 				error_msg = (
 					f"Timeout after {T}s, "
 					f"terminated via escalation ladder (level {escalation_level})"
+				)
+			elif died:
+				error_msg = (
+					f"Solver process disappeared after {elapsed:.0f}s without "
+					f"writing a return code — killed externally, out of memory, "
+					f"or the machine restarted"
 				)
 			else:
 				error_msg = (
@@ -831,7 +905,7 @@ class AbaqusRunner:
 
 		self.logger.info(f"Preflight [{mode}]: {' '.join(cmd)}")
 		res = self.backend.run(cmd, self.exec_ctx.output_dir,
-							timeout=self.timeout or 300)
+							timeout=self.timeouts.preflight)
 		returncode = res.returncode
 		if returncode is None:
 			self.logger.error(f"Preflight [{mode}] did not complete: {res.stderr}")
@@ -943,10 +1017,10 @@ class AbaqusRunner:
 
 		self.logger.info(f"Compile subroutine: {' '.join(cmd)}")
 		res = self.backend.run(cmd, self.exec_ctx.output_dir,
-							timeout=self.timeout or 600)
+							timeout=self.timeouts.compile)
 
 		if res.returncode is None:
-			msg = f"Compile did not complete ({self.timeout or 600}s): {res.stderr}"
+			msg = f"Compile did not complete ({self.timeouts.compile}s): {res.stderr}"
 			self.logger.error(msg)
 			return (False, '', msg)
 
@@ -1174,10 +1248,10 @@ class AbaqusRunner:
 				stdout = '{}'
 			return _FakeProc()
 
-		res = backend.run(cmd, work_dir, timeout=self.timeout)
+		res = backend.run(cmd, work_dir, timeout=self.timeouts.hook)
 
 		if res.returncode is None:
-			self.logger.error(f"Timeout ({self.timeout}s): {' '.join(cmd)}\n{res.stderr}")
+			self.logger.error(f"Timeout ({self.timeouts.hook}s): {' '.join(cmd)}\n{res.stderr}")
 			return None
 		if res.returncode != 0:
 			self.logger.error(f"Command failed: {' '.join(cmd)}\n"

@@ -75,6 +75,14 @@ class LocalBackend(ExecutionBackend):
 					if self.work_root else ctx.output_dir)
 		return replace(ctx, output_dir=output_dir, cpus=cpus, abaqus_exe=exe)
 
+	# ---- machine facts ----
+
+	def probe_cores(self) -> int | None:
+		"""Physical cores on this machine — the same measurement a host-less
+		batch has always used, so both paths report the same number."""
+		from ..hosts import physical_cores
+		return physical_cores()
+
 	# ---- synchronous execution ----
 
 	def run(self, cmd: list[str], cwd: str, timeout: float | None = None) -> ExecResult:
@@ -132,9 +140,21 @@ class LocalBackend(ExecutionBackend):
 			self._write_rc(handle, rc)
 		return rc
 
+	def is_alive(self, handle: JobHandle) -> bool | None:
+		"""Whether the launched process is still running.
+
+		Answered from the live :class:`~subprocess.Popen` when this backend
+		started it.  Without one — a resumed session, say — liveness is
+		genuinely unknown, and ``None`` says so rather than guessing.
+		"""
+		proc = self._procs.get(handle.job_name)
+		if proc is None:
+			return None
+		return proc.poll() is None
+
 	def wait(self, handle: JobHandle, timeout_s: float | None = None,
-			interval: float = 2.0, max_interval: float = 30.0
-			) -> tuple[str, int | None, float]:
+			interval: float = 2.0, max_interval: float = 30.0,
+			settle_s: float = 5.0) -> tuple[str, int | None, float]:
 		"""Block on the real process handle rather than polling a file.
 
 		Locally we own a live :class:`~subprocess.Popen`, so waiting on it
@@ -144,7 +164,7 @@ class LocalBackend(ExecutionBackend):
 		"""
 		proc = self._procs.get(handle.job_name)
 		if proc is None:
-			return super().wait(handle, timeout_s, interval, max_interval)
+			return super().wait(handle, timeout_s, interval, max_interval, settle_s)
 
 		start = time.time()
 		try:

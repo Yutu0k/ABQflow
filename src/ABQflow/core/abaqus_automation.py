@@ -22,6 +22,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
+from rich.logging import RichHandler
 from rich.progress import (
 	BarColumn,
 	Progress,
@@ -35,9 +36,9 @@ from .context import JobContext
 from .hosts import (
 	HostSpec,
 	assign_hosts,
+	oversubscription_note,
 	physical_cores,
 	summarise_assignment,
-	total_capacity,
 )
 from .registry import build_workflow
 from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
@@ -454,12 +455,20 @@ class BatchAbaqusProcessor:
 			many jobs each machine runs *at once* is a separate knob,
 			``HostSpec.max_concurrent``, enforced during execution — so a
 			batch can send two concurrent jobs to one machine and one to
-			another.
+			another.  Neither knob changes ``cpus=``: that is ``cpus_per_job``,
+			per batch or per host, and nothing rewrites it.
+
+			Core counts are measured, not assumed — a remote machine that
+			leaves ``cpus_total`` unset is probed over SSH once, before any
+			job is dispatched.  As in a host-less batch, cores are advisory:
+			asking for more than a machine has is logged as oversubscription
+			and then run anyway.
 		"""
 		self.base_output_dir = base_output_dir
 		self.cpus_per_job = cpus_per_job
 		self.hosts = list(hosts) if hosts else None
 		self._assignment: dict[str, HostSpec] = {}
+		self._probed_cores: dict[str, int | None] = {}
 		self.abaqus_exe = abaqus_exe
 		self.duplicate_mode = duplicate_mode.lower()
 		self._prompt = prompt_fn
@@ -505,6 +514,60 @@ class BatchAbaqusProcessor:
 		"""
 		return summarise_assignment(self._assignment)
 
+	def _pool_cores(self, pool_hosts: list[HostSpec]) -> dict[str, int | None]:
+		"""Physical cores per machine, measured once and cached for the batch.
+
+		A host-less batch reads this machine's cores automatically, and this
+		is the remote equivalent: rather than make ``cpus_total`` mandatory,
+		each remote machine is asked over SSH — one short command, before any
+		job is dispatched, reusing the same backend the jobs will use.
+
+		A host that already carries ``cpus_total`` is never probed, so an
+		explicit value both wins and costs nothing.
+
+		Raises
+		------
+		ValueError
+			If a remote machine cannot be measured *and* has neither
+			``cpus_total`` nor ``max_concurrent`` — its capacity would then be
+			an invented number, and silently running one job at a time on a
+			32-core machine is worse than saying so.
+		"""
+		out: dict[str, int | None] = {}
+		for host in pool_hosts:
+			if host.cpus_total is not None or not host.is_remote:
+				out[host.name] = None       # resolved_cores() handles both
+				continue
+			if host.name not in self._probed_cores:
+				cores = None
+				backend = None
+				try:
+					backend = make_backend(host, logger=self.logger)
+					cores = backend.probe_cores()
+				except Exception as e:
+					self.logger.warning("Could not probe %s for its core count: %s",
+										host.name, e)
+				finally:
+					if backend is not None:
+						backend.close()
+				self._probed_cores[host.name] = cores
+			out[host.name] = self._probed_cores[host.name]
+
+			if out[host.name] is None:
+				if host.max_concurrent is None:
+					raise ValueError(
+						f"Cannot determine the core count of remote host "
+						f"{host.name!r}, so its concurrency cannot be derived. "
+						f"Set HostSpec.cpus_total (physical cores on that "
+						f"machine), or pin HostSpec.max_concurrent explicitly."
+					)
+				self.logger.warning(
+					"Core count of %s is unknown; running with the configured "
+					"max_concurrent=%d and skipping the oversubscription check. "
+					"Set HostSpec.cpus_total to enable it.",
+					host.name, host.max_concurrent)
+		return out
+
 	@staticmethod
 	def _hosts_in(calcs: list[AbaqusCalculation]) -> list[HostSpec]:
 		"""Unique hosts referenced by *calcs*, in first-seen order."""
@@ -523,6 +586,11 @@ class BatchAbaqusProcessor:
 		file_handler = logging.FileHandler(self._log_path, mode='a', encoding='utf-8')
 		file_handler.setFormatter(formatter)
 		logger.addHandler(file_handler)
+
+		console_handler = RichHandler(level=logging.WARNING, show_path=False, rich_tracebacks=False, markup=False)
+		console_handler.setFormatter(logging.Formatter('%(message)s'))
+		logger.addHandler(console_handler)
+
 		logger.info("======== Batch Processor Start ========")
 		logger.info(f"Duplicate mode: {self.duplicate_mode}")
 		return logger
@@ -902,19 +970,27 @@ class BatchAbaqusProcessor:
 			# another takes one: HostSpec.max_concurrent (or the capacity
 			# derived from its cores and tokens) caps each machine
 			# independently, and num_parallel_jobs is only the global ceiling.
-			gates = {
-				h.name: threading.Semaphore(h.capacity(self.cpus_per_job))
-				for h in pool_hosts
-			}
-			capacity = total_capacity(pool_hosts, self.cpus_per_job)
+			cores = self._pool_cores(pool_hosts)
+			caps = {h.name: h.capacity(self.cpus_per_job, cores.get(h.name))
+					for h in pool_hosts}
+			gates = {name: threading.Semaphore(c) for name, c in caps.items()}
+			capacity = sum(caps.values())
 			p = max(1, min(num_parallel_jobs or capacity, capacity, len(calcs)))
 			n_remote = sum(1 for h in pool_hosts if h.is_remote)
 			self.logger.info(
 				"Pooled batch: %d job(s) over %d machine(s) (%d remote, %d local); "
 				"global cap %d, per-host caps %s",
 				len(calcs), len(pool_hosts), n_remote, len(pool_hosts) - n_remote, p,
-				{h.name: h.capacity(self.cpus_per_job) for h in pool_hosts},
+				caps,
 			)
+			# Cores are advisory, exactly as in the host-less path: report the
+			# oversubscription and run anyway.  Only licence tokens, applied
+			# inside capacity(), ever reduce concurrency.
+			for h in pool_hosts:
+				note = oversubscription_note(h, caps[h.name], self.cpus_per_job,
+											cores.get(h.name))
+				if note:
+					self.logger.warning(note)
 		else:
 			gates = {}
 			p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)

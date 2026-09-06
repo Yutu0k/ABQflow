@@ -15,6 +15,7 @@ import pytest
 from ABQflow import (
 	BatchAbaqusProcessor,
 	CommandRecord,
+	HostSpec,
 	JobOutcome,
 	JobPlan,
 	JobSpec,
@@ -141,3 +142,132 @@ def test_job_outcome_carries_results_alongside_diagnostics():
 	assert oc.diagnostics == {'sta_verdict': 'ABORTED'}
 	assert oc.results == {'x': 1.0}
 	assert oc.error == 'err'
+
+
+# ============================================================
+# Pooled batches: measured cores, oversubscription is a report
+# ============================================================
+
+class _ProbeBackend:
+	"""Backend stand-in that answers the core-count probe and nothing else."""
+
+	def __init__(self, cores):
+		self.cores = cores
+		self.probes = 0
+		self.closed = False
+
+	def probe_cores(self):
+		self.probes += 1
+		return self.cores
+
+	def close(self):
+		self.closed = True
+
+
+def _remote_host(name='node01', **kw):
+	kw.setdefault('hostname', f'{name}.example')
+	kw.setdefault('work_root', r'D:\abqwork')
+	kw.setdefault('abaqus_exe', r'C:\SIMULIA\Commands\abaqus.bat')
+	return HostSpec(name=name, **kw)
+
+
+def _processor(tmp_path, hosts, cpus_per_job=2):
+	spec = JobSpec('pooled',
+				preparation=PreparationSpec(kind='existing_inp',
+											source_path='missing.inp'))
+	return BatchAbaqusProcessor([spec], str(tmp_path), cpus_per_job=cpus_per_job,
+								hosts=hosts)
+
+
+def _patch_backend(monkeypatch, backend):
+	monkeypatch.setattr('ABQflow.core.abaqus_automation.make_backend',
+						lambda host=None, logger=None: backend)
+
+
+def test_a_remote_host_without_cpus_total_is_measured(tmp_path, monkeypatch):
+	"""The remote counterpart of reading this machine's cores automatically."""
+	backend = _ProbeBackend(32)
+	_patch_backend(monkeypatch, backend)
+	host = _remote_host()
+	bp = _processor(tmp_path, [host])
+
+	assert bp._pool_cores([host]) == {'node01': 32}
+	assert backend.probes == 1 and backend.closed is True
+	assert host.capacity(bp.cpus_per_job, 32) == (32 - 1) // 2
+
+
+def test_an_explicit_cpus_total_skips_the_probe(tmp_path, monkeypatch):
+	backend = _ProbeBackend(32)
+	_patch_backend(monkeypatch, backend)
+	host = _remote_host(cpus_total=16)
+	bp = _processor(tmp_path, [host])
+
+	assert bp._pool_cores([host]) == {'node01': None}   # resolved_cores uses 16
+	assert backend.probes == 0
+
+
+def test_the_probe_runs_once_per_batch(tmp_path, monkeypatch):
+	"""Every phase method goes through _execute_pool; one measurement is enough."""
+	backend = _ProbeBackend(32)
+	_patch_backend(monkeypatch, backend)
+	host = _remote_host()
+	bp = _processor(tmp_path, [host])
+
+	bp._pool_cores([host])
+	bp._pool_cores([host])
+	assert backend.probes == 1
+
+
+def test_a_local_pool_member_is_never_probed(tmp_path, monkeypatch):
+	backend = _ProbeBackend(32)
+	_patch_backend(monkeypatch, backend)
+	host = HostSpec.local(name='here', max_concurrent=1)
+	bp = _processor(tmp_path, [host])
+
+	assert bp._pool_cores([host]) == {'here': None}
+	assert backend.probes == 0
+
+
+def test_an_unmeasurable_host_without_a_cap_is_refused(tmp_path, monkeypatch):
+	"""Deriving concurrency from an invented core count would be worse."""
+	_patch_backend(monkeypatch, _ProbeBackend(None))
+	host = _remote_host()
+	bp = _processor(tmp_path, [host])
+
+	with pytest.raises(ValueError, match='cpus_total'):
+		bp._pool_cores([host])
+
+
+def test_an_unmeasurable_host_with_a_cap_runs_anyway(tmp_path, monkeypatch, caplog):
+	_patch_backend(monkeypatch, _ProbeBackend(None))
+	host = _remote_host(max_concurrent=2)
+	bp = _processor(tmp_path, [host])
+
+	with caplog.at_level('WARNING'):
+		assert bp._pool_cores([host]) == {'node01': None}
+	assert 'unknown' in caplog.text
+
+
+def test_a_failed_probe_is_not_retried_for_every_phase(tmp_path, monkeypatch):
+	backend = _ProbeBackend(None)
+	_patch_backend(monkeypatch, backend)
+	host = _remote_host(max_concurrent=2)
+	bp = _processor(tmp_path, [host])
+
+	bp._pool_cores([host])
+	bp._pool_cores([host])
+	assert backend.probes == 1
+
+
+def test_a_pooled_batch_reports_oversubscription_and_still_runs(tmp_path, caplog):
+	"""Cores are advisory here exactly as in a host-less batch: warn, then run."""
+	host = HostSpec.local(name='here', cpus_total=2, max_concurrent=4)
+	bp = _processor(tmp_path, [host], cpus_per_job=4)
+	calcs = [bp._build_calc(spec) for spec in bp.specs]
+
+	with caplog.at_level('WARNING'):
+		outcomes = bp._execute_pool(calcs, 'prepare', num_parallel_jobs=1)
+
+	assert 'oversubscribes' in caplog.text
+	assert '16 cores requested' in caplog.text
+	assert len(outcomes) == 1          # the job ran; concurrency was not clipped

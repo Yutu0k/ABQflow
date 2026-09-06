@@ -96,7 +96,11 @@ class HostSpec:
 		which is what keeps a homogeneous batch simple.
 	cpus_total : int or None
 		Physical cores.  Used to derive :meth:`capacity` when
-		*max_concurrent* is not given.
+		*max_concurrent* is not given, and to report CPU oversubscription.
+		``None`` enables probe: the local machine is read directly, and
+		a remote machine is probed over SSH once per batch
+		(:meth:`~ABQflow.core.backends.base.ExecutionBackend.probe_cores`).
+		Setting it explicitly skips the probe.
 	license_tokens : int or None
 		Token budget for this machine.  A **hard** cap on concurrency —
 		Abaqus refuses to start a job it cannot license, whereas
@@ -245,7 +249,31 @@ class HostSpec:
 		"""
 		return self.abaqus_exe or batch_default
 
-	def capacity(self, batch_cpus_per_job: int = 1) -> int:
+	def resolved_cores(self, probed: int | None = None) -> int | None:
+		"""Physical cores on this machine, or ``None`` when unknown.
+
+		Order: an explicit *cpus_total* always wins, then a value *probed*
+		from the machine itself, then — for the local host only — a direct
+		measurement.  A remote host with neither a configured nor a probed
+		count is genuinely unknown, and saying so beats guessing.
+		"""
+		if self.cpus_total is not None:
+			return self.cpus_total
+		if probed is not None:
+			return probed
+		if not self.is_remote:
+			return physical_cores()
+		return None
+
+	def usable_cores(self, probed: int | None = None) -> int | None:
+		"""Cores available to jobs, i.e. :meth:`resolved_cores` less the reserve."""
+		total = self.resolved_cores(probed)
+		if total is None:
+			return None
+		return max(1, total - self.reserve_cores)
+
+	def capacity(self, batch_cpus_per_job: int = 1,
+				probed_cores: int | None = None) -> int:
 		"""How many jobs may run here at once.
 
 		Resolution order:
@@ -255,29 +283,36 @@ class HostSpec:
 		   and cores advisory.
 
 		Always at least 1: a machine worth configuring can run one job.
+
+		Parameters
+		----------
+		batch_cpus_per_job : int
+			Batch default used when this host does not set ``cpus_per_job``.
+		probed_cores : int or None
+			Core count measured on the machine itself, used when
+			``cpus_total`` was left unset.  See :meth:`resolved_cores`.
 		"""
 		if self.max_concurrent is not None:
 			return self.max_concurrent
 
 		cpus = self.resolved_cpus(batch_cpus_per_job)
 
-		# For this machine the core count is knowable, so an unset cpus_total
-		# is measured rather than assumed — otherwise the local host would
-		# fall back to a capacity of 1 and be starved next to the remotes.
-		total = self.cpus_total
-		if total is None and not self.is_remote:
-			total = physical_cores()
+		# An unset cpus_total is measured rather than assumed — otherwise a
+		# host would fall back to a capacity of 1 and be starved next to the
+		# others.  Local reads its own cores; remote is probed by the caller.
+		usable = self.usable_cores(probed_cores)
 
 		by_cores = 1
-		if total:
-			by_cores = max(1, (total - self.reserve_cores) // max(1, cpus))
+		if usable:
+			by_cores = max(1, usable // max(1, cpus))
 
 		if self.license_tokens is None:
 			return by_cores
 		by_tokens = max(1, self.license_tokens // solver_tokens(cpus))
 		return max(1, min(by_cores, by_tokens))
 
-	def allocation_weight(self, batch_cpus_per_job: int = 1) -> float:
+	def allocation_weight(self, batch_cpus_per_job: int = 1,
+						probed_cores: int | None = None) -> float:
 		"""Share of the batch this machine should receive.
 
 		An explicit *weight* wins.  Otherwise the machine's concurrency
@@ -286,7 +321,46 @@ class HostSpec:
 		"""
 		if self.weight is not None:
 			return float(self.weight)
-		return float(self.capacity(batch_cpus_per_job))
+		return float(self.capacity(batch_cpus_per_job, probed_cores))
+
+
+def oversubscription_note(host: HostSpec, concurrency: int,
+						batch_cpus_per_job: int = 1,
+						probed_cores: int | None = None) -> str | None:
+	"""Describe CPU oversubscription on *host*, or ``None`` when the work fits.
+
+	Cores are **advisory**, never a cap: a small job rarely saturates a core,
+	and Abaqus will happily run oversubscribed — only licence tokens can stop
+	it starting.  So this returns a message for the caller to log and then
+	proceed, matching what :func:`~ABQflow.core.abaqus_automation.plan_parallelism`
+	does for a host-less batch.  ``None`` is also returned when the core count
+	is unknown, since there is nothing to compare against.
+
+	Parameters
+	----------
+	host : HostSpec
+		Machine being checked.
+	concurrency : int
+		Jobs that will run there at once — normally :meth:`HostSpec.capacity`.
+	batch_cpus_per_job : int
+		Batch default used when *host* does not set ``cpus_per_job``.
+	probed_cores : int or None
+		Core count measured on the machine, when ``cpus_total`` was not set.
+	"""
+	usable = host.usable_cores(probed_cores)
+	if not usable:
+		return None
+	cpus = host.resolved_cpus(batch_cpus_per_job)
+	wanted = concurrency * cpus
+	if wanted <= usable:
+		return None
+	total = host.resolved_cores(probed_cores)
+	return (
+		f"Host {host.name!r} oversubscribes its CPUs: {concurrency} concurrent "
+		f"job(s) x {cpus} cpus = {wanted} cores requested, but only {usable} "
+		f"usable physical core(s) ({total} total - {host.reserve_cores} "
+		f"reserved); proceeding anyway."
+	)
 
 
 LOCAL_HOST = HostSpec(name='local')

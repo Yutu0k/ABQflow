@@ -20,6 +20,8 @@ import pytest
 from ABQflow.core.hosts import (
 	HostSpec,
 	assign_hosts,
+	oversubscription_note,
+	physical_cores,
 	solver_tokens,
 	summarise_assignment,
 	total_capacity,
@@ -258,8 +260,6 @@ def test_local_host_needs_no_connection_fields():
 def test_local_host_measures_its_own_cores_when_unset():
 	"""Without this a local host would fall back to capacity 1 and be
 	starved next to the remotes it shares a pool with."""
-	from ABQflow.core.hosts import physical_cores
-
 	host = HostSpec.local(cpus_per_job=1)
 	expected = max(1, physical_cores() - 1)
 	assert host.capacity() == expected
@@ -331,3 +331,61 @@ def test_plain_local_backend_still_returns_the_same_context():
 def test_job_dir_is_under_work_root():
 	host = _remote('a', work_root='D:\\abqwork\\')
 	assert host.job_dir('myjob') == 'D:\\abqwork\\myjob'
+
+
+# ============================================================
+# measured cores, and oversubscription as a report not a cap
+# ============================================================
+
+def test_a_probed_count_fills_in_an_unset_cpus_total():
+	"""The remote counterpart of measuring the local machine's cores."""
+	host = _remote('a', cpus_per_job=2)
+	assert host.capacity() == 1                          # unknown → conservative
+	assert host.capacity(probed_cores=32) == (32 - 1) // 2
+
+
+def test_an_explicit_cpus_total_beats_a_probe():
+	host = _remote('a', cpus_total=8, cpus_per_job=2)
+	assert host.resolved_cores(probed=64) == 8
+	assert host.capacity(2, probed_cores=64) == (8 - 1) // 2
+
+
+def test_cores_of_an_unmeasured_remote_are_unknown_not_guessed():
+	assert _remote('a').resolved_cores() is None
+
+
+def test_a_local_host_needs_no_probe_to_know_its_cores():
+	assert HostSpec.local().resolved_cores() == physical_cores()
+
+
+def test_oversubscription_is_reported_not_prevented():
+	"""Cores are advisory: capacity is untouched, a message is produced."""
+	host = _remote('a', cpus_total=8, cpus_per_job=4, max_concurrent=4)
+	assert host.capacity() == 4
+	note = oversubscription_note(host, host.capacity())
+	assert note is not None
+	assert '16 cores requested' in note and '7 usable' in note
+
+
+def test_no_note_when_the_work_fits():
+	host = _remote('a', cpus_total=32, cpus_per_job=2, max_concurrent=2)
+	assert oversubscription_note(host, host.capacity()) is None
+
+
+def test_no_note_when_the_core_count_is_unknown():
+	"""Nothing to compare against — better silent than invented."""
+	host = _remote('a', cpus_per_job=2, max_concurrent=8)
+	assert oversubscription_note(host, 8) is None
+
+
+def test_note_uses_the_batch_default_when_the_host_sets_no_cpus_per_job():
+	host = _remote('a', cpus_total=8, max_concurrent=4)
+	assert oversubscription_note(host, 4, batch_cpus_per_job=4) is not None
+	assert oversubscription_note(host, 1, batch_cpus_per_job=4) is None
+
+
+def test_a_wide_job_on_a_small_machine_is_reported():
+	"""One job can oversubscribe on its own, without any concurrency."""
+	host = _remote('a', cpus_total=8, cpus_per_job=64)
+	assert host.capacity() == 1
+	assert oversubscription_note(host, 1) is not None

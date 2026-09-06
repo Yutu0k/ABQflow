@@ -27,6 +27,14 @@ from .core.abaqus_automation import (
 	plan_parallelism,
 	solver_tokens,
 )
+from .core.backends import (
+	ExecResult,
+	ExecutionBackend,
+	JobHandle,
+	LocalBackend,
+	RecordingBackend,
+	make_backend,
+)
 from .core.context import JobContext
 from .core.diagnostics import (
 	SolverDiagnostics,
@@ -36,17 +44,10 @@ from .core.diagnostics import (
 	harvest_errors,
 	parse_sta,
 )
-from .core.backends import (
-	ExecResult,
-	ExecutionBackend,
-	JobHandle,
-	LocalBackend,
-	RecordingBackend,
-	make_backend,
-)
 from .core.hosts import (
 	HostSpec,
 	assign_hosts,
+	oversubscription_note,
 	summarise_assignment,
 	total_capacity,
 )
@@ -57,7 +58,7 @@ from .core.registry import (
 	register_extraction,
 	register_preparation,
 )
-from .core.runner import AbaqusRunner, CommandRecord, extract_json
+from .core.runner import AbaqusRunner, CommandRecord, Timeouts, extract_json
 from .core.spec import HOOK_SOURCES, HookSpec, JobSpec, PreparationSpec, SubroutineSpec
 from .core.status import JobStatus, JobStatusManager
 from .core.strategies import (
@@ -138,6 +139,8 @@ __all__ = [
 	"SolverResult",
 	"SubroutineCompileStrategy",
 	"SubroutineSpec",
+	# Core — per-stage time limits
+	"Timeouts",
 	"apply_truth_table",
 	"assign_hosts",
 	# Core — registry
@@ -153,6 +156,7 @@ __all__ = [
 	"iter_fields",
 	"load_field",
 	"make_backend",
+	"oversubscription_note",
 	"parse_sta",
 	# Core — resource planning
 	"plan_parallelism",

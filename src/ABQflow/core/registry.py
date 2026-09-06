@@ -5,7 +5,7 @@ strategies at runtime via :func:`register_preparation` without modifying
 framework code.
 """
 
-from .spec import JobSpec, PreparationSpec
+from .spec import HookSpec, JobSpec, PreparationSpec
 from .strategies import (
 	DatExtractionStrategy,
 	ExistingInpStrategy,

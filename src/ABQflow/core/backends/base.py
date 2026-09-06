@@ -154,22 +154,61 @@ class ExecutionBackend(ABC):
 	def terminate(self, handle: JobHandle, abaqus_exe: str, grace_s: int) -> list[str]:
 		"""Run the terminate escalation ladder; return a log of what each rung did."""
 
-	def wait(self, handle: JobHandle, timeout_s: float | None = None,
-			interval: float = 2.0, max_interval: float = 30.0
-			) -> tuple[str, int | None, float]:
-		"""Block until *handle* finishes or *timeout_s* elapses.
+	def is_alive(self, handle: JobHandle) -> bool | None:
+		"""Whether the launched process still exists on the executing machine.
 
-		The default polls :meth:`poll` with exponential backoff, which is what
-		a remote backend needs — the answer lives in a file on another
-		machine.  :class:`LocalBackend` overrides this to wait on the real
-		process handle instead, so running locally keeps its immediate
-		wake-up rather than inheriting up to *max_interval* of poll latency.
+		Returns
+		-------
+		bool or None
+			``True``/``False``, or ``None`` when liveness cannot be
+			determined (no PID was reported, or the query itself failed).
+			``None`` must never be read as "dead" — an unanswerable question
+			is not a negative answer, and killing a healthy multi-hour job
+			over a transient query failure would be far worse than waiting.
+		"""
+		return None
+
+	def wait(self, handle: JobHandle, timeout_s: float | None = None,
+			interval: float = 2.0, max_interval: float = 30.0,
+			settle_s: float = 5.0) -> tuple[str, int | None, float]:
+		"""Block until *handle* finishes, dies, or *timeout_s* elapses.
+
+		Two independent signals are consulted, because neither alone is
+		sufficient:
+
+		**The rc sentinel** is authoritative for *completion* — the launcher
+		writes it only after the solver has exited — but it says nothing when
+		the process is killed before reaching that line (a reboot, an OOM
+		kill, someone else's ``taskkill``).  On its own it would leave the
+		poll loop waiting out the entire timeout for a job that died minutes
+		in, which is precisely the wrong trade for jobs measured in hours.
+
+		**Process liveness** covers that gap, and deliberately does *not*
+		impose a deadline: a job that is still running is still running, no
+		matter how long it has taken.  A single direct-solver factorization
+		can occupy an hour writing nothing at all, so elapsed time and file
+		growth are both useless as health signals here — only the process
+		itself is trustworthy.
+
+		The two race: the solver can exit between the rc read and the
+		liveness check, so an apparent death is confirmed by re-reading the
+		sentinel after *settle_s* rather than reported immediately.
+
+		Parameters
+		----------
+		timeout_s : float or None
+			Wall-clock cap.  ``None`` means none — with liveness detection
+			in place that is a reasonable default for long solves, since a
+			dead job is caught within one poll interval regardless.
+		settle_s : float
+			Grace given to a just-finished launcher to flush its sentinel
+			before "the process is gone" is treated as a death.
 
 		Returns
 		-------
 		tuple[str, int | None, float]
 			``(verdict, returncode, elapsed)`` with *verdict* one of
-			``'finished'`` / ``'timeout'``.
+			``'finished'`` / ``'died'`` / ``'timeout'``.
 		"""
 		import time
 
@@ -180,6 +219,16 @@ class ExecutionBackend(ABC):
 			elapsed = time.time() - start
 			if rc is not None:
 				return 'finished', rc, elapsed
+
+			if self.is_alive(handle) is False:
+				# Confirm before concluding: the launcher may have exited
+				# microseconds after the rc read above and not yet flushed.
+				time.sleep(settle_s)
+				rc = self.poll(handle)
+				if rc is not None:
+					return 'finished', rc, time.time() - start
+				return 'died', None, time.time() - start
+
 			if timeout_s is not None and elapsed >= timeout_s:
 				return 'timeout', None, elapsed
 			time.sleep(wait_s)
@@ -216,6 +265,19 @@ class ExecutionBackend(ABC):
 	@abstractmethod
 	def close(self) -> None:
 		"""Release connections.  Must be safe to call more than once."""
+
+	# ---- machine facts ----
+
+	def probe_cores(self) -> int | None:
+		"""Physical core count of the executing machine, or ``None`` if unknown.
+
+		Only ever advisory: it fills in an unset ``HostSpec.cpus_total`` so a
+		pooled batch can size concurrency and report oversubscription for a
+		remote machine the same way it already does for the local one.  A
+		backend that cannot answer returns ``None`` rather than guessing —
+		the caller then asks the user for ``cpus_total``.
+		"""
+		return None
 
 	# ---- convenience shared by every backend ----
 
