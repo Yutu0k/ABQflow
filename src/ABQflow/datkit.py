@@ -97,7 +97,10 @@ _TERM_INC  = 'THE NUMBER OF INCS ON THE *STEP CARD HAS BEEN COMPLETED'
 _DESC_MARK = 'THE FOLLOWING TABLE IS PRINTED'
 
 # Header tokens that identify a row *label* rather than a printed value.
-_LABEL_TOKENS = ('NODE', 'ELEMENT', 'ELEM', 'PT', 'SP', 'IP', 'SEC', 'FOOTNOTE')
+# 'SEC PT' is the section-point column shells and beams print; it arrives
+# already joined from _merge_header, which wraps across the heading's two lines.
+_LABEL_TOKENS = ('NODE', 'ELEMENT', 'ELEM', 'PT', 'SP', 'IP', 'SEC', 'SEC PT',
+					'FOOTNOTE')
 # Longest first, so 'AT ELEMENT' wins over 'ELEMENT' and 'AT NODE' over 'NODE'.
 _SUMMARY_LABELS = ('AT ELEMENT', 'AT NODE', 'MAXIMUM', 'MINIMUM',
 					'AVERAGE', 'ELEMENT', 'TOTAL', 'NODE', 'RMS')
@@ -291,26 +294,62 @@ def _classify(columns):
 	return labels, list(columns[i:]), footnote_index
 
 
-def _merge_header(tokens, continuation):
-	"""Join hyphen-ended header tokens with their continuation line.
+def _spans(line):
+	"""Split *line* into ``(TEXT, start, end)`` triples, text upper-cased."""
+	return [(m.group(0).upper(), m.start(), m.end())
+			for m in re.finditer(r'\S+', line)]
 
-	``['NODE', 'FOOT-', 'U1', ...]`` + ``['NOTE']`` -> ``['NODE', 'FOOTNOTE',
-	'U1', ...]``.  A generic rule, applied in order, so any split heading is
-	rejoined — not just ``FOOT-NOTE``.  Returns ``(tokens, consumed)``.
+
+def _merge_header(header_line, continuation_line):
+	"""Join a two-line column heading into one token per column.
+
+	Abaqus wraps a heading that does not fit its column width onto the next
+	line, aligned under the half it belongs to::
+
+		 ELEMENT  PT SEC FOOT-   MISES
+		              PT NOTE
+
+	so the pairing is *positional*, not "one continuation per hyphen": here
+	``PT`` continues ``SEC`` and ``NOTE`` continues ``FOOT-``, and a rule
+	keyed on the trailing hyphen sees one hyphen against two continuation
+	tokens, gives up, and leaves ``FOOT-`` standing as a value column — which
+	pushes every shell/beam ``MISES`` one column to the right and reads it
+	back as ``None``.  Matching by character span instead covers both that
+	case and the plain ``FOOT-``/``NOTE`` one.
+
+	A hyphen-ended token is joined without a separator (``FOOT-`` + ``NOTE``
+	-> ``FOOTNOTE``); anything else keeps a space (``SEC`` + ``PT`` ->
+	``SEC PT``).  Returns ``(columns, consumed)`` — ``consumed`` is ``False``
+	when *continuation_line* is not a continuation at all (it carries a
+	number, or a token sits under no heading), leaving the caller to
+	re-dispatch it as the table's first data row.
 	"""
-	hyphenated = [t for t in tokens if t.endswith('-')]
-	if not hyphenated or len(continuation) != len(hyphenated):
+	head = _spans(header_line)
+	continuation = _spans(continuation_line)
+	tokens = [text for text, _start, _end in head]
+	if not continuation or not head:
 		return tokens, False
-	if _has_number(continuation):
+	if _has_number([text for text, _start, _end in continuation]):
 		return tokens, False
-	merged = []
-	index = 0
-	for token in tokens:
-		if token.endswith('-'):
-			merged.append(token[:-1] + continuation[index])
-			index += 1
+
+	extra = dict((i, []) for i in range(len(head)))
+	for text, start, end in continuation:
+		for i, (_htext, hstart, hend) in enumerate(head):
+			if hstart < end and start < hend:
+				extra[i].append(text)
+				break
 		else:
+			# A token under no heading — this is not a continuation line.
+			return tokens, False
+
+	merged = []
+	for i, token in enumerate(tokens):
+		if not extra[i]:
 			merged.append(token)
+		elif token.endswith('-'):
+			merged.append(token[:-1] + ''.join(extra[i]))
+		else:
+			merged.append(' '.join([token] + extra[i]))
 	return merged, True
 
 
@@ -422,7 +461,7 @@ def _iter_events(path, kinds=None, set_name=None, steps=None, max_rows=None):
 	increment = None
 	table = None          # the open table
 	opening = None        # table descriptor being built in _AWAIT / _AWAIT_NOTE
-	header_tokens = None
+	header_line = None    # raw heading line: _merge_header pairs by column
 	resume = False        # the open table may continue after a page break
 	describing = False    # inside a (possibly wrapped) description line
 	last_summary = None   # summary row an 'AT NODE' line belongs to
@@ -525,7 +564,7 @@ def _iter_events(path, kinds=None, set_name=None, steps=None, max_rows=None):
 							resume = False
 							state = _RAW
 						else:
-							header_tokens = [t.upper() for t in tokens]
+							header_line = line
 							state = _AWAIT_NOTE
 
 				# ---- the line after a header may carry its 'NOTE' half ----
@@ -535,8 +574,7 @@ def _iter_events(path, kinds=None, set_name=None, steps=None, max_rows=None):
 					if opening is not None and opening['description']:
 						found = _SET_RE.search(opening['description'])
 						opening['set'] = found.group(1) if found else None
-					header_tokens, consumed = _merge_header(header_tokens, line.split())
-					columns = header_tokens
+					columns, consumed = _merge_header(header_line, line)
 					labels, values, footnote_index = _classify(columns)
 
 					# A page break re-prints the banner and the column header but
@@ -570,7 +608,7 @@ def _iter_events(path, kinds=None, set_name=None, steps=None, max_rows=None):
 						opening = None
 					resume = False
 					last_summary = None
-					header_tokens = None
+					header_line = None
 					state = _IN_TABLE
 					handled = consumed   # if not consumed, this line is a data row
 

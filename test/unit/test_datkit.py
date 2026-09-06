@@ -34,6 +34,10 @@ MULTISTEP = os.path.join(FIXTURES, 'static_multistep.dat')
 # mixed CPS3/CPS4R mesh.  Structural lines are byte-for-byte as Abaqus wrote
 # them; only the bulk data rows were cut.
 EL_PRINT = os.path.join(FIXTURES, 'el_print_mixed.dat')
+# Shell output from a real ``*EL PRINT, POSITION=INTEGRATION POINTS`` run: the
+# heading carries a SEC PT column, so TWO headings wrap onto the second line
+# instead of just FOOT-/NOTE.
+EL_PRINT_SHELL = os.path.join(FIXTURES, 'el_print_shell.dat')
 
 NSET = 'JOB001_INSPECTION_POSITION_NODE1536604'
 
@@ -46,7 +50,7 @@ def riks():
 # ======================== structure ========================
 
 def test_fixtures_exist():
-	for path in (RIKS, RIKS_BAD, ELEMENT, MULTISTEP, EL_PRINT):
+	for path in (RIKS, RIKS_BAD, ELEMENT, MULTISTEP, EL_PRINT, EL_PRINT_SHELL):
 		assert os.path.isfile(path), f"missing fixture {path}"
 
 
@@ -256,6 +260,47 @@ def test_el_print_columns_and_reduction(el_print):
 	# first few data rows of each table, so reducing over them understates it.
 	peaks = [datkit.summary(t, 'MAXIMUM')['MISES'] for t in tables]
 	assert max(peaks) == pytest.approx(4525.0)
+
+
+@pytest.fixture(scope='module')
+def el_print_shell():
+	return datkit.parse(EL_PRINT_SHELL)
+
+
+def test_shell_heading_wraps_two_columns_not_one(el_print_shell):
+	"""Shell/beam element output prints a SEC PT column, so the heading wraps
+	as::
+
+	     ELEMENT  PT SEC FOOT-   MISES
+	                  PT NOTE
+
+	— two headings continued on the second line, not just FOOT-/NOTE.  Pairing
+	them by trailing hyphen sees one hyphen against two continuation tokens,
+	gives up, and leaves FOOT- standing as a value column; MISES then lands one
+	column to the right of where it is read from and every value comes back
+	``None``.  The pairing is by character span, which covers both shapes."""
+	tables = datkit.select_tables(el_print_shell, kind='element', increment='last')
+	assert len(tables) == 2
+
+	for table in tables:
+		assert table['columns'] == ['ELEMENT', 'PT', 'SEC PT', 'FOOTNOTE', 'MISES']
+		assert table['label_columns'] == ['ELEMENT', 'PT', 'SEC PT']
+		assert table['value_columns'] == ['MISES']
+		assert None not in datkit.column_values(table, 'MISES')
+
+	assert tables[0]['rows'][0] == [67972, 1, 1, '', pytest.approx(12.10)]
+
+
+def test_shell_set_spans_one_table_per_element_type(el_print_shell):
+	"""One ``*EL PRINT, ELSET=...`` over a shell mesh prints an S4R table and an
+	S3R table under the same set name — the peak for that set is the max over
+	both, which is what the hooks fold on."""
+	tables = datkit.select_tables(el_print_shell, kind='element', increment='last')
+	assert [t['set'] for t in tables] == ['ELE_AZ000093005097_T400'] * 2
+
+	header, rows = datkit.to_rows(tables, columns=['MISES'])
+	assert len(rows) == 11                      # 6 S4R + 5 S3R
+	assert datkit.reduce_rows(rows, header, 'MISES', 'max') == pytest.approx(482.7)
 
 
 def test_el_print_step_time_metadata(el_print):
