@@ -47,6 +47,7 @@ from .core.backends import (
 from .core.hosts import (
 	HostSpec,
 	assign_hosts,
+	oversubscription_note,
 	summarise_assignment,
 	total_capacity,
 )
@@ -153,6 +154,7 @@ __all__ = [
 	"iter_fields",
 	"load_field",
 	"make_backend",
+	"oversubscription_note",
 	"parse_sta",
 	# Core — resource planning
 	"plan_parallelism",

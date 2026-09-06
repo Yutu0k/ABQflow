@@ -20,6 +20,7 @@ from __future__ import annotations
 import fnmatch
 import os
 import posixpath
+import re
 import time
 from dataclasses import replace
 
@@ -72,6 +73,7 @@ class SshBackend(ExecutionBackend):
 		self._client = None
 		self._sftp = None
 		self._prefix: str | None = None   # '' or '/', learned on first use
+		self._cores: int | None = None    # 0 once a probe has failed
 
 	# ---- connection ----
 
@@ -172,6 +174,48 @@ class SshBackend(ExecutionBackend):
 			cpus=self.host.resolved_cpus(ctx.cpus),
 			user_subroutine=user_sub,
 		)
+
+	# ---- machine facts ----
+
+	def probe_cores(self) -> int | None:
+		"""Physical cores on the remote machine, measured over SSH.
+
+		``Win32_Processor.NumberOfCores`` summed over sockets is the physical
+		count, matching what ``psutil.cpu_count(logical=False)`` reports
+		locally so the two paths are comparable.  ``NUMBER_OF_PROCESSORS`` is
+		the fallback: it counts *logical* processors and so over-estimates on
+		an SMT machine, which is the harmless direction — core counts are
+		advisory here, and licence tokens are the hard cap.
+
+		Returns ``None`` when neither answers, leaving the caller to insist on
+		an explicit ``HostSpec.cpus_total`` rather than run on a guess.
+		"""
+		if self._cores is not None:
+			return self._cores or None
+		script = (
+			"$n = 0\n"
+			"try { $n = (Get-CimInstance Win32_Processor | "
+			"Measure-Object -Property NumberOfCores -Sum).Sum } catch { $n = 0 }\n"
+			"if (-not $n) { $n = [int]$env:NUMBER_OF_PROCESSORS }\n"
+			"Write-Output ([int]$n)\n"
+		)
+		self._cores = 0   # provisional: a failed probe is not retried per job
+		try:
+			res = self.run_powershell(script, timeout=60)
+		except Exception:
+			return None
+		match = re.search(r'\d+', res.stdout or '')
+		if not match:
+			if self.logger:
+				self.logger.warning(
+					"Could not read the core count of %s: %s",
+					self.host.name, (res.stderr or res.stdout or '').strip()[:200])
+			return None
+		self._cores = int(match.group())
+		if self.logger:
+			self.logger.info("Host %s reports %d physical core(s)",
+							self.host.name, self._cores)
+		return self._cores or None
 
 	# ---- SFTP path convention ----
 

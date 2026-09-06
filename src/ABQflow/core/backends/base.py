@@ -217,6 +217,19 @@ class ExecutionBackend(ABC):
 	def close(self) -> None:
 		"""Release connections.  Must be safe to call more than once."""
 
+	# ---- machine facts ----
+
+	def probe_cores(self) -> int | None:
+		"""Physical core count of the executing machine, or ``None`` if unknown.
+
+		Only ever advisory: it fills in an unset ``HostSpec.cpus_total`` so a
+		pooled batch can size concurrency and report oversubscription for a
+		remote machine the same way it already does for the local one.  A
+		backend that cannot answer returns ``None`` rather than guessing —
+		the caller then asks the user for ``cpus_total``.
+		"""
+		return None
+
 	# ---- convenience shared by every backend ----
 
 	def read_text(self, path: str, max_bytes: int = 65536) -> str | None:

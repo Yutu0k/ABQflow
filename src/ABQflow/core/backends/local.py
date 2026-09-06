@@ -75,6 +75,14 @@ class LocalBackend(ExecutionBackend):
 					if self.work_root else ctx.output_dir)
 		return replace(ctx, output_dir=output_dir, cpus=cpus, abaqus_exe=exe)
 
+	# ---- machine facts ----
+
+	def probe_cores(self) -> int | None:
+		"""Physical cores on this machine — the same measurement a host-less
+		batch has always used, so both paths report the same number."""
+		from ..hosts import physical_cores
+		return physical_cores()
+
 	# ---- synchronous execution ----
 
 	def run(self, cmd: list[str], cwd: str, timeout: float | None = None) -> ExecResult:
