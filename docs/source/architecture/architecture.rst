@@ -1,3 +1,5 @@
+:hide-toc:
+
 Architecture
 ============
 
@@ -64,8 +66,18 @@ Workflows are composed from three strategy types:
 
    * :class:`~ABQflow.OdbExtractionStrategy` — post-simulation ODB
      extraction (uses ``odbAccess``, no CAE kernel needed).
+   * :class:`~ABQflow.DatExtractionStrategy` — post-simulation extraction
+     from the printed ``.dat`` output, for values written by ``*NODE PRINT``
+     / ``*EL PRINT`` when the ODB is too large to open.  Plain text, so it
+     runs under the host Python and consumes no license token.
    * :class:`~ABQflow.ModelPropertiesExtractionStrategy` — pre-simulation
      INP extraction (uses CAE kernel / ``mdb``).
+
+   Which one a post-extraction hook gets is decided by its
+   :attr:`~ABQflow.HookSpec.source` (``'odb'`` by default, or ``'dat'``);
+   :func:`~ABQflow.build_workflow` groups consecutive hooks that share a
+   source, so declaration order survives a mixed list.  Add another artifact
+   via :func:`~ABQflow.register_extraction`.
 
 :class:`~ABQflow.JobWorkflowStrategy`
    Orchestrates the full pipeline:
@@ -96,8 +108,20 @@ based on what the script needs:
    * - Needs odbAccess only
      - ``abaqus python script.py``
      - ODB post-processing
+   * - ``interpreter='host'``
+     - ``<sys.executable> script.py``
+     - ``.dat`` post-processing — plain text, no solver, no license token
 
 The ``--`` separator after ``noGUI=`` prevents Abaqus from consuming custom arguments.
+
+``interpreter='host'`` outranks the rows above it: it describes the *artifact*
+rather than the environment, so no Abaqus entry point applies however this
+machine is configured.  A host hook also runs on **this** machine even when the
+backend is remote — :class:`~ABQflow.DatExtractionStrategy` fetches the
+``.dat`` home first, nothing is uploaded, artifact paths are not remapped, and
+sidecar CSVs are written straight into the local job directory.  Set
+``ABQFLOW_HOST_PYTHON`` to override the interpreter when ``sys.executable`` is
+a frozen or embedded binary.
 
 Resource Planning
 -----------------
@@ -173,6 +197,15 @@ runs unmodified under the Abaqus Python interpreter (Py2.7 or Py3). It also
 adds a field-output mode (``hookkit.field()``) that spills large result sets
 (>10k rows or >1MB) to a CSV sidecar instead of inlining them in the JSON
 payload, keeping stdout small for bulky field quantities.
+
+``ABQflow.datkit`` is staged the same way, but only for hooks with
+``source='dat'``, and carries the same contract — single file, stdlib only,
+Py2.7 and Py3, never imports ``ABQflow``.  It parses Abaqus's printed tables
+(``N O D E`` / ``E L E M E N T`` / ``E N E R G Y`` / ``C O N T A C T``
+output) into rows and columns, streaming so that ``parse(path,
+increments='last')`` costs one increment however long the analysis ran.
+``test/unit/test_hookkit_py27.py`` enforces the Python 2.7 promise on both
+files with an AST scan.
 
 Configuration Validation
 ------------------------

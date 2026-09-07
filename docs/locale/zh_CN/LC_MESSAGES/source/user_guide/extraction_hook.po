@@ -1,0 +1,66 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/extraction_hook.rst:2
+msgid "Extraction Hooks"
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:5
+msgid ""
+"Extraction hooks are a powerful feature in ABQflow that allow users to "
+"define custom extraction logic for Abaqus inp/dat/odb results."
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:15
+msgid ":doc:`Odb Extraction <hooks/odb_extraction_hook>`:"
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:16
+msgid "Extract data from Abaqus **ODB** files using custom logic."
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:18
+msgid ":doc:`Dat Extraction <hooks/dat_extraction_hook>`:"
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:19
+msgid "Extract data from Abaqus **DAT** files using custom logic."
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:21
+msgid ":doc:`Inp Extraction <hooks/inp_extraction_hook>`:"
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:22
+msgid "Extract data from Abaqus **INP** files using custom logic."
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:25
+msgid "Hook Verification"
+msgstr ""
+
+#: ../../../source/user_guide/extraction_hook.rst:27
+msgid ""
+"``ABQflow`` provides a convenient way to verify the correctness of your "
+"extraction hooks. You can use the :class:`~ABQflow.check_hook` module to "
+"check if your hook scripts are functioning as expected."
+msgstr ""
+

@@ -1,0 +1,658 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 11:45+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/api/ABQflow.rst:4
+msgid "ABQflow package"
+msgstr ""
+
+#: ../../../source/api/ABQflow.rst:7
+msgid "Subpackages"
+msgstr ""
+
+#: ../../../source/api/ABQflow.rst:16
+msgid "Submodules"
+msgstr ""
+
+#: ../../../source/api/ABQflow.rst:19
+msgid "ABQflow.check\\_hook module"
+msgstr ""
+
+#: ABQflow.check_hook:1 of
+msgid "Stand-alone self-check for a hookkit extraction script."
+msgstr ""
+
+#: ABQflow.check_hook:3 of
+msgid ""
+"Reproduces exactly what :meth:`~ABQflow.AbaqusRunner.run_hook` does — "
+"stage ``hookkit.py`` into the working directory, write a tasks JSON "
+"beside it, build the interpreter command line, run it there — and then "
+"grades the output against the contract the framework will later hold it "
+"to.  Use it after writing a new hook and before wiring it into a "
+":class:`~ABQflow.HookSpec`: a hook that passes here will run inside "
+"ABQflow, and a hook that fails here would have failed there with far less"
+" to go on."
+msgstr ""
+
+#: ABQflow.check_hook:11 of
+msgid ""
+"The command line and the checks are not reimplemented — they come from "
+":meth:`~ABQflow.AbaqusRunner.build_script_command`, "
+":func:`~ABQflow.extract_json` and ``AbaqusRunner._validate_envelope``, "
+"the very functions the framework uses, so this tool cannot drift away "
+"from it."
+msgstr ""
+
+#: ABQflow.check_hook:16 of
+msgid ""
+"Installed as the ``abqflow-check-hook`` command; equivalently runnable as"
+" ``python -m ABQflow.check_hook``."
+msgstr ""
+
+#: ABQflow.check_hook:20 of
+msgid "Usage"
+msgstr ""
+
+#: ABQflow.check_hook:21 of
+msgid "ODB hook (runs under ``abaqus python``)::"
+msgstr ""
+
+#: ABQflow.check_hook:27 of
+msgid "DAT hook (plain text — runs under this Python, no Abaqus, no license)::"
+msgstr ""
+
+#: ABQflow.check_hook:33 of
+msgid "INP pre-extraction hook (needs the CAE kernel)::"
+msgstr ""
+
+#: ABQflow.check_hook:38 of
+msgid "Exit code is 0 when every check passes, 1 otherwise."
+msgstr ""
+
+#: ABQflow.check_hook.Report:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: ABQflow.check_hook.Report:1 of
+msgid "Collects graded checks and prints them as they happen."
+msgstr ""
+
+#: ABQflow.check_hook.scan_py27:1 of
+msgid "Return Python-2.7 incompatibilities in *tree*."
+msgstr ""
+
+#: ABQflow.check_hook.scan_py27:3 of
+msgid ""
+"The same rule set ``test/unit/test_hookkit_py27.py`` enforces on the "
+"staged modules, applied to a user hook: Abaqus 2022 and earlier ship "
+"Python 2.7 as ``abaqus python``, and every one of these is an import-time"
+" ``SyntaxError`` there while passing silently on a newer machine."
+msgstr ""
+
+#: ABQflow.check_hook.check_script ABQflow.check_hook.main
+#: ABQflow.check_hook.scan_py27 ABQflow.check_hook.stage of
+msgid "Return type"
+msgstr ""
+
+#: ABQflow.check_hook.check_script:1 of
+msgid "Grade the hook source itself: exists, parses, calls hookkit.run()."
+msgstr ""
+
+#: ABQflow.check_hook.build_tasks:1 of
+msgid "Return the task list, from ``--tasks-json`` or repeated ``--task``."
+msgstr ""
+
+#: ABQflow.check_hook.stage:1 of
+msgid "Copy ``hookkit.py`` (and any extra module) into *workdir*."
+msgstr ""
+
+#: ABQflow.check_hook.run_hook:1 of
+msgid "Build the command line the way ABQflow does and execute it in *workdir*."
+msgstr ""
+
+#: ABQflow.check_hook.check_output:1 of
+msgid "Grade stdout: sentinel pairing, JSON payload, per-task values."
+msgstr ""
+
+#: ABQflow.check_hook.check_values:1 of
+msgid "Grade each value the way the consumer side (``load_field``) will."
+msgstr ""
+
+#: ABQflow.check_hook.main:1 of
+msgid "Entry point for the ``abqflow-check-hook`` command."
+msgstr ""
+
+#: ../../../source/api/ABQflow.rst:26
+msgid "ABQflow.datkit module"
+msgstr ""
+
+#: ABQflow.datkit:1 of
+msgid "datkit — parser for Abaqus ``.dat`` printed output."
+msgstr ""
+
+#: ABQflow.datkit:3 of
+msgid ""
+"Single file, stdlib only, Py2.7 / Py3 compatible — the same contract as "
+":mod:`ABQflow.hookkit`, and for the same reason: this file is staged into"
+" the job directory and imported by hook scripts, which may run under an "
+"interpreter that is not the one ABQflow itself runs on.  It never imports"
+" ABQflow."
+msgstr ""
+
+#: ABQflow.datkit:9 of
+msgid "Why this exists"
+msgstr ""
+
+#: ABQflow.datkit:10 of
+msgid ""
+"An ``.odb`` is often too large to open just to read a handful of numbers."
+"  The usual workaround is to add ``*EL PRINT`` / ``*NODE PRINT`` to the "
+"deck so that Abaqus also writes the values as text into ``<job>.dat``.  "
+"This module turns that text back into rows and columns."
+msgstr ""
+
+#: ABQflow.datkit:16 of
+msgid "What it parses"
+msgstr ""
+
+#: ABQflow.datkit:17 of
+#, python-format
+msgid ""
+"The ``.dat`` is ~99% input echo followed by, per converged increment, an "
+"``INCREMENT n SUMMARY`` block and one printed table per output request.  "
+"A table is a banner (``N O D E   O U T P U T``), an optional \"THE "
+"FOLLOWING TABLE IS PRINTED FOR ...\" line naming the set, a two-line "
+"header whose ``FOOT-`` / ``NOTE`` heading is split across both lines, the"
+" data rows, and ``MAXIMUM`` / ``MINIMUM`` / ``AT NODE`` summary rows.  "
+"Those land in ``table['summary']``, where the ``AT NODE`` rows are keyed "
+"``'MAXIMUM AT'`` / ``'MINIMUM AT'`` after the row each one annotates."
+msgstr ""
+
+#: ABQflow.datkit:26 ABQflow.hookkit.opened:3 of
+msgid "Usage::"
+msgstr ""
+
+#: ABQflow.datkit:35 of
+msgid "For a file too large to hold, or when only one increment is wanted::"
+msgstr ""
+
+#: ABQflow.datkit:42 of
+msgid ""
+"The Py2.7 half of the promise is load-bearing — no f-strings, no "
+"annotations, no ``open(..., encoding=...)``, every class explicitly "
+"``(object)``.  ``test/unit/test_hookkit_py27.py`` enforces it with an AST"
+" scan over this file as well as hookkit.py; run it before changing "
+"anything here."
+msgstr ""
+
+#: ABQflow.datkit.to_float:1 of
+msgid "Parse one printed value, returning ``None`` rather than raising."
+msgstr ""
+
+#: ABQflow.datkit.to_float:3 of
+msgid ""
+"Handles plain floats, Fortran ``D`` exponents (``1.0D-03``), the "
+"missing-``E`` three-digit exponent form (``4.2961278-303``), ``***`` "
+"overflow fields, and NaN/Inf — all of which appear in real ``.dat`` files"
+" and none of which should kill a whole table."
+msgstr ""
+
+#: ABQflow.datkit.match_set:1 of
+msgid "Case-insensitive :mod:`fnmatch` of a table's set name against *pattern*."
+msgstr ""
+
+#: ABQflow.datkit.match_set:3 of
+msgid ""
+"``.dat`` upper-cases set names relative to the INP, so an exact name from"
+" the deck still matches.  ``None`` *pattern* matches everything; a table "
+"with no set never matches a non-``None`` pattern."
+msgstr ""
+
+#: ABQflow.datkit.iter_tables:1 of
+msgid "Yield tables one at a time, retaining nothing between them."
+msgstr ""
+
+#: ABQflow.datkit.iter_tables:3 of
+msgid ""
+"Use this instead of :func:`parse` when the file is large and the caller "
+"only needs to fold over the tables.  *steps* accepts an int or a sequence"
+" of ints — ``'last'`` cannot be resolved while streaming, so ask "
+":func:`parse` for that."
+msgstr ""
+
+#: ABQflow.datkit.parse:1 of
+msgid "Parse *path* into a document dict."
+msgstr ""
+
+#: ABQflow.datkit.parse:4 ABQflow.datkit.to_rows:4 ABQflow.hookkit.field:4
+#: ABQflow.hookkit.run:7 of
+msgid "Parameters"
+msgstr ""
+
+#: ABQflow.datkit.parse:5 of
+msgid "path"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 ABQflow.hookkit.run:-1 of
+msgid "str"
+msgstr ""
+
+#: ABQflow.datkit.parse:6 of
+msgid "Path to the ``.dat`` file."
+msgstr ""
+
+#: ABQflow.datkit.parse:7 of
+msgid "kinds"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 of
+msgid "str or sequence of str or None"
+msgstr ""
+
+#: ABQflow.datkit.parse:8 of
+msgid ""
+"Keep only these table kinds (``'node'``, ``'element'``, ``'energy'``, "
+"``'contact'``, ...)."
+msgstr ""
+
+#: ABQflow.datkit.parse:10 of
+msgid "set_name"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 ABQflow.hookkit.field:-1 of
+msgid "str or None"
+msgstr ""
+
+#: ABQflow.datkit.parse:11 of
+msgid ""
+"Keep only tables whose set matches this :mod:`fnmatch` pattern (case-"
+"insensitive)."
+msgstr ""
+
+#: ABQflow.datkit.parse:13 of
+msgid "steps"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 of
+msgid "int or sequence of int or None"
+msgstr ""
+
+#: ABQflow.datkit.parse:14 of
+msgid "Keep only tables from these steps."
+msgstr ""
+
+#: ABQflow.datkit.parse:15 of
+msgid "increments"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 of
+msgid "str or int or sequence"
+msgstr ""
+
+#: ABQflow.datkit.parse:16 of
+msgid ""
+"``'all'`` (default), ``'first'``, ``'last'``, a positive increment "
+"number, a negative index from the end, or a sequence.  ``'first'``, "
+"``'last'``, positive numbers and negative indices are applied *while "
+"streaming*, so peak memory stays at one increment however long the "
+"analysis ran."
+msgstr ""
+
+#: ABQflow.datkit.parse:21 of
+msgid "keep_rows"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 ABQflow.datkit.to_rows:-1 of
+msgid "bool"
+msgstr ""
+
+#: ABQflow.datkit.parse:22 of
+msgid "``False`` discards row data, keeping only ``summary`` and ``shape``."
+msgstr ""
+
+#: ABQflow.datkit.parse:23 of
+msgid "max_rows"
+msgstr ""
+
+#: ABQflow.datkit.parse:-1 of
+msgid "int or None"
+msgstr ""
+
+#: ABQflow.datkit.parse:24 of
+msgid "Cap the rows retained per table; capped tables carry ``truncated=True``."
+msgstr ""
+
+#: ABQflow.datkit.parse:28 ABQflow.hookkit.field:18 of
+msgid "Returns"
+msgstr ""
+
+#: ABQflow.datkit.parse:29 ABQflow.hookkit.field:-1 of
+msgid "dict"
+msgstr ""
+
+#: ABQflow.datkit.parse:30 of
+#, python-brace-format
+msgid ""
+"``{'path', 'completed', 'terminator', 'steps', 'increments', "
+"'increment_count', 'table_count', 'warnings', ...}``. ``increment_count``"
+" and ``table_count`` describe the *file* — every increment, and every "
+"table passing *kinds* / *set_name* / *steps* — not the subset "
+"*increments* retained, so a log line built from them still says how big "
+"the run was."
+msgstr ""
+
+#: ABQflow.datkit.scan_status:1 of
+msgid "Read only the tail of *path* and report how the analysis ended."
+msgstr ""
+
+#: ABQflow.datkit.scan_status:3 of
+msgid ""
+"``ANALYSIS COMPLETE`` is printed whether or not the step converged, so it"
+" is deliberately not consulted: ``completed`` follows ``THE ANALYSIS HAS "
+"BEEN COMPLETED`` alone."
+msgstr ""
+
+#: ABQflow.datkit.select_increments:1 of
+msgid "Pick increments out of a parsed *doc*."
+msgstr ""
+
+#: ABQflow.datkit.select_increments:3 of
+msgid ""
+"*step* is ``None`` (all), an int, ``'last'``, or a sequence. *increment* "
+"is ``'all'``, ``'first'``, ``'last'``, a positive increment number, a "
+"negative index from the end, or a sequence of either."
+msgstr ""
+
+#: ABQflow.datkit.select_tables:1 of
+msgid "Pick tables out of a parsed *doc*, filtered by kind and set name."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:1 of
+msgid "Flatten *tables* into a single ``(header, rows)`` pair."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:5 of
+msgid "tables"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:-1 of
+msgid "list[dict]"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:6 of
+msgid "Tables from :func:`select_tables` or :func:`iter_tables`."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:7 ABQflow.hookkit.field:11 of
+msgid "columns"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:-1 of
+msgid "list[str] or None"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:8 of
+msgid "Value columns to keep, by name (case-insensitive).  ``None`` keeps all."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:9 of
+msgid "labels"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:-1 of
+msgid "sequence or None"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:10 of
+msgid "Keep only rows whose node/element label is in this set."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:11 of
+msgid "index_columns"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:12 of
+msgid ""
+"Columns prepended from each table's context — ``'step'``, "
+"``'increment'``, or any increment-metadata key such as "
+"``'load_proportionality_factor'``."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:15 of
+msgid "include_labels"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:16 of
+msgid "Prepend the label columns (``NODE``, or ``ELEMENT`` + ``PT``)."
+msgstr ""
+
+#: ABQflow.datkit.to_rows:17 of
+msgid "include_footnote"
+msgstr ""
+
+#: ABQflow.datkit.to_rows:18 of
+msgid ""
+"Keep the footnote column.  Off by default: it holds text, and "
+":func:`ABQflow.helpers.convert.load_field` expects every cell of a field "
+"to be numeric."
+msgstr ""
+
+#: ABQflow.datkit.column_values:1 of
+msgid "Every value of one column of one table, in row order."
+msgstr ""
+
+#: ABQflow.datkit.summary:1 of
+#, python-brace-format
+msgid "One summary row of *table* as a ``{column: value}`` mapping."
+msgstr ""
+
+#: ABQflow.datkit.summary:3 of
+msgid ""
+"*row* is ``'MAXIMUM'``, ``'MINIMUM'``, ``'TOTAL'``, ``'AVERAGE'``, ... or"
+" one of the label rows: Abaqus prints ``AT NODE`` (or ``AT ELEMENT``) "
+"twice, once under ``MAXIMUM`` and once under ``MINIMUM``, so each is "
+"keyed by the row it belongs to — ``'MAXIMUM AT'`` and ``'MINIMUM AT'`` — "
+"and asking for ``'MAXIMUM AT'`` tells you *where* each column peaked."
+msgstr ""
+
+#: ABQflow.datkit.summary:9 of
+#, python-brace-format
+msgid ""
+"Returns an :class:`~collections.OrderedDict` so callers get a stable "
+"column order under Python 2.7 as well.  An unknown *row* gives ``{}``."
+msgstr ""
+
+#: ABQflow.datkit.reduce_values:1 of
+msgid "Reduce a list of numbers to one."
+msgstr ""
+
+#: ABQflow.datkit.reduce_values:3 of
+msgid ""
+"``'absmax'`` / ``'absmin'`` pick by magnitude but return the value with "
+"its **sign intact** — a Riks analysis that snaps back drives the response"
+" negative, and the peak of that curve is a negative number."
+msgstr ""
+
+#: ABQflow.datkit.reduce_rows:1 of
+msgid "Reduce one named column of a ``(header, rows)`` pair to a scalar."
+msgstr ""
+
+#: ../../../source/api/ABQflow.rst:33
+msgid "ABQflow.hookkit module"
+msgstr ""
+
+#: ABQflow.hookkit:1 of
+msgid "hookkit — minimal extraction harness for Abaqus Python hooks."
+msgstr ""
+
+#: ABQflow.hookkit:3 of
+msgid ""
+"Single file, stdlib only, Py2.7 / Py3 compatible. Never imports ABQflow, "
+"odbAccess, abaqus, or numpy — it only manages the protocol (argparse, "
+"JSON, sentinel output, sidecar CSV)."
+msgstr ""
+
+#: ABQflow.hookkit:8 of
+msgid ""
+"The Py2.7 half of that promise is real and load-bearing: Abaqus 2022 and "
+"earlier ship Python 2.7 as their ``abaqus python`` interpreter, and this "
+"file is imported by every hook running under it.  That rules out "
+"f-strings, ``open(..., encoding=...)`` and implicit old-style classes — "
+"any of which turn into an ``ImportError``/``SyntaxError`` that surfaces "
+"only on an older machine.  ``test/unit/test_hookkit_py27.py`` enforces "
+"this with an AST scan; run it before changing anything here."
+msgstr ""
+
+#: ABQflow.hookkit:16 of
+msgid "Usage (ODB hook)::"
+msgstr ""
+
+#: ABQflow.hookkit:31 of
+msgid "Usage (INP / mdb hook)::"
+msgstr ""
+
+#: ABQflow.hookkit.log:1 of
+msgid "Write *msg* + newline to stderr (Py2-safe)."
+msgstr ""
+
+#: ABQflow.hookkit.scalar:1 of
+msgid "Convert *v* to a plain ``float``."
+msgstr ""
+
+#: ABQflow.hookkit.scalar:3 of
+msgid "Handles Abaqus internal numeric types that don't serialise cleanly."
+msgstr ""
+
+#: ABQflow.hookkit.fail:1 of
+msgid "Explicitly produce ``None`` for *name* with a stderr log."
+msgstr ""
+
+#: ABQflow.hookkit.fail:3 of
+msgid "Sugar so the user can write::"
+msgstr ""
+
+#: ABQflow.hookkit.fail:7 of
+msgid "instead of raising an exception — both produce ``None`` + log."
+msgstr ""
+
+#: ABQflow.hookkit.emit:1 of
+msgid "Write *results* dict as sentinel-wrapped JSON to ``sys.__stdout__``."
+msgstr ""
+
+#: ABQflow.hookkit.emit:3 of
+msgid ""
+"Idempotent: a second call in the same process raises ``RuntimeError`` to "
+"prevent double-sentinel blocks (which would corrupt the parse)."
+msgstr ""
+
+#: ABQflow.hookkit.opened:1 of
+msgid "Return a context manager that closes *obj* on exit."
+msgstr ""
+
+#: ABQflow.hookkit.field:1 of
+msgid "Decide representation and return raw *rows* or a sidecar envelope."
+msgstr ""
+
+#: ABQflow.hookkit.field:5 of
+msgid "task"
+msgstr ""
+
+#: ABQflow.hookkit.field:6 of
+msgid ""
+"Task descriptor from the tasks JSON.  ``task['output']`` controls the "
+"mode (``'inline'`` / ``'file'`` / ``'auto'``) and wins over the *mode* "
+"argument."
+msgstr ""
+
+#: ABQflow.hookkit.field:9 of
+msgid "rows"
+msgstr ""
+
+#: ABQflow.hookkit.field:-1 of
+msgid "list[list]"
+msgstr ""
+
+#: ABQflow.hookkit.field:10 of
+msgid "Row-major data to be extracted."
+msgstr ""
+
+#: ABQflow.hookkit.field:-1 of
+msgid "list[str]"
+msgstr ""
+
+#: ABQflow.hookkit.field:12 of
+msgid "Column names (CSV header when writing to file)."
+msgstr ""
+
+#: ABQflow.hookkit.field:13 of
+msgid "mode"
+msgstr ""
+
+#: ABQflow.hookkit.field:14 of
+msgid ""
+"``'inline'`` / ``'file'`` / ``'auto'``.  Only used when "
+"``task['output']`` is absent.  Default: ``'auto'``."
+msgstr ""
+
+#: ABQflow.hookkit.field:19 of
+msgid "list or dict"
+msgstr ""
+
+#: ABQflow.hookkit.field:20 of
+msgid ""
+"Raw *rows* for inline, or an envelope ``dict`` for file mode. Returns "
+"``None`` if file write fails (promise-after-write)."
+msgstr ""
+
+#: ABQflow.hookkit.run:1 of
+msgid "Main harness — parse args, iterate tasks, emit results."
+msgstr ""
+
+#: ABQflow.hookkit.run:3 of
+msgid ""
+"The user only writes *extract_fn*.  Everything else (argparse, task "
+"iteration, try/except→None, sentinel output) is handled here."
+msgstr ""
+
+#: ABQflow.hookkit.run:8 of
+msgid "extract_fn"
+msgstr ""
+
+#: ABQflow.hookkit.run:-1 of
+msgid "callable"
+msgstr ""
+
+#: ABQflow.hookkit.run:9 of
+msgid ""
+"``(source_path, task_dict) -> value``. Raise an exception on failure — "
+"``run()`` converts it to ``None`` + stderr log for that task only "
+"(partial-failure semantics)."
+msgstr ""
+
+#: ABQflow.hookkit.run:13 of
+msgid "source_arg"
+msgstr ""
+
+#: ABQflow.hookkit.run:14 of
+msgid ""
+"CLI flag carrying the source path, e.g. ``'--odb_path'`` or ``'--"
+"inp_path'``."
+msgstr ""
+

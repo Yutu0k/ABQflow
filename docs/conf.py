@@ -58,20 +58,29 @@ intersphinx_mapping = {
 }
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+]
 
 source_suffix = {
     '.rst': 'restructuredtext',
     '.md': 'markdown',
 }
 
-language = 'zh-cn'
+language = 'en'
+locale_dirs = ['locale/']
+gettext_compact = False
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'furo'
 html_static_path = ['_static']
+html_title = f"ABQflow {release}"
+html_css_files = ['language-switcher.css']
+html_js_files = ['language-switcher.js']
 
 # Furo theme options
 html_theme_options = {

@@ -1,0 +1,619 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 16:07+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/remote_execution.rst:2
+msgid "Remote Execution"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:5
+msgid "Prerequisites"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:8
+msgid "Local Machine Setup"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:10
+msgid "Requires the optional dependency:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:17
+msgid "Remote Machine Setup"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:29
+msgid ""
+"Remote Desktop is **unaffected**: SSH sessions do not occupy an "
+"interactive session slot, and detached jobs run outside any RDP session, "
+"and are invisible in Task Manager unless you enable *show processes from "
+"all users*."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:33
+msgid "Basic Usage of Remote Execution"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:35
+msgid ""
+"A batch can run on other machines instead of the one you submit from. One"
+" can specify a list of remote hosts via :class:`~ABQflow.HostSpec` in "
+":class:`~ABQflow.BatchAbaqusProcessor`. Each host can have its own "
+"concurrency limit and weight, which controls how many jobs are sent to it"
+" and how many run at once."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:70
+msgid "Division of Labour"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:72
+msgid ""
+"Preparation always runs **locally**. INPs are generated on the submitting"
+" machine and then shipped; a remote machine is only ever asked to solve "
+"and to extract. This keeps model generation reproducible in one place and"
+" means a remote host needs nothing but Abaqus and an SSH server."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:74
+msgid "What crosses the wire, per job:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:80
+msgid "Direction"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:81
+msgid "Contents"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:82
+msgid "Up"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:83
+msgid ""
+"the job's ``.inp``, ``*INCLUDE`` targets (see below), ``hookkit.py``, "
+"hook scripts, the tasks JSON, and a user subroutine if configured"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:85
+msgid "Down"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:86
+msgid ""
+"``.sta`` / ``.msg`` / ``.dat`` / ``.log``, sidecar ``.csv`` files, and "
+"the return-code sentinel — kilobytes to megabytes"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:88
+msgid "Never"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:89
+msgid "the ``.odb``, unless ``fetch_odb=True``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:92
+msgid "Distributing Work"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:94
+msgid ""
+"Multiple knobs control multi-machine behaviour, and they are deliberately"
+" separate."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:96
+msgid "``cpus_per_job``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:97
+msgid "The number of cores each job is given."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:99
+msgid "``max_concurrent``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:100
+msgid ""
+"How many jobs run on a machine **at once**.  Enforced during execution by"
+" a per-host semaphore, so a batch can send two concurrent jobs to one "
+"machine and one to another."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:104
+msgid ""
+"When ``max_concurrent`` is not given it is derived from ``cpus_total``, "
+"``cpus_per_job`` and ``license_tokens``."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:106
+msgid "``weight``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:107
+msgid ""
+"What **share of the batch** a machine receives.  Applied when jobs are "
+"assigned.  Defaults to the machine's concurrency capacity."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:109
+msgid "``cpus_total`` (Optional)"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:110
+msgid ""
+"Total cores on the machine. If leaft unset, it is measured once over SSH "
+"before any job is dispatched. Setting it explicitly skips that probe."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:113
+msgid ""
+"If ``cpus_per_job`` * ``max_concurrent`` exceeds ``cpus_total``, a "
+"**over-subscription Warning** will be given but preceeding to solver."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:116
+msgid "Inspect the plan before running anything:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:126
+msgid "``*INCLUDE`` and the Shared Directory"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:128
+msgid ""
+"Decks that pull in with ``*INCLUDE, INPUT=`` need those files on the "
+"executing machine. The whole tree is walked through, and each file is "
+"placed in one of two tiers.  Which tier is read off the directive's "
+"**shape**, which is the convention :mod:`ABQflow.core.inp_include` "
+"already established when it resolved the tree locally — so preparation "
+"and staging agree with no manifest passed between them:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:134
+msgid "Directive looks like"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:135
+msgid "Means"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:136
+msgid "Goes to"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:137
+msgid "a bare filename"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:138
+msgid ""
+"per-job — a template a parameter touched, materialised beside the job's "
+"own INP"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:140
+msgid ""
+"the remote **job directory**, name unchanged (Abaqus resolves a bare "
+"include against the working directory)"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:142
+msgid "anything else"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:143
+msgid "static — identical across the batch"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:144
+msgid "the machine's **shared directory**, content-addressed"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:161
+msgid ""
+"A per-job file is **not** a candidate for sharing even though it is "
+"small.Shared names are **content-addressed** - "
+"``<sha256[:12]>_<basename>``:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:163
+msgid ""
+"the same file is uploaded once no matter how many jobs or batches "
+"reference it;"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:164
+msgid "two different files that happen to share a basename cannot collide;"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:165
+msgid ""
+"\"already present remotely\" is *exactly* equivalent to \"identical "
+"content\", so the existence check is a correct cache check rather than a "
+"guess."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:170
+msgid "Surviving Disconnects"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:172
+msgid ""
+"Holding an SSH channel open for the duration of a solve makes the job as "
+"fragile as the connection. Instead the solver is launched **detached** "
+"via ``Win32_Process.Create``, so the process is re-parented away from the"
+" sshd session and survives the channel closing.  Progress is read from "
+"files on the remote disk, which makes the poll loop stateless — it can "
+"lose the connection, reconnect, and resume:"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:178
+msgid "Signal"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:179
+msgid "Meaning"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:180
+msgid "``<job>.abqflow.rc``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:181
+msgid ""
+"Written by the launcher only *after* the solver exits.  Its existence is "
+"the authoritative \"finished\" signal; its contents are the return code."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:184
+msgid "``<job>.lck``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:185
+msgid ""
+"Solver holds the database.  A liveness hint only — Abaqus does not create"
+" it for the first few seconds, so its *absence* never means \"done\"."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:188
+msgid "``<job>.sta``"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:189
+msgid ""
+"Progress, and the ``COMPLETED`` verdict that remains the only success "
+"certificate."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:192
+msgid ""
+"On timeout the same escalation ladder as local execution runs remotely: "
+"``abaqus terminate`` → grace period → ``taskkill /T /F /PID`` → remove "
+"the ``.lck``."
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:196
+msgid "Dry Runs"
+msgstr ""
+
+#: ../../../source/user_guide/remote_execution.rst:198
+msgid ""
+"``RecordingBackend`` exercises the whole remote pipeline — staging, "
+"launcher generation, poll loop, result fetch - without a network, and is "
+"useful for checking what a batch *would* do:"
+msgstr ""
+
+#~ msgid ""
+#~ "A batch can run on other machines"
+#~ " instead of — or alongside — "
+#~ "the one you submit from.  Everything "
+#~ "is opt-in: without a ``hosts`` "
+#~ "argument the code path is unreachable"
+#~ " and behaviour is exactly what it "
+#~ "has always been."
+#~ msgstr ""
+
+#~ msgid "Requires the optional dependency::"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``paramiko`` is imported lazily, so a"
+#~ " local-only installation never needs "
+#~ "it."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Preparation always runs **locally**.  INPs "
+#~ "are generated on the submitting machine"
+#~ " and then shipped; a remote machine"
+#~ " is only ever asked to solve "
+#~ "and to extract.  This keeps model "
+#~ "generation reproducible in one place and"
+#~ " means a remote host needs nothing"
+#~ " but Abaqus and an SSH server."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Because only small text artifacts come"
+#~ " back, ``diagnose()`` runs unchanged "
+#~ "against the local copies and the "
+#~ "multi-gigabyte ODB stays where the "
+#~ "solver wrote it."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Two knobs control multi-machine "
+#~ "behaviour, and they are deliberately "
+#~ "separate."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Conflating the two is tempting and "
+#~ "wrong.  Of two machines measured during"
+#~ " development, the one with *half* the"
+#~ " cores finished the same job 60% "
+#~ "faster — ranking purely by core "
+#~ "count would have sent most of the"
+#~ " work to the slower machine.  Set "
+#~ "``weight`` explicitly once you know how"
+#~ " fast a machine actually is:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "When ``max_concurrent`` is not given it"
+#~ " is derived from ``cpus_total``, "
+#~ "``cpus_per_job`` and ``license_tokens``, with "
+#~ "tokens a hard cap and cores "
+#~ "advisory — overcommitting cores merely "
+#~ "slows a machine down, whereas running"
+#~ " out of tokens makes jobs fail "
+#~ "to start with errors that look "
+#~ "like solver crashes."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``cpus_total`` itself is optional: a "
+#~ "remote machine that leaves it unset "
+#~ "is measured once over SSH before "
+#~ "any job is dispatched, the same "
+#~ "way a host-less batch reads this"
+#~ " machine's cores.  Setting it explicitly"
+#~ " skips that probe and always wins."
+#~ "  Only if a machine cannot be "
+#~ "measured *and* has no ``max_concurrent`` "
+#~ "does the batch stop and ask for"
+#~ " one of the two."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Neither knob ever changes ``cpus=``.  "
+#~ "That is ``cpus_per_job``, per batch or"
+#~ " per host, and nothing rewrites it:"
+#~ " when concurrency × cpus exceeds a"
+#~ " machine's cores the batch logs the"
+#~ " oversubscription and runs anyway."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Decks that pull in an external "
+#~ "mesh or geometry with ``*INCLUDE, "
+#~ "INPUT=`` need those files on the "
+#~ "executing machine.  Three things would "
+#~ "go wrong naively:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "the directive points at a **local "
+#~ "path**, which cannot resolve on another"
+#~ " machine — the job fails with "
+#~ "an opaque Abaqus preprocessing error;"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "copying every target into every job "
+#~ "directory would make **transfer, not "
+#~ "solving, the dominant cost** of a "
+#~ "sweep, since a referenced mesh is "
+#~ "often orders of magnitude larger than"
+#~ " the deck referencing it;"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "scanning only the job's own ``.inp`` "
+#~ "leaves anything *it* includes behind —"
+#~ " an include tree is a tree, and"
+#~ " the second level dies the same "
+#~ "opaque death."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The whole tree is therefore walked, "
+#~ "and each file is placed in one "
+#~ "of two tiers.  Which tier is read"
+#~ " off the directive's **shape**, which "
+#~ "is the convention :mod:`ABQflow.core.inp_include`"
+#~ " already established when it resolved "
+#~ "the tree locally — so preparation "
+#~ "and staging agree with no manifest "
+#~ "passed between them:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "A per-job file is *not* a "
+#~ "candidate for sharing even though it "
+#~ "is small: its content is unique to"
+#~ " the job, so putting it in the"
+#~ " machine-wide cache would fill the"
+#~ " cache with N entries that nothing"
+#~ " ever reuses."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Shared names are **content-addressed** —"
+#~ " ``<sha256[:12]>_<basename>`` — which buys "
+#~ "three properties from one decision:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The hash covers **what is uploaded**,"
+#~ " not what sits on disk: a "
+#~ "shared file whose own includes were "
+#~ "rewritten no longer has its original "
+#~ "bytes, and addressing it by them "
+#~ "would let two different rewrites of "
+#~ "one source collide. A file that "
+#~ "needed no rewriting is hashed by "
+#~ "streaming and uploaded straight from "
+#~ "disk, so a multi-gigabyte mesh is"
+#~ " never held in memory or copied "
+#~ "to a temporary file first — and"
+#~ " its address is unchanged, so cache"
+#~ " entries written before this behaviour "
+#~ "existed stay valid."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The shared directory is a cache "
+#~ "and is **not** touched by ``cleanup``,"
+#~ " which only ever removes job "
+#~ "directories.  Delete it by hand to "
+#~ "force a re-upload."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Holding an SSH channel open for "
+#~ "the duration of a solve makes the"
+#~ " job as fragile as the connection:"
+#~ " a laptop sleeping, a Wi-Fi "
+#~ "roam, a VPN reconnect or sshd's "
+#~ "``ClientAliveInterval`` closes the channel, "
+#~ "and Windows OpenSSH terminates the "
+#~ "session's process tree with it.  A "
+#~ "six-hour job dies at hour four."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Instead the solver is launched "
+#~ "**detached**, via ``Win32_Process.Create``, so "
+#~ "the process is re-parented away "
+#~ "from the sshd session and survives "
+#~ "the channel closing.  Progress is read"
+#~ " from files on the remote disk, "
+#~ "which makes the poll loop stateless "
+#~ "— it can lose the connection, "
+#~ "reconnect, and resume:"
+#~ msgstr ""
+
+#~ msgid "On the target, in an elevated PowerShell:"
+#~ msgstr ""
+
+#~ msgid "Points that cost real debugging time:"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**Always give an absolute** ``abaqus_exe``."
+#~ "  A non-interactive SSH session "
+#~ "inherits machine- and user-level "
+#~ "environment but not what a login "
+#~ "shell profile adds, and installers often"
+#~ " put Abaqus on the installing user's"
+#~ " ``PATH`` only.  ``HostSpec`` refuses a "
+#~ "remote host without one."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**IPv6 literals go in bare** — "
+#~ "``2001:db8::1``, not ``[2001:db8::1]``.  A "
+#~ "link-local address needs a *numeric* "
+#~ "Windows zone index (``fe80::1%12``), not "
+#~ "an interface name."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**License environment must be machine-"
+#~ "scoped.**  ``ABAQUSLM_LICENSE_FILE`` set at "
+#~ "user scope works over RDP and "
+#~ "fails over SSH."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**Prefer a dedicated local account.**  "
+#~ "SSH password authentication against a "
+#~ "Microsoft-account-backed login is "
+#~ "unreliable."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**Abaqus 2022 and earlier run hooks "
+#~ "under Python 2.7.**  ``hookkit.py`` supports"
+#~ " it, but your own hook scripts "
+#~ "must too."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Remote Desktop is unaffected: SSH "
+#~ "sessions do not occupy an interactive"
+#~ " session slot, and detached jobs run"
+#~ " outside any RDP session — they "
+#~ "survive you logging out, and are "
+#~ "invisible in Task Manager unless you "
+#~ "enable *show processes from all users*."
+#~ "  They do compete for the same "
+#~ "cores and license tokens as anything "
+#~ "you run interactively."
+#~ msgstr ""
+
+#~ msgid "Credentials"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Never hard-code a password in a"
+#~ " script or notebook.  Read it from"
+#~ " the environment:"
+#~ msgstr ""
+
+#~ msgid "or pass ``key_filename`` and use key authentication instead."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "A notebook stores **cell outputs** as"
+#~ " well as source.  Printing a password"
+#~ " to check it loaded leaves it "
+#~ "in the ``.ipynb`` even after the "
+#~ "source is cleaned — and committing "
+#~ "that leaks it.  Clear the outputs "
+#~ "of any cell that touched a "
+#~ "credential before committing."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``RecordingBackend`` exercises the whole "
+#~ "remote pipeline — staging, launcher "
+#~ "generation, poll loop, result fetch —"
+#~ " without a network, and is useful "
+#~ "for checking what a batch *would* "
+#~ "do:"
+#~ msgstr ""
+

@@ -1,0 +1,917 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 11:45+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/api/ABQflow.core.backends.rst:4
+msgid "ABQflow.core.backends package"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst:7
+msgid "Submodules"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst:10
+msgid "ABQflow.core.backends.base module"
+msgstr ""
+
+#: ABQflow.core.backends.base:1 of
+msgid ""
+"ExecutionBackend — the seam between *what* command to run and *where* it "
+"runs."
+msgstr ""
+
+#: ABQflow.core.backends.base:3 of
+msgid ""
+":class:`~ABQflow.core.backends.local.LocalBackend` reproduces today's "
+"``subprocess`` behaviour exactly and is the default everywhere, so remote"
+" execution is strictly opt-in and existing callers see no change."
+msgstr ""
+
+#: ABQflow.core.backends.base:7 of
+msgid ""
+"The design decision worth stating up front: **there is no filesystem "
+"abstraction.**  After a remote solve, the small text artifacts (``.sta`` "
+"/ ``.msg`` / ``.dat``, kilobytes to megabytes) are copied back into the "
+"job's *local* directory and the existing "
+":func:`~ABQflow.core.diagnostics.diagnose` runs against them unchanged.  "
+"The multi-gigabyte ``.odb`` stays where the solver wrote it.  That keeps "
+"``diagnostics.py`` — the most carefully tested module in the package — at"
+" zero changes, and leaves the local job directory a complete, "
+"reproducible artifact."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:1
+#: ABQflow.core.backends.base.JobHandle:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:1 of
+msgid "Outcome of one synchronous command execution."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:3 of
+msgid ""
+"Deliberately shaped like :class:`subprocess.CompletedProcess` — same "
+"three attribute names — so call sites in "
+":class:`~ABQflow.core.runner.AbaqusRunner` need no restructuring."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:8
+#: ABQflow.core.backends.base.JobHandle:8 of
+msgid "Attributes"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:9 of
+msgid "returncode"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:-1
+#: ABQflow.core.backends.base.JobHandle:-1 of
+msgid "int or None"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:10 of
+msgid "Exit code; ``None`` when the command timed out or never launched."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:11 of
+msgid "stdout, stderr"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:-1
+#: ABQflow.core.backends.base.JobHandle:-1
+#: ABQflow.core.backends.recording.RecordingBackend:-1 of
+msgid "str"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecResult:12 of
+msgid "Captured output."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst
+#: ABQflow.core.backends.base.ExecutionBackend.clear_sentinels
+#: ABQflow.core.backends.base.ExecutionBackend.get
+#: ABQflow.core.backends.base.ExecutionBackend.glob_get
+#: ABQflow.core.backends.base.ExecutionBackend.map_context
+#: ABQflow.core.backends.base.ExecutionBackend.poll
+#: ABQflow.core.backends.base.ExecutionBackend.put
+#: ABQflow.core.backends.base.ExecutionBackend.put_text
+#: ABQflow.core.backends.base.ExecutionBackend.read_text
+#: ABQflow.core.backends.base.ExecutionBackend.run
+#: ABQflow.core.backends.base.ExecutionBackend.submit_detached
+#: ABQflow.core.backends.base.ExecutionBackend.terminate
+#: ABQflow.core.backends.base.ExecutionBackend.wait:25
+#: ABQflow.core.backends.local.LocalBackend:4
+#: ABQflow.core.backends.local.LocalBackend.get
+#: ABQflow.core.backends.local.LocalBackend.glob_get
+#: ABQflow.core.backends.local.LocalBackend.is_alive
+#: ABQflow.core.backends.local.LocalBackend.map_context
+#: ABQflow.core.backends.local.LocalBackend.poll
+#: ABQflow.core.backends.local.LocalBackend.put
+#: ABQflow.core.backends.local.LocalBackend.put_text
+#: ABQflow.core.backends.local.LocalBackend.read_text
+#: ABQflow.core.backends.local.LocalBackend.run
+#: ABQflow.core.backends.local.LocalBackend.submit_detached
+#: ABQflow.core.backends.local.LocalBackend.terminate
+#: ABQflow.core.backends.local.LocalBackend.wait
+#: ABQflow.core.backends.local.resolve_local_exe
+#: ABQflow.core.backends.recording.RecordingBackend:4
+#: ABQflow.core.backends.recording.RecordingBackend.commands
+#: ABQflow.core.backends.recording.RecordingBackend.get
+#: ABQflow.core.backends.recording.RecordingBackend.glob_get
+#: ABQflow.core.backends.recording.RecordingBackend.is_alive
+#: ABQflow.core.backends.recording.RecordingBackend.map_context
+#: ABQflow.core.backends.recording.RecordingBackend.poll
+#: ABQflow.core.backends.recording.RecordingBackend.put
+#: ABQflow.core.backends.recording.RecordingBackend.put_text
+#: ABQflow.core.backends.recording.RecordingBackend.read_text
+#: ABQflow.core.backends.recording.RecordingBackend.run
+#: ABQflow.core.backends.recording.RecordingBackend.submit_detached
+#: ABQflow.core.backends.recording.RecordingBackend.terminate
+#: ABQflow.core.backends.ssh.SshBackend:4
+#: ABQflow.core.backends.ssh.SshBackend.get
+#: ABQflow.core.backends.ssh.SshBackend.glob_get
+#: ABQflow.core.backends.ssh.SshBackend.is_alive
+#: ABQflow.core.backends.ssh.SshBackend.map_context
+#: ABQflow.core.backends.ssh.SshBackend.poll
+#: ABQflow.core.backends.ssh.SshBackend.put
+#: ABQflow.core.backends.ssh.SshBackend.put_text
+#: ABQflow.core.backends.ssh.SshBackend.read_text
+#: ABQflow.core.backends.ssh.SshBackend.reconnect
+#: ABQflow.core.backends.ssh.SshBackend.run
+#: ABQflow.core.backends.ssh.SshBackend.submit_detached
+#: ABQflow.core.backends.ssh.SshBackend.terminate of
+msgid "Parameters"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:1 of
+msgid "Reference to a detached solver process."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:3 of
+msgid ""
+"Plain data only, so a poll loop can be resumed after a dropped "
+"connection: every completion signal lives in a file on the executing "
+"machine, never in this object."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:9 of
+msgid "job_name"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:10 of
+msgid "Abaqus job name."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:11 of
+msgid "work_dir"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:12 of
+msgid "Directory on the *executing* machine holding the job's files."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:13 of
+msgid "pid"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:14 of
+msgid ""
+"Process id on the executing machine, used by the terminate escalation "
+"ladder.  ``None`` when the launcher could not report one, in which case "
+"the ladder skips its force-kill rung."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:17 of
+msgid "method"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:18 of
+msgid "How the process was launched, for diagnostics."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:19 of
+msgid "launch_rc"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:20 of
+msgid "Return code of the launch call itself (not of the solver)."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:21 of
+msgid "launch_output"
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle:22 of
+msgid "Raw launcher output, kept for error messages."
+msgstr ""
+
+#: ABQflow.core.backends.base.JobHandle.rc_path:1 of
+msgid ""
+"Sentinel written only *after* the solver exits — the authoritative \"this"
+" job has finished\" signal.  ``.lck`` cannot play that role: it does not "
+"exist for the first few seconds after launch."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend:1 of
+msgid "Bases: :py:class:`~abc.ABC`"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend:1 of
+msgid "Runs commands and moves files on behalf of :class:`AbaqusRunner`."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend:3 of
+msgid ""
+"Implementations must satisfy the shared conformance suite in "
+"``test/unit/test_backend_conformance.py``: ``LocalBackend`` is the "
+"executable specification, and every other backend is asserted against the"
+" identical checks, so a backend that diverges from local semantics fails "
+"there rather than six hours into a solve."
+msgstr ""
+
+#: ../../../../docstring ABQflow.core.backends.base.ExecutionBackend.name:1
+#: ABQflow.core.backends.local.LocalBackend.name:1 of
+msgid "Short identifier, used in per-host cache-marker filenames."
+msgstr ""
+
+#: ../../../../docstring
+#: ABQflow.core.backends.base.ExecutionBackend.is_remote:1
+#: ABQflow.core.backends.local.LocalBackend.is_remote:1
+#: ABQflow.core.backends.recording.RecordingBackend.is_remote:1
+#: ABQflow.core.backends.ssh.SshBackend.is_remote:1 of
+msgid ""
+"Whether commands run against a directory tree that needs inputs staged "
+"into it and results fetched back.  True for any remote backend, and also "
+"for a :class:`LocalBackend` given an explicit ``work_root``."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.map_context:1
+#: ABQflow.core.backends.recording.RecordingBackend.map_context:1 of
+msgid "Return the context as seen *by the machine that runs the commands*."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.map_context:3
+#: ABQflow.core.backends.recording.RecordingBackend.map_context:3 of
+msgid ""
+":class:`LocalBackend` returns *ctx* unchanged.  A remote backend returns "
+"``dataclasses.replace(ctx, output_dir=<remote job dir>, "
+"abaqus_exe=<host.abaqus_exe>)`` so every derived path property "
+"(``inp_path`` / ``odb_path`` / ``sta_path`` / …) recomputes against the "
+"remote work root — which is why the pure command builders "
+"(:meth:`AbaqusRunner.build_solver_command` and friends) need no changes "
+"at all, and :class:`~ABQflow.core.context.JobContext` stays frozen and "
+"local-first."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst
+#: ABQflow.core.backends.base.ExecutionBackend.clear_sentinels
+#: ABQflow.core.backends.base.ExecutionBackend.close
+#: ABQflow.core.backends.base.ExecutionBackend.get
+#: ABQflow.core.backends.base.ExecutionBackend.glob_get
+#: ABQflow.core.backends.base.ExecutionBackend.map_context
+#: ABQflow.core.backends.base.ExecutionBackend.poll
+#: ABQflow.core.backends.base.ExecutionBackend.probe_cores
+#: ABQflow.core.backends.base.ExecutionBackend.put
+#: ABQflow.core.backends.base.ExecutionBackend.put_text
+#: ABQflow.core.backends.base.ExecutionBackend.read_text
+#: ABQflow.core.backends.base.ExecutionBackend.run
+#: ABQflow.core.backends.base.ExecutionBackend.submit_detached
+#: ABQflow.core.backends.base.ExecutionBackend.terminate
+#: ABQflow.core.backends.local.LocalBackend.close
+#: ABQflow.core.backends.local.LocalBackend.get
+#: ABQflow.core.backends.local.LocalBackend.glob_get
+#: ABQflow.core.backends.local.LocalBackend.is_alive
+#: ABQflow.core.backends.local.LocalBackend.map_context
+#: ABQflow.core.backends.local.LocalBackend.poll
+#: ABQflow.core.backends.local.LocalBackend.probe_cores
+#: ABQflow.core.backends.local.LocalBackend.put
+#: ABQflow.core.backends.local.LocalBackend.put_text
+#: ABQflow.core.backends.local.LocalBackend.read_text
+#: ABQflow.core.backends.local.LocalBackend.run
+#: ABQflow.core.backends.local.LocalBackend.submit_detached
+#: ABQflow.core.backends.local.LocalBackend.terminate
+#: ABQflow.core.backends.local.LocalBackend.wait
+#: ABQflow.core.backends.local.resolve_local_exe
+#: ABQflow.core.backends.recording.RecordingBackend.close
+#: ABQflow.core.backends.recording.RecordingBackend.commands
+#: ABQflow.core.backends.recording.RecordingBackend.get
+#: ABQflow.core.backends.recording.RecordingBackend.glob_get
+#: ABQflow.core.backends.recording.RecordingBackend.is_alive
+#: ABQflow.core.backends.recording.RecordingBackend.map_context
+#: ABQflow.core.backends.recording.RecordingBackend.poll
+#: ABQflow.core.backends.recording.RecordingBackend.put
+#: ABQflow.core.backends.recording.RecordingBackend.put_text
+#: ABQflow.core.backends.recording.RecordingBackend.read_text
+#: ABQflow.core.backends.recording.RecordingBackend.run
+#: ABQflow.core.backends.recording.RecordingBackend.submit_detached
+#: ABQflow.core.backends.recording.RecordingBackend.terminate
+#: ABQflow.core.backends.ssh.SshBackend.close
+#: ABQflow.core.backends.ssh.SshBackend.get
+#: ABQflow.core.backends.ssh.SshBackend.glob_get
+#: ABQflow.core.backends.ssh.SshBackend.is_alive
+#: ABQflow.core.backends.ssh.SshBackend.map_context
+#: ABQflow.core.backends.ssh.SshBackend.poll
+#: ABQflow.core.backends.ssh.SshBackend.probe_cores
+#: ABQflow.core.backends.ssh.SshBackend.put
+#: ABQflow.core.backends.ssh.SshBackend.put_text
+#: ABQflow.core.backends.ssh.SshBackend.read_text
+#: ABQflow.core.backends.ssh.SshBackend.reconnect
+#: ABQflow.core.backends.ssh.SshBackend.run
+#: ABQflow.core.backends.ssh.SshBackend.submit_detached
+#: ABQflow.core.backends.ssh.SshBackend.terminate of
+msgid "Return type"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.run:1
+#: ABQflow.core.backends.local.LocalBackend.run:1
+#: ABQflow.core.backends.ssh.SshBackend.run:1 of
+msgid "Run *cmd* to completion and capture its output."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.run:3
+#: ABQflow.core.backends.local.LocalBackend.run:3
+#: ABQflow.core.backends.ssh.SshBackend.run:3 of
+msgid ""
+"Must never raise for an ordinary command failure — a non-zero exit is "
+"data, returned in :attr:`ExecResult.returncode`."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.submit_detached:1
+#: ABQflow.core.backends.recording.RecordingBackend.submit_detached:1 of
+msgid "Start the solver so it outlives this connection, and return a handle."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.poll:1
+#: ABQflow.core.backends.local.LocalBackend.poll:1
+#: ABQflow.core.backends.recording.RecordingBackend.poll:1 of
+msgid "Return the solver's return code, or ``None`` while it is still running."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.terminate:1
+#: ABQflow.core.backends.local.LocalBackend.terminate:1
+#: ABQflow.core.backends.recording.RecordingBackend.terminate:1 of
+msgid "Run the terminate escalation ladder; return a log of what each rung did."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.is_alive:1 of
+msgid "Whether the launched process still exists on the executing machine."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.is_alive:4
+#: ABQflow.core.backends.base.ExecutionBackend.wait:35
+#: ABQflow.core.backends.local.wait_for:6 of
+msgid "Returns"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.is_alive:5 of
+msgid "bool or None"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.is_alive:6 of
+msgid ""
+"``True``/``False``, or ``None`` when liveness cannot be determined (no "
+"PID was reported, or the query itself failed). ``None`` must never be "
+"read as \"dead\" — an unanswerable question is not a negative answer, and"
+" killing a healthy multi-hour job over a transient query failure would be"
+" far worse than waiting."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:1 of
+msgid "Block until *handle* finishes, dies, or *timeout_s* elapses."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:3 of
+msgid ""
+"Two independent signals are consulted, because neither alone is "
+"sufficient:"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:6 of
+msgid ""
+"**The rc sentinel** is authoritative for *completion* — the launcher "
+"writes it only after the solver has exited — but it says nothing when the"
+" process is killed before reaching that line (a reboot, an OOM kill, "
+"someone else's ``taskkill``).  On its own it would leave the poll loop "
+"waiting out the entire timeout for a job that died minutes in, which is "
+"precisely the wrong trade for jobs measured in hours."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:13 of
+msgid ""
+"**Process liveness** covers that gap, and deliberately does *not* impose "
+"a deadline: a job that is still running is still running, no matter how "
+"long it has taken.  A single direct-solver factorization can occupy an "
+"hour writing nothing at all, so elapsed time and file growth are both "
+"useless as health signals here — only the process itself is trustworthy."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:20 of
+msgid ""
+"The two race: the solver can exit between the rc read and the liveness "
+"check, so an apparent death is confirmed by re-reading the sentinel after"
+" *settle_s* rather than reported immediately."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:26 of
+msgid "timeout_s"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:-1 of
+msgid "float or None"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:27 of
+msgid ""
+"Wall-clock cap.  ``None`` means none — with liveness detection in place "
+"that is a reasonable default for long solves, since a dead job is caught "
+"within one poll interval regardless."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:30 of
+msgid "settle_s"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:-1 of
+msgid "float"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:31 of
+msgid ""
+"Grace given to a just-finished launcher to flush its sentinel before "
+"\"the process is gone\" is treated as a death."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:36
+#: ABQflow.core.backends.local.wait_for:7 of
+msgid "tuple[str, int | None, float]"
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.wait:37 of
+msgid ""
+"``(verdict, returncode, elapsed)`` with *verdict* one of ``'finished'`` /"
+" ``'died'`` / ``'timeout'``."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.put:1
+#: ABQflow.core.backends.local.LocalBackend.put:1
+#: ABQflow.core.backends.recording.RecordingBackend.put:1
+#: ABQflow.core.backends.ssh.SshBackend.put:1 of
+msgid "Upload one file; return bytes transferred."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.put_text:1
+#: ABQflow.core.backends.local.LocalBackend.put_text:1
+#: ABQflow.core.backends.recording.RecordingBackend.put_text:1
+#: ABQflow.core.backends.ssh.SshBackend.put_text:1 of
+msgid "Write *text* directly to a file on the executing machine (CRLF)."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.get:1
+#: ABQflow.core.backends.local.LocalBackend.get:1
+#: ABQflow.core.backends.recording.RecordingBackend.get:1 of
+msgid "Download one file; ``False`` when the source does not exist."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.glob_get:1
+#: ABQflow.core.backends.local.LocalBackend.glob_get:1
+#: ABQflow.core.backends.recording.RecordingBackend.glob_get:1
+#: ABQflow.core.backends.ssh.SshBackend.glob_get:1 of
+msgid "Download every file in *remote_dir* matching *patterns*."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.close:1
+#: ABQflow.core.backends.local.LocalBackend.close:1
+#: ABQflow.core.backends.recording.RecordingBackend.close:1
+#: ABQflow.core.backends.ssh.SshBackend.close:1 of
+msgid "Release connections.  Must be safe to call more than once."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.probe_cores:1 of
+msgid "Physical core count of the executing machine, or ``None`` if unknown."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.probe_cores:3 of
+msgid ""
+"Only ever advisory: it fills in an unset ``HostSpec.cpus_total`` so a "
+"pooled batch can size concurrency and report oversubscription for a "
+"remote machine the same way it already does for the local one.  A backend"
+" that cannot answer returns ``None`` rather than guessing — the caller "
+"then asks the user for ``cpus_total``."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.read_text:1
+#: ABQflow.core.backends.local.LocalBackend.read_text:1
+#: ABQflow.core.backends.recording.RecordingBackend.read_text:1
+#: ABQflow.core.backends.ssh.SshBackend.read_text:1 of
+msgid "Read a small file on the executing machine, or ``None`` if absent."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.clear_sentinels:1 of
+msgid "Delete completion markers left by a previous run of *job_name*."
+msgstr ""
+
+#: ABQflow.core.backends.base.ExecutionBackend.clear_sentinels:3 of
+msgid ""
+"Re-running a job into a directory that still holds ``.abqflow.rc`` makes "
+"the poll loop report \"finished\" before the solver has started, and then"
+" read the *previous* run's results.  Every launch clears these first."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst:17
+msgid "ABQflow.core.backends.local module"
+msgstr ""
+
+#: ABQflow.core.backends.local:1 of
+msgid "LocalBackend — today's behaviour, expressed through the backend protocol."
+msgstr ""
+
+#: ABQflow.core.backends.local:3 of
+msgid ""
+"This is the default for every batch, and the executable specification the"
+" conformance suite holds other backends to."
+msgstr ""
+
+#: ABQflow.core.backends.local:6 of
+msgid ""
+"``put``/``get`` are real copies rather than no-ops on purpose.  Pointing "
+"a ``LocalBackend`` at a *different* local directory then exercises the "
+"whole stage-up → solve → stage-down → diagnose pipeline against real "
+"files with real path mapping, no network and no mocks — which is where "
+"most staging and path-joining bugs are actually caught."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend:1
+#: ABQflow.core.backends.recording.RecordingBackend:1
+#: ABQflow.core.backends.ssh.SshBackend:1 of
+msgid "Bases: :py:class:`~ABQflow.core.backends.base.ExecutionBackend`"
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend:1 of
+msgid "Execute on this machine via :mod:`subprocess`."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend:5
+#: ABQflow.core.backends.recording.RecordingBackend:5 of
+msgid "work_root"
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend:-1
+#: ABQflow.core.backends.recording.RecordingBackend:-1 of
+msgid "str or None"
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend:6 of
+msgid ""
+"When given, contexts are remapped to ``<work_root>/<job_name>`` instead "
+"of running in place.  Used by tests to exercise the staging path without "
+"a network; ``None`` (the default) leaves every context untouched, which "
+"is what production uses."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.map_context:1 of
+msgid "Apply this host's overrides; otherwise hand *ctx* straight back."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.map_context:3 of
+msgid ""
+"A plain ``LocalBackend()`` returns the identical object, so a host-less "
+"batch is byte-for-byte the behaviour it always had.  A local "
+":class:`~ABQflow.core.hosts.HostSpec` may still override "
+"``cpus_per_job``, which is what lets a mixed pool give this machine a "
+"different job width from the remote ones."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.probe_cores:1 of
+msgid ""
+"Physical cores on this machine — the same measurement a host-less batch "
+"has always used, so both paths report the same number."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.submit_detached:1 of
+msgid "Launch with process-group isolation and keep the live handle."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.submit_detached:3 of
+msgid ""
+"Locally there is no reason to detach-and-poll: holding the real "
+":class:`~subprocess.Popen` gives the terminate ladder a precise process "
+"group to reach ``standard.exe`` through, which is strictly better than a "
+"PID scraped out of WMI.  The rc sentinel is still written so both "
+"backends expose the same completion signal."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.is_alive:1 of
+msgid "Whether the launched process is still running."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.is_alive:3 of
+msgid ""
+"Answered from the live :class:`~subprocess.Popen` when this backend "
+"started it.  Without one — a resumed session, say — liveness is genuinely"
+" unknown, and ``None`` says so rather than guessing."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.wait:1 of
+msgid "Block on the real process handle rather than polling a file."
+msgstr ""
+
+#: ABQflow.core.backends.local.LocalBackend.wait:3 of
+msgid ""
+"Locally we own a live :class:`~subprocess.Popen`, so waiting on it "
+"returns the instant the solver exits.  Falling back to the base class's "
+"poll loop would add up to *max_interval* seconds of latency per job for "
+"no benefit."
+msgstr ""
+
+#: ABQflow.core.backends.local.resolve_local_exe:1 of
+msgid "Absolute path for *exe* on this machine, honouring ``PATHEXT``."
+msgstr ""
+
+#: ABQflow.core.backends.local.resolve_local_exe:3 of
+msgid ""
+"``subprocess`` launches through ``CreateProcess``, which searches "
+"``PATH`` but **not** ``PATHEXT`` — it only ever appends ``.exe``.  So a "
+"bare ``'abaqus'`` fails with ``FileNotFoundError: [WinError 2]`` even on "
+"a machine where ``abaqus.bat`` is properly on ``PATH`` and "
+":func:`shutil.which` finds it.  The error names no file, which makes it "
+"needlessly hard to place."
+msgstr ""
+
+#: ABQflow.core.backends.local.resolve_local_exe:10 of
+msgid ""
+"Resolving up front removes the trap.  Anything that already looks like a "
+"path is returned untouched, and an unresolvable name is returned as-is so"
+" the caller can report it verbatim."
+msgstr ""
+
+#: ABQflow.core.backends.local.wait_for:1 of
+msgid "Poll *handle* until it finishes or *timeout_s* elapses."
+msgstr ""
+
+#: ABQflow.core.backends.local.wait_for:3 of
+msgid "Shared by both backends so the completion semantics cannot drift."
+msgstr ""
+
+#: ABQflow.core.backends.local.wait_for:8 of
+msgid ""
+"``(verdict, returncode, elapsed)`` where *verdict* is ``'finished'`` or "
+"``'timeout'``."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst:24
+msgid "ABQflow.core.backends.recording module"
+msgstr ""
+
+#: ABQflow.core.backends.recording:1 of
+msgid "RecordingBackend — dry-run the remote path with no network and no mocks."
+msgstr ""
+
+#: ABQflow.core.backends.recording:3 of
+msgid ""
+"Extends the ``record_only`` idea that :class:`AbaqusRunner` already "
+"ships: commands are recorded instead of executed, and the poll sequence "
+"can be scripted, so the whole remote pipeline — staging, launcher "
+"generation, poll loop, fetch, diagnose — is exercisable in a unit test."
+msgstr ""
+
+#: ABQflow.core.backends.recording:8 of
+msgid ""
+"Shipped in the package rather than kept in the test tree, because a "
+"remote dry-run is useful to users for the same reason ``record_only`` is."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:1 of
+msgid "Record every command and file operation; execute nothing."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:6 of
+msgid ""
+"When set, contexts are remapped under it, so path mapping is exercised "
+"exactly as a remote backend would."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:8 of
+msgid "poll_sequence"
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:-1 of
+msgid "list[int | None] or None"
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:9 of
+msgid ""
+"Return codes handed out by successive :meth:`poll` calls, e.g. ``[None, "
+"None, 0]`` for \"running, running, finished\".  Exhausting the list "
+"yields the last value forever.  ``None`` (the default) means every poll "
+"reports success immediately."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:13 of
+msgid "name"
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend:14 of
+msgid "Identifier reported as the backend name."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend.run:1 of
+msgid "Record *cmd* and answer with a well-formed hook payload."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend.run:3 of
+msgid ""
+"Emitting the sentinel block rather than empty output is what lets this "
+"backend drive :meth:`AbaqusRunner.run_hook` end to end — argument "
+"mapping, interpreter selection, sidecar fetch ordering — without a "
+"network.  Set ``hook_results`` to script the values it returns."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend.is_alive:1 of
+msgid "Hand out the next scripted liveness answer; the last one persists."
+msgstr ""
+
+#: ABQflow.core.backends.recording.RecordingBackend.commands:1 of
+msgid "Recorded command lines, optionally filtered by *stage*."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.backends.rst:31
+msgid "ABQflow.core.backends.ssh module"
+msgstr ""
+
+#: ABQflow.core.backends.ssh:1 of
+msgid "SshBackend — run Abaqus on another Windows machine over SSH + SFTP."
+msgstr ""
+
+#: ABQflow.core.backends.ssh:3 of
+msgid ""
+"``paramiko`` is imported lazily, inside :meth:`SshBackend.connect`, so a "
+"local-only installation never needs it and ``import ABQflow`` keeps "
+"working without it.  Install with ``pip install 'ABQflow[remote]'``."
+msgstr ""
+
+#: ABQflow.core.backends.ssh:8 of
+msgid "Threading"
+msgstr ""
+
+#: ABQflow.core.backends.ssh:9 of
+msgid ""
+"One backend instance belongs to one job and therefore to one worker "
+"thread. paramiko's ``Transport`` tolerates concurrent channel opens, but "
+"a single ``SFTPClient`` does **not**, so nothing here is shared between "
+"threads. Remote jobs are I/O-bound on this side — upload, launch, sleep, "
+"stat, download — which is why the remote path uses threads rather than "
+"processes (and incidentally sidesteps the fact that an ``SSHClient`` "
+"cannot be pickled into a ``ProcessPoolExecutor``)."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:1 of
+msgid ""
+"Execute on a remote Windows machine described by a "
+":class:`~ABQflow.core.hosts.HostSpec`."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:5 of
+msgid "host"
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:-1 of
+msgid "HostSpec"
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:6 of
+msgid "Target machine.  Must have ``hostname`` and ``work_root`` set."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:7 of
+msgid "logger"
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:-1 of
+msgid "logging.Logger or None"
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend:8 of
+msgid "Optional logger for connection events."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.connect:1 of
+msgid "Open the SSH connection, importing paramiko on first use."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.reconnect:1 of
+msgid "Re-establish a dropped connection."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.reconnect:3 of
+msgid ""
+"Always safe: every completion signal lives in a file on the remote disk, "
+"so a poll loop resumes with nothing lost."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.map_context:1 of
+msgid "Rewrite *ctx* to the remote job directory and this host's Abaqus."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.map_context:3 of
+msgid ""
+"One :func:`dataclasses.replace` handles both the path problem and the "
+"\"Abaqus lives elsewhere on that machine\" problem, because every derived"
+" path on :class:`~ABQflow.core.context.JobContext` is a property computed"
+" from ``output_dir``.  The command builders therefore need no changes and"
+" ``JobContext`` stays frozen and local-first."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.probe_cores:1 of
+msgid "Physical cores on the remote machine, measured over SSH."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.probe_cores:3 of
+msgid ""
+"``Win32_Processor.NumberOfCores`` summed over sockets is the physical "
+"count, matching what ``psutil.cpu_count(logical=False)`` reports locally "
+"so the two paths are comparable.  ``NUMBER_OF_PROCESSORS`` is the "
+"fallback: it counts *logical* processors and so over-estimates on an SMT "
+"machine, which is the harmless direction — core counts are advisory here,"
+" and licence tokens are the hard cap."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.probe_cores:10 of
+msgid ""
+"Returns ``None`` when neither answers, leaving the caller to insist on an"
+" explicit ``HostSpec.cpus_total`` rather than run on a guess."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.submit_detached:1 of
+msgid "Write a .bat wrapper, launch it via WMI, and return a pollable handle."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.submit_detached:3 of
+msgid ""
+"The command is *not* run through the SSH channel directly: see "
+":mod:`~ABQflow.core.remote_launch` for why the solver has to outlive the "
+"connection."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.poll:1 of
+msgid "Return the solver return code, or ``None`` while it is still running."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.poll:3 of
+msgid ""
+"Reconnects transparently: the answer is a file on the remote disk, so "
+"losing the connection costs nothing but a retry."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.is_alive:1 of
+msgid "Whether the launcher process still exists on the remote machine."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.is_alive:3 of
+msgid ""
+"Queried with ``tasklist /FI \"PID eq <pid>\"``, which prints a header and"
+" the matching row, or an \"INFO: No tasks\" line when nothing matches.  "
+"The PID is the ``cmd.exe`` running the launcher script, so its "
+"disappearance means the script will never reach the line that writes the "
+"rc sentinel — the job is over whether or not it succeeded."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.is_alive:9 of
+msgid ""
+"Returns ``None`` when the launcher reported no PID, or when the query "
+"itself fails: a connection hiccup must not be mistaken for a dead job and"
+" cut short a solve that has been running for hours."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.terminate:1 of
+msgid "Remote mirror of the local escalation ladder."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.get:1 of
+msgid "Download one file."
+msgstr ""
+
+#: ABQflow.core.backends.ssh.SshBackend.get:3 of
+msgid ""
+"SFTP is a **binary** transfer — no newline translation — so files arrive "
+"exactly as Abaqus wrote them, which is what lets the unmodified "
+"``.sta``/``.msg`` parsers run against them."
+msgstr ""
+

@@ -1,0 +1,52 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/hooks/inp_extraction_hook.rst:2
+msgid "Inp Extraction Hook"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/inp_extraction_hook.rst:4
+msgid ""
+"Inp Extraction Hook deals with the extraction of results from Abaqus inp "
+"files. The following script gives an example of inp extraction."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/inp_extraction_hook.rst:6
+msgid ""
+"We first determine :class:`~ABQflow.HookSpec` object in "
+":class:`~ABQflow.JobSpec` to specify the extraction script and the tasks "
+"to be performed."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/inp_extraction_hook.rst:33
+msgid ""
+"Inp Extraction Hook should be specified in ``pre_extraction`` attribute "
+"of :class:`~ABQflow.JobSpec` object. It will be executed before the "
+"simulation is run."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/inp_extraction_hook.rst:35
+msgid ""
+"In the extraction script, we can use :mod:`hookkit` to simplify the "
+"extraction process. The following example shows how to extract the total "
+"mass from the inp file."
+msgstr ""
+

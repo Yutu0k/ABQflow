@@ -1,0 +1,195 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:2
+msgid "Odb Extraction Hook"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:4
+msgid ""
+"Odb Extraction Hook deals with the extraction of results from Abaqus ODB "
+"files. The following script gives an example of ODB extraction."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:7
+msgid "Example"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:9
+msgid ""
+"We first determine :class:`~ABQflow.HookSpec` object in "
+":class:`~ABQflow.JobSpec` to specify the extraction script and the tasks "
+"to be performed."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:38
+msgid ""
+"In the extraction script, we can use :mod:`hookkit` to simplify the "
+"extraction process. The following example shows how to extract the "
+"maximum Mises stress from the ODB file."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:66
+msgid "``hookkit`` Usage"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:68
+msgid ""
+"``hookkit`` is a utility library for writing and executing extraction "
+"hooks. It provides a simple interface for defining extraction logic and "
+"handling the input and output of the extraction process. The main "
+"function in hookkit is :func:`~hookkit.run`, which takes an extraction "
+"function and runs it with the appropriate arguments."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:70
+msgid ""
+"``hookkit`` also provides field output: or field quantities (stress "
+"tensors, displacement fields), use :func:`~hookkit.field()`."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:89
+msgid ""
+"Normally, if unstated, field output will be returned as stdout JSON. "
+"Users can specify in :class:`~ABQflow.HookSpec`:"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:91
+msgid "Output behavior control"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:95
+msgid "``\"output\"``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:96
+msgid "Behavior"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:97
+msgid "``\"inline\"``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:98
+msgid "Return through stdout JSON (always)"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:99
+msgid "``\"file\"``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:100
+msgid "Write CSV + return a lightweight envelope (always)"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:101
+msgid "(unset)"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:102
+msgid "Auto: >10k rows or >1MB → file, else inline"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:113
+msgid ""
+"Your hook receives tasks as ``task`` dicts. Only ``result_name`` is "
+"required; every other key is user-defined and read by your "
+"``extract_one`` via ``task.get()``."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:115
+msgid "Task dict keys"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:119
+msgid "Key"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:120
+msgid "Required"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:121
+msgid "Used by"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:122
+msgid "Purpose"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:123
+msgid "``result_name``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:124
+msgid "**yes**"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:125
+msgid "hookkit + your code"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:126
+msgid "Result key in the output dict; file name for sidecar CSV"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:127
+msgid "``output``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:128
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:132
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:136
+msgid "no"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:129
+msgid "``hookkit.field()``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:130
+msgid "``\"inline\"`` / ``\"file\"`` — controls field representation"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:131
+msgid "``columns``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:133
+msgid "your code + ``hookkit.field()``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:134
+msgid "CSV column headers for field output"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:135
+msgid "``*(any other)*``"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:137
+msgid "your code"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/odb_extraction_hook.rst:138
+msgid "Freely defined — hookkit passes everything through transparently"
+msgstr ""
+

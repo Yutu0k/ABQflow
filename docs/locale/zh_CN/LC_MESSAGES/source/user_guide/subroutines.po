@@ -1,0 +1,57 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 16:07+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/subroutines.rst:2
+msgid "Subroutines"
+msgstr ""
+
+#: ../../../source/user_guide/subroutines.rst:4
+msgid ""
+"It is often the case for us to perform simulations with **USER-"
+"Subroutines** in ABAQUS. ABQflow supports the usage of subroutines in a "
+"batch. The subroutine file can be specified in :class:`~ABQflow.JobSpec` "
+"using ``subroutine`` attribute by :class:`~ABQflow.SubroutineSpec` "
+"object."
+msgstr ""
+
+#: ../../../source/user_guide/subroutines.rst:6
+msgid ""
+"**USER-Subroutines** might needs compilation before being used in ABAQUS "
+"via ``abaqus make`` command."
+msgstr ""
+
+#: ../../../source/user_guide/subroutines.rst:8
+msgid ""
+"The following example utilizes an linear elastic UMAT subroutine to "
+"perform a batch of simulations. The subroutine file is located in "
+"``./examples/07_SubroutineJob/subroutine/umat_elastic.for``."
+msgstr ""
+
+#: ../../../source/user_guide/subroutines.rst:11
+msgid "Define JobSpec"
+msgstr ""
+
+#: ../../../source/user_guide/subroutines.rst:65
+msgid ""
+"We can use :meth:`~ABQflow.BatchAbaqusProcessor.dry_run` to chech if "
+"commands are generated correctly."
+msgstr ""
+

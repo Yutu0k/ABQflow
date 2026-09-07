@@ -1,0 +1,467 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 11:45+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/architecture/architecture.rst:4
+msgid "Architecture"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:6
+msgid ""
+"This page describes the design rationale and internals of ABQflow (v\\ "
+"|release|)."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:9
+msgid "Design Principles"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:11
+msgid "**Data + Service = Strategy**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:13
+msgid ""
+"The core insight of v0.3 is splitting the old ``AbaqusCalculation`` God-"
+"object into two narrow contracts:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:16
+msgid ""
+":class:`~ABQflow.JobContext` — **frozen** data: paths, job name, CPU "
+"count. Strategies see data, not implementation."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:18
+msgid ""
+":class:`~ABQflow.AbaqusRunner` — a **service** with three public methods:"
+" ``run_solver()``, ``run_hook()``, and the internal ``_base_command()``."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:21
+msgid ""
+"Strategies depend only on ``(ctx, runner, logger)`` — not on "
+"``AbaqusCalculation`` private methods.  This eliminates the circular "
+"import that required ``TYPE_CHECKING`` hacks, makes strategies "
+"independently testable (mock the runner), and gives each layer a clear "
+"responsibility."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:50
+msgid "Strategy Pattern"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:52
+msgid "Workflows are composed from three strategy types:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:54
+msgid ":class:`~ABQflow.PreparationStrategy`"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:55
+msgid "Generates an INP file.  Built-in implementations:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:57
+msgid ""
+":class:`~ABQflow.InpModifyStrategy` — replace ``{{placeholders}}`` in a "
+"base INP file.  Validates coverage at prepare-time; missing parameters "
+"produce a clear error, not a silently broken input file."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:60
+msgid ""
+":class:`~ABQflow.ModelGenerationStrategy` — run a Python script (with CAE"
+" kernel) that builds the model and exports an INP."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:62
+msgid "*Custom* — register via :func:`~ABQflow.register_preparation`."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:64
+msgid ":class:`~ABQflow.ExtractionStrategy`"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:65
+msgid "Extracts data from simulation outputs.  Built-in:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:67
+msgid ""
+":class:`~ABQflow.OdbExtractionStrategy` — post-simulation ODB extraction "
+"(uses ``odbAccess``, no CAE kernel needed)."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:69
+msgid ""
+":class:`~ABQflow.DatExtractionStrategy` — post-simulation extraction from"
+" the printed ``.dat`` output, for values written by ``*NODE PRINT`` / "
+"``*EL PRINT`` when the ODB is too large to open.  Plain text, so it runs "
+"under the host Python and consumes no license token."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:73
+msgid ""
+":class:`~ABQflow.ModelPropertiesExtractionStrategy` — pre-simulation INP "
+"extraction (uses CAE kernel / ``mdb``)."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:76
+msgid ""
+"Which one a post-extraction hook gets is decided by its "
+":attr:`~ABQflow.HookSpec.source` (``'odb'`` by default, or ``'dat'``); "
+":func:`~ABQflow.build_workflow` groups consecutive hooks that share a "
+"source, so declaration order survives a mixed list.  Add another artifact"
+" via :func:`~ABQflow.register_extraction`."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:82
+msgid ":class:`~ABQflow.JobWorkflowStrategy`"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:83
+msgid "Orchestrates the full pipeline:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:85
+msgid ""
+":class:`~ABQflow.ModularWorkflowStrategy` — preparation → pre-extraction "
+"→ simulation → post-extraction."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:87
+msgid ""
+":class:`~ABQflow.MonolithicWorkflowStrategy` — single script handles "
+"everything; results returned as JSON on stdout."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:91
+msgid "Execution Environments"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:93
+msgid ""
+":class:`~ABQflow.AbaqusRunner` selects the correct Python interpreter "
+"based on what the script needs:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:99
+msgid "Condition"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:100
+msgid "Command"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:101
+msgid "Use Case"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:102
+msgid "``abqpy`` installed"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:103
+msgid "``python script.py``"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:104
+msgid "Any script (recommended)"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:105
+msgid "Needs CAE kernel (``mdb``)"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:106
+msgid "``abaqus cae noGUI=script.py --``"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:107
+msgid "Model generation, INP extraction"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:108
+msgid "Needs odbAccess only"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:109
+msgid "``abaqus python script.py``"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:110
+msgid "ODB post-processing"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:111
+msgid "``interpreter='host'``"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:112
+msgid "``<sys.executable> script.py``"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:113
+msgid "``.dat`` post-processing — plain text, no solver, no license token"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:115
+msgid ""
+"The ``--`` separator after ``noGUI=`` prevents Abaqus from consuming "
+"custom arguments."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:117
+msgid ""
+"``interpreter='host'`` outranks the rows above it: it describes the "
+"*artifact* rather than the environment, so no Abaqus entry point applies "
+"however this machine is configured.  A host hook also runs on **this** "
+"machine even when the backend is remote — "
+":class:`~ABQflow.DatExtractionStrategy` fetches the ``.dat`` home first, "
+"nothing is uploaded, artifact paths are not remapped, and sidecar CSVs "
+"are written straight into the local job directory.  Set "
+"``ABQFLOW_HOST_PYTHON`` to override the interpreter when "
+"``sys.executable`` is a frozen or embedded binary."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:127
+msgid "Resource Planning"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:129
+msgid ""
+"The framework automatically caps parallelism to avoid oversubscribing "
+"Abaqus license tokens, since a job that cannot obtain a license will "
+"simply fail to start. CPU cores are not hard-capped — small jobs rarely "
+"saturate a full core, so requesting more parallel jobs than physical "
+"cores support (CPU oversubscription) is allowed, but it is flagged with a"
+" warning so the allocation stays visible."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:136
+msgid ""
+"**Abaqus license token formula** (official): a job using *n* CPU cores "
+"consumes"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:138
+#, python-brace-format
+msgid "T(n) = \\lceil 5 \\cdot n^{0.422} \\rceil"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:142
+msgid "Example token counts: 1→5, 2→7, 4→9, 8→12, 16→16."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:144
+msgid "**Parallelism limits:**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:146
+#, python-brace-format
+msgid ""
+"P_{cpu}     &= \\lfloor (C - R) / c \\rfloor \\\\\n"
+"P_{license} &= \\lfloor L / T(c) \\rfloor \\\\\n"
+"P_{actual}  &= \\max(1, \\min(P_{req}, P_{license}))"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:152
+#, python-brace-format
+msgid ""
+"where *C* = physical cores, *R* = reserved cores (default 1), *c* = cores"
+" per job, and *L* = available tokens. :math:`P_{cpu}` is computed only to"
+" decide whether to emit the CPU-oversubscription warning — it no longer "
+"bounds :math:`P_{actual}`."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:157
+msgid "Use :func:`~ABQflow.plan_parallelism` to compute this directly."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:160
+msgid "Fault Tolerance"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:162
+msgid ""
+"``run_batch`` uses :class:`concurrent.futures.ProcessPoolExecutor` with "
+"these guarantees:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:165
+msgid ""
+"**Single-job isolation**: an exception in one worker returns as an error "
+":class:`~ABQflow.JobOutcome` — it does not kill the batch."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:167
+msgid ""
+"**Clean process lifecycle**: the executor context-manager guarantees "
+"worker cleanup on completion or error."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:169
+msgid ""
+"**Pickle-safe workers**: the top-level ``_worker`` function (not a lambda"
+" or closure) is the entry point, ensuring Windows ``spawn`` "
+"compatibility."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:173
+msgid "JSON Protocol"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:175
+msgid ""
+"Hook scripts and monolithic scripts communicate results via stdout.  The "
+"framework uses a **sentinel-marker** approach to reliably extract JSON "
+"even when Abaqus prints banner text or warnings to stdout."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:188
+msgid ""
+"When sentinel markers are absent, the framework falls back to scanning "
+"from the **end** of stdout for the last complete JSON object (Abaqus "
+"banner precedes script output, so the last ``{`` is most likely the "
+"result)."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:192
+msgid ""
+"``ABQflow.hookkit`` (staged into the job's working directory "
+"automatically) implements this protocol for hook scripts so authors never"
+" write sentinel markers or argparse plumbing by hand. It is single-file "
+"and stdlib-only — never imports ``ABQflow``, ``odbAccess``, ``abaqus``, "
+"or ``numpy`` — so it runs unmodified under the Abaqus Python interpreter "
+"(Py2.7 or Py3). It also adds a field-output mode (``hookkit.field()``) "
+"that spills large result sets (>10k rows or >1MB) to a CSV sidecar "
+"instead of inlining them in the JSON payload, keeping stdout small for "
+"bulky field quantities."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:201
+msgid ""
+"``ABQflow.datkit`` is staged the same way, but only for hooks with "
+"``source='dat'``, and carries the same contract — single file, stdlib "
+"only, Py2.7 and Py3, never imports ``ABQflow``.  It parses Abaqus's "
+"printed tables (``N O D E`` / ``E L E M E N T`` / ``E N E R G Y`` / ``C O"
+" N T A C T`` output) into rows and columns, streaming so that "
+"``parse(path, increments='last')`` costs one increment however long the "
+"analysis ran. ``test/unit/test_hookkit_py27.py`` enforces the Python 2.7 "
+"promise on both files with an AST scan."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:211
+msgid "Configuration Validation"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:213
+msgid ":class:`~ABQflow.JobSpec` validates at construction time:"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:215
+msgid "``workflow='modular'`` requires a ``preparation`` field."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:216
+msgid "``workflow='monolithic'`` requires a ``monolithic_script`` field."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:217
+msgid "Unknown workflow values raise ``ValueError`` immediately."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:219
+msgid ""
+"This means misconfiguration surfaces before any Abaqus process is "
+"launched — no silent ``KeyError`` at job initialization."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:223
+msgid "Migration from v0.2"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:225
+msgid ""
+"v0.3 introduced breaking changes to fix structural defects (see the "
+"`design document <https://github.com/Yutu0k/ABQflow>`_ for the full "
+"analysis)."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:229
+msgid "**Dict config → JobSpec:**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:231
+msgid "Old::"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:235
+msgid "New::"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:239
+msgid ""
+"The ``JobSpec.from_dict`` bridge that accepted the old shape has been "
+"removed; ``batch_data`` now rejects anything that is not a "
+":class:`JobSpec`."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:242
+msgid "**Batch result format:**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:244
+#, python-brace-format
+msgid ""
+"Old: ``run_batch()`` returned ``list[dict]`` or ``dict[str, dict]``. New:"
+" returns ``list[JobOutcome]``.  The ``outcomes_to_list`` / "
+"``outcomes_to_dict`` converters have been removed — a :class:`JobOutcome`"
+" already exposes ``job_name``, ``status``, ``results``, ``error`` and "
+"``diagnostics``, so iterate the list directly, or build ``{oc.job_name: "
+"oc for oc in outcomes}`` when you need it keyed."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:251
+msgid "**Strategy signatures:**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:253
+msgid ""
+"Custom strategies that subclasses ``PreparationStrategy`` / "
+"``ExtractionStrategy`` / ``JobWorkflowStrategy`` must change their method"
+" signatures from ``(self, context: AbaqusCalculation)`` to ``(self, ctx: "
+"JobContext, runner: AbaqusRunner, logger: Logger)``."
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:258
+msgid "**Constructor side-effects:**"
+msgstr ""
+
+#: ../../../source/architecture/architecture.rst:260
+msgid ""
+"``BatchAbaqusProcessor.__init__`` no longer deletes directories or "
+"prompts for input.  Call ``plan()`` / ``prepare()`` explicitly, or let "
+"``run_batch()`` auto-call them.  The default ``duplicate_mode`` is now "
+"``'fail'`` (was ``'interactive'``)."
+msgstr ""
+

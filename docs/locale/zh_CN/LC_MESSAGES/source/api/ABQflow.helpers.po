@@ -1,0 +1,475 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 11:45+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/api/ABQflow.helpers.rst:4
+msgid "ABQflow.helpers package"
+msgstr ""
+
+#: ../../../source/api/ABQflow.helpers.rst:7
+msgid "Submodules"
+msgstr ""
+
+#: ../../../source/api/ABQflow.helpers.rst:10
+msgid "ABQflow.helpers.constant module"
+msgstr ""
+
+#: ../../../source/api/ABQflow.helpers.rst:17
+msgid "ABQflow.helpers.convert module"
+msgstr ""
+
+#: ABQflow.helpers.convert:1 of
+msgid ""
+"Data conversion utilities — array generation, result flattening, outcome "
+"serialisation."
+msgstr ""
+
+#: ABQflow.helpers.convert:3 of
+msgid ""
+"These are the most commonly used helper functions extracted from the main"
+" orchestrator so they can be imported lightweight without pulling in the "
+"entire batch-processing machinery."
+msgstr ""
+
+#: ABQflow.helpers.convert.is_sidecar:1 of
+msgid "Return ``True`` if *value* is a sidecar envelope (dict with ``__file__``)."
+msgstr ""
+
+#: ../../../source/api/ABQflow.helpers.rst
+#: ABQflow.helpers.convert.degenerate_from_array:8
+#: ABQflow.helpers.convert.generate_from_array:7
+#: ABQflow.helpers.convert.generate_from_inp_files:7
+#: ABQflow.helpers.convert.is_sidecar:4 ABQflow.helpers.convert.iter_fields:8
+#: ABQflow.helpers.convert.load_field:8
+#: ABQflow.helpers.convert.resolve_sidecar:4
+#: ABQflow.helpers.convert.sanitize_job_name of
+msgid "Parameters"
+msgstr ""
+
+#: ABQflow.helpers.convert.is_sidecar:5
+#: ABQflow.helpers.convert.resolve_sidecar:5 of
+msgid "value"
+msgstr ""
+
+#: ABQflow.helpers.convert.is_sidecar:-1 of
+msgid "any"
+msgstr ""
+
+#: ABQflow.helpers.convert.is_sidecar:6 of
+msgid "Value to test."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:20
+#: ABQflow.helpers.convert.generate_from_array:20
+#: ABQflow.helpers.convert.generate_from_inp_files:27
+#: ABQflow.helpers.convert.is_sidecar:9 ABQflow.helpers.convert.load_field:19
+#: ABQflow.helpers.convert.resolve_sidecar:14 of
+msgid "Returns"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:-1
+#: ABQflow.helpers.convert.generate_from_inp_files:-1
+#: ABQflow.helpers.convert.is_sidecar:10 ABQflow.helpers.convert.load_field:-1
+#: ABQflow.helpers.convert.resolve_sidecar:-1 of
+msgid "bool"
+msgstr ""
+
+#: ../../../source/api/ABQflow.helpers.rst
+#: ABQflow.helpers.convert.sanitize_job_name of
+msgid "Return type"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:1 of
+msgid "Resolve a sidecar envelope to an absolute path and optional data."
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:-1 of
+msgid "dict"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:6 of
+#, python-brace-format
+msgid "Sidecar envelope: ``{'__file__': path, 'format': 'csv', ...}``."
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:7 of
+msgid "output_dir"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:-1
+#: ABQflow.helpers.convert.iter_fields:-1 ABQflow.helpers.convert.load_field:-1
+#: ABQflow.helpers.convert.resolve_sidecar:-1 of
+msgid "str"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:8 of
+msgid "Directory that ``__file__`` is relative to."
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:9 of
+msgid "load"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:10 of
+msgid ""
+"If ``True``, load the file and return a ``numpy.ndarray``. Default "
+"``False`` (lazy — returns the absolute path)."
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:15 of
+msgid "tuple[str, dict] or tuple[numpy.ndarray, dict]"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:16 of
+msgid ""
+"``(absolute_path, metadata)`` when ``load=False``; ``(ndarray, "
+"metadata)`` when ``load=True``."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:25
+#: ABQflow.helpers.convert.generate_from_inp_files:32
+#: ABQflow.helpers.convert.resolve_sidecar:20 of
+msgid "Raises"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:26
+#: ABQflow.helpers.convert.generate_from_inp_files:33
+#: ABQflow.helpers.convert.resolve_sidecar:21 of
+msgid "ValueError"
+msgstr ""
+
+#: ABQflow.helpers.convert.resolve_sidecar:22 of
+msgid "If the envelope is missing ``__file__`` or the file doesn't exist."
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:1 of
+msgid "Load a single named field from a ``JobOutcome``."
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:3 of
+msgid ""
+"Normalises inline values and sidecar CSV envelopes into a uniform "
+"``numpy.ndarray``.  This is the single-job entry point for consuming "
+"sidecar results; for batch consumption use :func:`iter_fields`."
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:9 of
+msgid "outcome"
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:-1 of
+msgid "JobOutcome"
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:10 of
+msgid "Outcome from :meth:`BatchAbaqusProcessor.run_batch`."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:11 ABQflow.helpers.convert.load_field:11
+#: of
+msgid "result_name"
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:12 ABQflow.helpers.convert.load_field:12
+#: of
+msgid "Key in ``outcome.results`` to load."
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:13 of
+msgid "numeric_only"
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:14 of
+msgid ""
+"If ``True`` (default), non-numeric CSV columns are dropped with a "
+"warning.  If ``False``, return an object array preserving string columns "
+"(for callers that need label columns)."
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:20 of
+msgid "numpy.ndarray or None"
+msgstr ""
+
+#: ABQflow.helpers.convert.load_field:21 of
+msgid ""
+"``None`` when the result is missing, the extraction failed, the sidecar "
+"file is gone, or the path is unsafe."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:1 of
+msgid "Yield ``(job_name, ndarray)`` pairs for a named field across a batch."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:3 of
+msgid ""
+"Outcomes are sorted by :func:`_natural_key` on ``job_name`` so the "
+"iteration order is deterministic and matches the row order of "
+":func:`degenerate_from_array` (row-order contract)."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:9
+#: ABQflow.helpers.convert.iter_fields:9 of
+msgid "outcomes"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:-1
+#: ABQflow.helpers.convert.iter_fields:-1 of
+msgid "list[JobOutcome]"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:10
+#: ABQflow.helpers.convert.iter_fields:10 of
+msgid "Outcomes from :meth:`BatchAbaqusProcessor.run_batch`."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:13 of
+msgid "on_missing"
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:14 of
+msgid "How to handle jobs where :func:`load_field` returns ``None``:"
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:16 of
+msgid ""
+"``'skip'`` (default) — omit the job; a single summary warning lists all "
+"skipped job names at generator exit."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:18 of
+msgid ""
+"``'none'`` — yield ``(job_name, None)`` so the caller can align rows with"
+" :func:`degenerate_from_array`."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:20 of
+msgid "``'raise'`` — raise :class:`ValueError` on the first missing field."
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:23 of
+msgid "Yields"
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:24 of
+msgid "tuple[str, numpy.ndarray or None]"
+msgstr ""
+
+#: ABQflow.helpers.convert.iter_fields:25 of
+msgid ""
+"``(job_name, ndarray)`` pairs.  ``ndarray`` is ``None`` only when "
+"``on_missing='none'``."
+msgstr ""
+
+#: ABQflow.helpers.convert.sanitize_job_name:1 of
+msgid "Clean *name* so it is a valid Abaqus job name."
+msgstr ""
+
+#: ABQflow.helpers.convert.sanitize_job_name:3 of
+msgid ""
+"Replaces any character outside ``[A-Za-z0-9_-]`` with ``'_'``, collapses "
+"consecutive underscores, strips leading/trailing underscores, ensures the"
+" result starts with a letter, and truncates to *max_len*."
+msgstr ""
+
+#: ABQflow.helpers.convert.sanitize_job_name:7 of
+msgid "Returns *name* unchanged if it is already valid."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:1 of
+msgid ""
+"Create N :class:`~ABQflow.core.spec.JobSpec` objects from a list (or "
+"glob) of existing INP files."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:3 of
+msgid ""
+"This is the batch-spec generator for the UC-03 \"pre-existing INP batch\""
+" use case.  Each INP file becomes a spec with ``kind='existing_inp'``."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:8 of
+msgid "inp_files"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:-1 of
+msgid "list[str] or str"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:9 of
+msgid "List of INP paths, or a glob pattern (e.g. ``'./legacy/*.inp'``)."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:13
+#: ABQflow.helpers.convert.generate_from_inp_files:10 of
+msgid "base_spec"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:-1
+#: ABQflow.helpers.convert.generate_from_inp_files:-1 of
+msgid "JobSpec"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:11 of
+msgid ""
+"Template spec whose ``workflow``, extraction hooks, ``options`` and other"
+" non-preparation fields are copied.  ``preparation.kind``, "
+"``.source_path`` and ``.params`` are **supplied by this function** — "
+"leave them unset in the base spec; setting them anyway earns a warning "
+"saying the values were discarded.  ``meta`` is merged, not replaced, so "
+"your own keys survive alongside ``'source_inp'``."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:17 of
+msgid "naming"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:18 of
+#, python-brace-format
+msgid ""
+"Job-name generation rule: ``'stem'`` (default) uses the INP filename "
+"without extension, sanitised via :func:`sanitize_job_name`; ``'indexed'``"
+" uses ``{base_spec.job_name}_{i:04d}``."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:23 of
+msgid "sort"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:24 of
+msgid "If ``True`` (default), sort files by natural key order."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:21
+#: ABQflow.helpers.convert.generate_from_inp_files:28 of
+msgid "list[JobSpec]"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:29 of
+msgid ""
+"One spec per INP file, ready for "
+":class:`~abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor`."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_inp_files:34 of
+msgid "If glob expands to zero files, or if sanitised stem names collide."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:1 of
+msgid ""
+"Create N :class:`~ABQflow.core.spec.JobSpec` objects from an (N, D) "
+"parameter array."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:3 of
+msgid ""
+"Each row of *samples_array* becomes a new spec via :func:`copy.deepcopy` "
+"of *base_spec*, so every spec owns independent mutable state."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:8 of
+msgid "samples_array"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:-1 of
+msgid "ndarray or Tensor"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:9 of
+msgid ""
+"Shape ``(N, D)`` parameter matrix.  Torch tensors are converted to NumPy "
+"internally."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:11 of
+msgid "param_names"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:-1
+#: ABQflow.helpers.convert.generate_from_array:-1 of
+msgid "list[str]"
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:12 of
+msgid "Length-D list of parameter names."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:14 of
+msgid ""
+"Template spec.  Its ``job_name`` becomes the prefix for the generated "
+"names, and ``preparation.source_path`` is the template every job is built"
+" from.  ``params`` is **supplied by this function** — leave it unset; "
+"setting it anyway earns a warning saying it was discarded."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:22 of
+msgid "N specs with zero-padded names (e.g. ``job_0001``, ``job_0002``)."
+msgstr ""
+
+#: ABQflow.helpers.convert.generate_from_array:27 of
+msgid "If the array column count does not match ``len(param_names)``."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:1 of
+msgid "Extract a 2D NumPy array of output values from a list of outcomes."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:3 of
+msgid ""
+"Outcomes are sorted by natural key on ``job_name`` so rows appear in the "
+"order the jobs were generated.  Jobs that are not ``COMPLETED`` are "
+"filled with *default_value* and trigger a warning."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:11 of
+msgid "output_names"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:12 of
+msgid "Keys to extract from each outcome's ``results`` dict."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:13 of
+msgid "default_value"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:-1 of
+msgid "float"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:14 of
+msgid "Value to use for missing or non-completed results (default ``NaN``)."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:15 of
+msgid "require_completed"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:16 of
+msgid "If ``True`` (default), warn when non-``COMPLETED`` jobs are encountered."
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:21 of
+msgid "np.ndarray"
+msgstr ""
+
+#: ABQflow.helpers.convert.degenerate_from_array:22 of
+msgid "Shape ``(len(outcomes), len(output_names))`` float array."
+msgstr ""
+

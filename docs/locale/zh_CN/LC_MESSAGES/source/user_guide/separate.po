@@ -1,0 +1,58 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 16:07+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/separate.rst:2
+msgid "Separate Processing"
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:4
+msgid ""
+"For ``modular`` workflow, the preparation period, simulation period and "
+"extraction period can be separated."
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:7
+msgid "Run Job"
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:54
+msgid ""
+"If ``pre_extraction`` is configured, it will be executed in "
+":meth:`~ABQflow.BatchAbaqusProcessor.run_simulation`"
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:59
+msgid "Post Processing"
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:61
+msgid ""
+"Post process is executed in a different script file. First, a same "
+"spec_list should be defined:"
+msgstr ""
+
+#: ../../../source/user_guide/separate.rst:105
+msgid "The same results should be obtained afterwards."
+msgstr ""
+
+#~ msgid "Separate Job"
+#~ msgstr ""
+

@@ -1,0 +1,66 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 12:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../index.rst:30
+msgid "User Guide"
+msgstr ""
+
+#: ../../../index.rst:42
+msgid "API Reference"
+msgstr ""
+
+#: ../../../index.rst:2
+msgid "ABQflow Documentation"
+msgstr ""
+
+#: ../../../index.rst:4
+msgid ""
+"**Modular batch-processing framework for Abaqus FEA** -- typed job specs,"
+" strategy-pattern workflows, fault-tolerant parallel execution, resource-"
+"aware scheduling."
+msgstr ""
+
+#: ../../../index.rst:7
+msgid "|version| | |python| | |license|"
+msgstr ""
+
+#: ../../../index.rst:9
+msgid "Latest release version"
+msgstr ""
+
+#: ../../../index.rst:11
+msgid "Python 3.9+"
+msgstr ""
+
+#: ../../../index.rst:13
+msgid "MIT License"
+msgstr ""
+
+#: ../../../index.rst:18
+msgid ""
+"ABQflow turns repetitive Abaqus FEA workflows into readable, batch-"
+"oriented Python code. Define parameter sweeps, multi-step extraction "
+"pipelines, and monolithic scripts as typed :class:`~ABQflow.JobSpec` "
+"objects; the framework handles resource planning, parallel execution, and"
+" fault tolerance."
+msgstr ""
+
+

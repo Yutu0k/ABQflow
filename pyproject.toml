@@ -68,9 +68,17 @@ ABQflow = { path = ".", editable = true }
 build = ">=1.5.0,<2"
 
 [tool.pixi.tasks]
-docs-generate = "sphinx-apidoc -o docs/source src/ABQflow"
+docs-generate = "sphinx-apidoc -o docs/source/api -d 1 -T src/ABQflow"
 docs-build = "sphinx-build docs docs/_build/html"
-docs-serve = "python -m http.server -d docs/_build/html 8080"
+docs-serve-static = "python -m http.server -d docs/_build/html 8080"
+docs-serve = "sphinx-autobuild docs docs/_build/html --host 127.0.0.1 --port 8080"
+docs-gettext = "sphinx-build -M gettext docs docs/_build/gettext"
+docs-translation-update = "sphinx-intl update -d docs/locale -p docs/_build/gettext/gettext -l zh_CN"
+docs-translation = { cmd = "sphinx-intl update -d docs/locale -p docs/_build/gettext/gettext -l zh_CN", depends-on = ["docs-gettext"] }
+docs-build-en = "sphinx-build -b html -D language=en docs docs/_build/html/en"
+docs-build-zh = { cmd = "sphinx-build -b html -D language=zh_CN docs docs/_build/html/zh_CN", depends-on = ["docs-translation"] }
+docs-build-root = "sphinx-build -b html -D language=en docs docs/_build/html"
+docs-build-all = { cmd = "python -c \"print('English and Chinese documentation built.')\"", depends-on = ["docs-build-root", "docs-build-en", "docs-build-zh"] }
 
 
 [tool.pixi.dependencies]
@@ -90,3 +98,5 @@ pip = ">=26.0.1,<27"
 twine = ">=7.0.0,<8"
 paramiko = ">=5.0.0,<6"
 python-dotenv = ">=1.2.3,<2"
+sphinx-intl = ">=2.3.2,<3"
+sphinx-autobuild = ">=2025.8.25,<2026"

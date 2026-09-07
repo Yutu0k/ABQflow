@@ -1,0 +1,32 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/getting_started/quick_start.rst:2
+msgid "Quick Start"
+msgstr "快速使用"
+
+#: ../../../source/getting_started/quick_start.rst:4
+msgid ""
+"After installing ABQflow, you can run a simple batch of jobs. This "
+"following simplest modular workflow uses a base INP file with "
+"``{{placeholders}}`` that get replaced per job."
+msgstr "在安装完 ABQflow 后，您可以跑一个简单的批次示例。接下来这个例子给出了一个最简单的使用 {{placeholders}} 的 INP 的例子"
+

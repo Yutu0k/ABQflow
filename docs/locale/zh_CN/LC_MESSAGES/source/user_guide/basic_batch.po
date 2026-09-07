@@ -1,0 +1,1100 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/basic_batch.rst:2
+msgid "Basic Batch Processing"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:4
+msgid ""
+"The following gives a basic pipeline of batch processing. The pipeline "
+"utilizes **a template Abaqus input file** and **two extraction scripts**."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:7
+msgid "Definition of Batch Job Specs"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:49
+msgid ""
+"After defining a ``base_spec``, a batch of ``spec_list`` can be generated"
+" using :func:`~ABQflow.generate_from_array` method:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:60
+msgid "``JobSpec`` params"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:62
+msgid ""
+":class:`~ABQflow.JobSpec` is the single-job configuration. It validates "
+"itself at construction, so an invalid combination raises before any "
+"Abaqus process is launched."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:70
+#: ../../../source/user_guide/basic_batch.rst:139
+#: ../../../source/user_guide/basic_batch.rst:220
+#: ../../../source/user_guide/basic_batch.rst:293
+msgid "Parameter"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:71
+#: ../../../source/user_guide/basic_batch.rst:140
+#: ../../../source/user_guide/basic_batch.rst:221
+#: ../../../source/user_guide/basic_batch.rst:294
+#: ../../../source/user_guide/basic_batch.rst:341
+msgid "Type"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:72
+#: ../../../source/user_guide/basic_batch.rst:141
+#: ../../../source/user_guide/basic_batch.rst:196
+#: ../../../source/user_guide/basic_batch.rst:222
+#: ../../../source/user_guide/basic_batch.rst:295
+msgid "Default"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:73
+#: ../../../source/user_guide/basic_batch.rst:142
+#: ../../../source/user_guide/basic_batch.rst:223
+#: ../../../source/user_guide/basic_batch.rst:296
+msgid "Description"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:74
+#: ../../../source/user_guide/basic_batch.rst:343
+msgid "``job_name``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:75
+#: ../../../source/user_guide/basic_batch.rst:81
+#: ../../../source/user_guide/basic_batch.rst:144
+#: ../../../source/user_guide/basic_batch.rst:148
+#: ../../../source/user_guide/basic_batch.rst:225
+#: ../../../source/user_guide/basic_batch.rst:234
+#: ../../../source/user_guide/basic_batch.rst:302
+#: ../../../source/user_guide/basic_batch.rst:310
+#: ../../../source/user_guide/basic_batch.rst:314
+#: ../../../source/user_guide/basic_batch.rst:344
+#: ../../../source/user_guide/basic_batch.rst:347
+msgid "``str``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:76
+#: ../../../source/user_guide/basic_batch.rst:145
+#: ../../../source/user_guide/basic_batch.rst:226
+#: ../../../source/user_guide/basic_batch.rst:299
+#: ../../../source/user_guide/basic_batch.rst:303
+#: ../../../source/user_guide/basic_batch.rst:307
+msgid "(required)"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:77
+msgid ""
+"Unique name for this job; also the name of its working directory under "
+"``base_output_dir``, and the key echoed back as "
+":attr:`~ABQflow.JobOutcome.job_name`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:80
+msgid "``workflow``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:82
+msgid "``\"modular\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:83
+msgid ""
+"``\"modular\"`` runs the 4-phase pipeline (preparation → preflight → "
+"simulation → extraction); ``\"monolithic\"`` hands everything to a single"
+" script."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:86
+msgid "``preparation``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:87
+msgid "``PreparationSpec | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:88
+#: ../../../source/user_guide/basic_batch.rst:93
+#: ../../../source/user_guide/basic_batch.rst:99
+#: ../../../source/user_guide/basic_batch.rst:118
+#: ../../../source/user_guide/basic_batch.rst:323
+msgid "``None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:89
+msgid ""
+"How the INP is produced. **Required for** ``workflow=\"modular\"``; "
+"ignored for monolithic. See :ref:`preparation_spec`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:91
+msgid "``preflight``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:92
+#: ../../../source/user_guide/basic_batch.rst:98
+#: ../../../source/user_guide/basic_batch.rst:354
+#: ../../../source/user_guide/basic_batch.rst:361
+msgid "``str | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:94
+msgid ""
+"``None`` (no check), ``\"syntaxcheck\"``, or ``\"datacheck\"``. Runs "
+"before the solver and fails the job with ``PREFLIGHT_FAILED`` if the deck"
+" is rejected."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:97
+msgid "``monolithic_script``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:100
+msgid "Path to the single script. **Required for** ``workflow=\"monolithic\"``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:102
+msgid "``monolithic_params``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:103
+#: ../../../source/user_guide/basic_batch.rst:122
+#: ../../../source/user_guide/basic_batch.rst:155
+#: ../../../source/user_guide/basic_batch.rst:162
+msgid "``dict``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:104
+#: ../../../source/user_guide/basic_batch.rst:123
+#: ../../../source/user_guide/basic_batch.rst:156
+#: ../../../source/user_guide/basic_batch.rst:163
+#, python-brace-format
+msgid "``{}``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:105
+msgid "Forwarded to that script as ``--key value`` command-line arguments."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:106
+msgid "``pre_extraction``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:107
+#: ../../../source/user_guide/basic_batch.rst:112
+msgid "``list[HookSpec]``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:108
+#: ../../../source/user_guide/basic_batch.rst:113
+#: ../../../source/user_guide/basic_batch.rst:230
+msgid "``[]``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:109
+msgid ""
+"Hooks run *before* the solver — model properties read from the INP "
+"through the CAE kernel (mass, volume, node counts)."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:111
+msgid "``post_extraction``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:114
+msgid ""
+"Hooks run *after* the solver. Each entry's ``source`` picks the artifact "
+"it reads; hooks execute in declaration order."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:116
+msgid "``subroutine``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:117
+msgid "``SubroutineSpec | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:119
+msgid ""
+"User subroutine to compile and pass via ``user=`` to the solver. Modular "
+"workflow only — see :doc:`subroutines`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:121
+msgid "``meta``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:124
+msgid ""
+"Arbitrary user metadata. Carried along untouched, so it is the place to "
+"stash the parameter set or sample index behind a job."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:130
+msgid "``PreparationSpec`` params"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:132
+msgid ""
+":class:`~ABQflow.PreparationSpec` describes how this job's INP comes into"
+" existence."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:143
+#: ../../../source/user_guide/basic_batch.rst:172
+msgid "``kind``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:146
+msgid ""
+"``\"inp_based\"``, ``\"existing_inp\"``, or ``\"model_generation\"``. See"
+" :ref:`preparation_spec_kind`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:147
+msgid "``source_path``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:149
+msgid "``\"\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:150
+msgid ""
+"The template or finished INP (``inp_based`` / ``existing_inp``), or the "
+"model-generation script (``model_generation``). **Leave it empty when a "
+"generator supplies it** — :func:`~ABQflow.generate_from_inp_files` fills "
+"it in per file and warns that a value you set is being discarded."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:154
+msgid "``params``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:157
+msgid ""
+"``{{placeholder}}`` replacements for ``inp_based``, CLI arguments for "
+"``model_generation``. Unused by ``existing_inp``, which warns if you set "
+"it. Left empty when :func:`~ABQflow.generate_from_array` supplies it, as "
+"in the example above."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:161
+msgid "``options``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:164
+msgid ""
+"Extra options; see :ref:`preparation_spec_options`. **Unknown keys "
+"raise**."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:168
+msgid "PreparationSpec ``kind`` values"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:173
+msgid "Pair with"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:174
+msgid "What varies"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:175
+msgid "``\"inp_based\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:176
+msgid ":func:`~ABQflow.generate_from_array`, or set ``params`` yourself"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:177
+msgid ""
+"One template, N parameter sets. A leftover ``{{placeholder}}`` is "
+"reported as a missing parameter."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:179
+msgid "``\"existing_inp\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:180
+msgid ""
+":func:`~ABQflow.generate_from_inp_files`, which fills ``kind`` and "
+"``source_path`` in for you"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:182
+msgid ""
+"N already-written decks. Uses no ``params``; a leftover "
+"``{{placeholder}}`` is reported as \"you handed a template to a batch of "
+"finished decks\"."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:185
+msgid "``\"model_generation\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:186
+msgid "``params`` as script arguments"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:187
+msgid "A CAE script builds the model, receiving ``params`` as CLI arguments."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:191
+msgid "PreparationSpec ``options`` keys"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:195
+#: ../../../source/user_guide/basic_batch.rst:246
+#: ../../../source/user_guide/basic_batch.rst:455
+msgid "Key"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:197
+#: ../../../source/user_guide/basic_batch.rst:383
+msgid "Meaning"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:198
+msgid "``resolve_includes``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:199
+msgid "``True``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:200
+msgid ""
+"Whether to walk and rewrite the ``*INCLUDE`` tree. See "
+":mod:`ABQflow.core.inp_include` for what the walk does with parameterized"
+" versus static includes."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:203
+msgid "``include_staging``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:204
+msgid "``\"reference\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:205
+msgid ""
+"What to do with the *static* includes. ``\"reference\"`` leaves them in "
+"place and points the deck at their absolute paths, so a shared mesh is "
+"never copied. Parameterized includes have no such choice — their content "
+"exists nowhere on disk, so they are always written into the job "
+"directory."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:212
+msgid "``HookSpec`` params"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:214
+msgid ""
+":class:`~ABQflow.HookSpec` binds one extraction script to the results it "
+"is expected to produce. The same class is used for ``pre_extraction`` and"
+" ``post_extraction``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:224
+msgid "``script_path``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:227
+msgid "Path to the Python script that performs the extraction."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:228
+msgid "``tasks``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:229
+msgid "``list[dict]``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:231
+msgid ""
+"One descriptor per value to extract. Only ``result_name`` is required; "
+"every other key is user-defined and read by your script."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:233
+msgid "``source``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:235
+msgid "``\"odb\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:236
+msgid ""
+"Which artifact the hook reads — ``\"odb\"`` or ``\"dat\"``. Consulted for"
+" ``post_extraction`` only; ``pre_extraction`` always reads the INP "
+"through the CAE kernel."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:240
+msgid "Each entry of ``tasks`` is passed through to your script untouched:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:247
+msgid "Required"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:248
+msgid "Used by"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:249
+msgid "Purpose"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:250
+msgid "``result_name``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:251
+msgid "**yes**"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:252
+msgid "``hookkit`` + your code"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:253
+msgid ""
+"Key this value appears under in :attr:`~ABQflow.JobOutcome.results`, and "
+"the file name of a sidecar CSV."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:255
+msgid "``output``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:256
+#: ../../../source/user_guide/basic_batch.rst:261
+#: ../../../source/user_guide/basic_batch.rst:265
+msgid "no"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:257
+msgid ":func:`~hookkit.field`"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:258
+msgid ""
+"``\"inline\"`` or ``\"file\"`` — forces the field representation instead "
+"of the size-based default."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:260
+msgid "``columns``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:262
+msgid "your code + :func:`~hookkit.field`"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:263
+msgid "CSV column headers for field output."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:264
+msgid "*(any other)*"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:266
+msgid "your code"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:267
+msgid "Freely defined — read it with ``task.get()`` inside ``extract_one``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:269
+msgid "See :doc:`extraction_hook` for how to write the scripts themselves."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:272
+msgid "Submitting Batch Jobs"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:285
+msgid ""
+"You would see each job being submitted to Abaqus in the console output. "
+"After all jobs are completed, the ``outcomes`` list will contain the "
+"results of each job."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:288
+msgid "``BatchAbaqusProcessor`` params"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:297
+msgid "``batch_data``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:298
+msgid "``list[dict] | list[JobSpec]``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:300
+msgid "Job specifications."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:301
+msgid "``base_output_dir``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:304
+msgid "Root directory for job outputs."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:305
+msgid "``cpus_per_job``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:306
+msgid "``int``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:308
+msgid "CPUs allocated to each Abaqus job."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:309
+msgid "``abaqus_exe``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:311
+msgid "``\"abaqus\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:312
+msgid "Path to the Abaqus executable."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:313
+msgid "``duplicate_mode``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:315
+msgid "``\"fail\"``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:316
+msgid "One of ``fail``, ``skip``, ``overwrite``, ``interactive``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:317
+msgid "``prompt_fn``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:318
+msgid "``callable``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:319
+msgid "``input``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:320
+msgid "Callback for interactive prompts."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:321
+msgid "``timeout``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:322
+#: ../../../source/user_guide/basic_batch.rst:367
+msgid "``float | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:324
+msgid "Seconds before a subprocess call is killed."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:326
+msgid "**``run_batch``** parameters:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:328
+msgid "``num_parallel_jobs`` -- Requested parallelism."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:329
+msgid ""
+"``license_tokens`` (optional) -- Total Abaqus license tokens available. "
+"If provided, parallelism is also capped by token consumption "
+"(:func:`~ABQflow.solver_tokens`)."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:332
+msgid "Processing the Results"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:334
+msgid ""
+":meth:`~ABQflow.BatchAbaqusProcessor.run_batch` returns a list of "
+":class:`~ABQflow.JobOutcome` objects. Each :class:`~ABQflow.JobOutcome` "
+"object holds:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:340
+msgid "Attribute"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:342
+msgid "When it holds what"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:345
+msgid "Always set — echoes ``JobSpec.job_name``. The join key for a batch."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:346
+msgid "``status``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:348
+msgid ""
+"Always set; a plain string, never the enum (it has to survive pickling "
+"across process boundaries). See :ref:`status`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:349
+msgid "``results``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:350
+#: ../../../source/user_guide/basic_batch.rst:357
+msgid "``dict | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:351
+msgid ""
+"Extracted values keyed by ``result_name``. **An empty dict** when the job"
+" failed before extraction — not ``None``. ``None`` only when an exception"
+" escaped the worker. A value may itself be ``None`` (that task failed) or"
+" a *sidecar envelope* dict (see below)."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:353
+msgid "``error``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:355
+msgid ""
+"``None`` on success. On failure, the **first** terminal failure's message"
+" — later phases are skipped, so this is the root cause, not the last "
+"symptom. For ``UNKNOWN_ERROR`` it is a formatted traceback."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:356
+#: ../../../source/user_guide/basic_batch.rst:430
+msgid "``diagnostics``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:358
+msgid ""
+"Solver snapshot. **``None`` on a clean success** — it is attached only "
+"when something is wrong. See :ref:`diagnostics`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:360
+msgid "``output_dir``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:362
+msgid ""
+"This job's directory. Needed by :func:`~ABQflow.load_field` to resolve "
+"sidecar files; ``None`` only for hand-built outcomes."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:363
+msgid "``phases``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:364
+msgid "``list[dict] | None``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:365
+msgid ""
+"Per-phase history for modular workflows. **``None`` for monolithic "
+"workflows**, which record no phases. See :ref:`phases`."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:366
+msgid "``duration_s``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:368
+msgid ""
+"Wall-clock seconds inside the job's ``execute()``. ``None`` when the "
+"worker died without reporting."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:370
+#, python-brace-format
+msgid ""
+"Iterate the list directly, or build ``{oc.job_name: oc for oc in "
+"outcomes}`` when you need it keyed by name."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:376
+msgid "``status`` values"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:382
+#: ../../../source/user_guide/basic_batch.rst:456
+msgid "Value"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:384
+msgid "``COMPLETED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:385
+msgid "Success — the only non-failure value an outcome can carry."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:386
+msgid "``SUBROUTINE_COMPILE_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:387
+msgid ""
+"``abaqus make`` failed. Note ``abaqus make`` can exit 0 on a broken "
+"build, so its output is also scanned for driver-level errors; the full "
+"compiler output is in ``error``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:390
+msgid "``PREPARATION_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:391
+msgid ""
+"No INP could be produced (missing source, unresolved "
+"``{{placeholders}}``, no ``*STEP``)."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:393
+msgid "``PREFLIGHT_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:394
+msgid "The ``syntax``/``datacheck`` preflight rejected the INP."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:395
+msgid "``SIMULATION_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:396
+msgid "The solver failed. Check ``diagnostics`` first."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:397
+msgid "``EXTRACTION_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:398
+msgid ""
+"A post-extraction task returned ``None``. ``error`` names which ones; "
+"``results`` still holds the tasks that did succeed."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:400
+msgid "``MONOLITHIC_SCRIPT_FAILED``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:401
+msgid "A monolithic script exited non-zero."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:402
+msgid "``JSON_DECODE_ERROR``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:403
+msgid ""
+"A script's output could not be parsed — usually missing "
+"``===ABQ_RESULT_BEGIN===`` / ``===ABQ_RESULT_END===`` markers."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:405
+msgid "``SCRIPT_ERROR``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:406
+msgid "An unhandled exception inside a hook or monolithic script."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:407
+msgid "``UNKNOWN_ERROR``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:408
+msgid ""
+"An exception escaped the worker. ``error`` holds the traceback — this one"
+" is a bug report, not a modelling problem."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:410
+msgid "``UNKNOWN``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:411
+msgid "A workflow returned no ``status`` at all. Should not occur."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:413
+msgid ""
+"In-progress values (``PREPARING``, ``SIMULATING``, ``EXTRACTING``) and "
+"per-phase success values (``PREPARATION_SUCCESS``, ``COMPILED``, "
+"``PASSED``, …) appear inside ``phases``, never as a final ``status``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:420
+msgid "``diagnostics`` keys"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:422
+msgid ""
+"Diagnostics are harvested after *every* solver run, but only **attached "
+"to the outcome when the run was not clean**."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:425
+msgid "Simulation Cases for Diagnostics"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:429
+msgid "Situation"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:431
+msgid "Solver ran, ``rc == 0``, ``.sta`` says COMPLETED"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:432
+msgid "``None`` — **the normal successful run**"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:433
+msgid "Solver ran and failed"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:434
+msgid "Populated; ``errors[0]`` is also copied into ``error``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:435
+msgid "``rc != 0`` but ``.sta`` says COMPLETED"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:436
+msgid ""
+"Populated, while ``status`` is still ``COMPLETED`` and ``error`` is "
+"``None``. Diagnostics appearing on a ``COMPLETED`` job *is* the signal — "
+"read ``errors`` and ``warning_total`` before trusting the results."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:439
+msgid "Failed before the solver (compile / preparation / preflight)"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:440
+msgid "``None`` — nothing ran, so there is nothing to harvest"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:441
+msgid "Remote staging failed"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:442
+msgid ""
+"Populated but **empty** (``sta_verdict='INDETERMINATE'``, no errors): the"
+" job never started, so ``error`` is the informative field"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:444
+msgid "Monolithic workflow"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:445
+msgid "``None`` always — it has no separate solver phase"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:446
+msgid "``record_only`` dry run"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:447
+msgid "``None`` — nothing was executed"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:449
+msgid ""
+"``diagnostics`` are read from the solver's ``.sta`` and ``.msg`` files. "
+"Its attributes are:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:457
+msgid "``sta_verdict``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:458
+msgid ""
+"``COMPLETED`` | ``NOT_COMPLETED`` | ``ABORTED`` | ``INDETERMINATE`` (the "
+"last means no ``.sta`` verdict line was found)."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:460
+msgid "``errors``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:461
+msgid "Deduplicated, truncated ERROR lines — usually the fastest read."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:462
+msgid "``error_total`` / ``warning_total``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:463
+msgid "Counts before dedup/truncation."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:464
+msgid "``increments``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:465
+msgid ""
+"Completed increments (best-effort). A low count with ``NOT_COMPLETED`` "
+"points at early divergence."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:467
+msgid "``source_files``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:468
+#, python-brace-format
+msgid "``{kind: absolute path}`` for each file actually read."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:469
+msgid "``solver_type``"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:470
+msgid "``standard`` | ``explicit`` | ``unknown``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:475
+msgid "``phases`` entries"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:477
+#, python-brace-format
+msgid ""
+"Each entry is ``{phase, status, started_at, ended_at, duration_s, "
+"error}``. ``phase`` is one of ``compile``, ``preparation``, "
+"``preflight``, ``pre_extraction``, ``simulation``, ``post_extraction``. "
+"Only phases that ran appear, so the last entry is where a failed job "
+"stopped."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:483
+msgid "Reading results"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:485
+#, python-brace-format
+msgid ""
+"A large result is written beside the job as a CSV and referenced by a "
+"sidecar envelope (``{\"__file__\": ..., \"format\": ..., \"shape\": "
+"...}``) rather than inlined. These helpers accept both inline values and "
+"envelopes, so you do not need to care which you got:"
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:490
+msgid ""
+":func:`~ABQflow.load_field` -- one field of one outcome as "
+"``numpy.ndarray``."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:491
+msgid ":func:`~ABQflow.iter_fields` -- ``(job_name, ndarray)`` across a batch."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:492
+msgid ""
+":func:`~ABQflow.degenerate_from_array` -- 2D ``numpy.ndarray`` from "
+"scalar results across a batch. Non-``COMPLETED`` jobs become "
+"``default_value`` (``nan``) rows with a warning, so array rows stay "
+"aligned with jobs."
+msgstr ""
+
+#: ../../../source/user_guide/basic_batch.rst:495
+msgid ""
+"``load_field`` and ``iter_fields`` need ``output_dir`` to find a sidecar "
+"file; they warn and return ``None`` if it is missing or the file has been"
+" moved."
+msgstr ""
+
+#~ msgid "Batch Processing"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "You would see each job being "
+#~ "submitted to Abaqus in the console "
+#~ "output. After all jobs are completed,"
+#~ " the `outcomes` list will contain the"
+#~ " results of each job."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "If you want to get a 2D "
+#~ "numpy array of the results, you "
+#~ "can use the :func:`~ABQflow.degenerate_from_array`"
+#~ " method:"
+#~ msgstr ""
+

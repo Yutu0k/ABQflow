@@ -1,0 +1,133 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:2
+msgid "Dat Extraction Hook"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:5
+msgid ""
+"When the ODB is too large to open comfortably, the usual workaround is to"
+" add `*NODE PRINT` / `*EL PRINT` to the deck so Abaqus also writes the "
+"values as text into `<job>.dat`."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:8
+msgid "Example"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:10
+msgid ""
+"We first determine :class:`~ABQflow.HookSpec` object in "
+":class:`~ABQflow.JobSpec` to specify the extraction script and the tasks "
+"to be performed."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:37
+msgid ""
+"In the extraction script, we can use :mod:`hookkit` and :mod:`datkit` to "
+"simplify the extraction process. The following example shows how to "
+"extract the maximum Mises stress and the Mises stress field from the dat "
+"file."
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:62
+msgid "``Datkit`` Usage"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:64
+msgid ""
+"``datkit`` is where the capability lives. The parser is generic across "
+"Abaqus's printed tables (``N O D E`` / ``E L E M E N T`` / ``E N E R G "
+"Y`` / ``C O N T A C T`` output) and streams, so one increment costs the "
+"same however long the analysis ran:"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:78
+msgid "Datkit API"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:82
+msgid "Function"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:83
+msgid "Purpose"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:84
+msgid ""
+"`parse(path, kinds=, set_name=, steps=, increments=, keep_rows=, "
+"max_rows=)`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:85
+msgid "Whole file → document dict"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:86
+msgid "`iter_tables(path, ...)`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:87
+msgid "Stream tables, retaining nothing"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:88
+msgid "`scan_status(path)`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:89
+msgid "Read only the tail: did the analysis complete?"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:90
+msgid "`select_increments` / `select_tables`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:91
+msgid "Pick by step, increment, kind, set name (`fnmatch`)"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:92
+msgid "`to_rows(tables, columns=, labels=, index_columns=, ...)`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:93
+msgid "Flatten to `(header, rows)`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:94
+msgid "`column_values` / `summary`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:95
+msgid "One column; one `MAXIMUM` / `MINIMUM` / `MAXIMUM AT` row"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:96
+msgid "`reduce_values` / `reduce_rows`"
+msgstr ""
+
+#: ../../../source/user_guide/hooks/dat_extraction_hook.rst:97
+msgid "`last` `first` `max` `min` `absmax` `absmin` `sum` `mean` `count` `range`"
+msgstr ""
+

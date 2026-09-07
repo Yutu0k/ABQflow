@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 12:36+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/getting_started/installation.rst:2
+msgid "Installation"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:5
+msgid "Install Using pip"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:11
+msgid "If you want the optional ``abqpy`` integration path:"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:17
+msgid ""
+"Additionally, if you want to install the optional dependencies for remote"
+" execution:"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:24
+msgid "Install Using Pixi"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:34
+msgid "Dependencies"
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:36
+msgid "**Abaqus** installed and the ``abaqus`` command available on ``PATH``."
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:37
+msgid "**Python 3.9+**."
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:38
+msgid "**numpy** for numerical operations."
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:39
+msgid "**rich** for console output formatting."
+msgstr ""
+
+#: ../../../source/getting_started/installation.rst:40
+msgid "**psutil** for process management."
+msgstr ""
+
+#~ msgid "Install from PyPI:"
+#~ msgstr ""
+
+#~ msgid "If you manage environments with Pixi:"
+#~ msgstr ""
+
+#~ msgid "Prerequisites"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "**abqpy** (optional, but recommended).  When"
+#~ " ``abqpy`` is detected, hook scripts "
+#~ "run under ``python`` directly instead of"
+#~ " ``abaqus python``, enabling a standard "
+#~ "Python toolchain."
+#~ msgstr ""
+

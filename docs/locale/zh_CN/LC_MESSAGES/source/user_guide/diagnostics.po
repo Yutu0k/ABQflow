@@ -1,0 +1,88 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 16:07+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/diagnostics.rst:2
+msgid "Diagnostics"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:4
+msgid ""
+"Diagnostics are supported by ``ABQflow`` to help users identify potential"
+" issues in their Abaqus input files."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:6
+msgid ""
+"In ABAQUS cli, we can use ``abaqus job=myjob [option]`` to submit a job. "
+"The ``[option]`` for diagnostics can be"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:8
+msgid "``syntaxcheck``: Check the syntax of the input file."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:9
+msgid "``datacheck``: Check the data in the input file."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:10
+msgid "``parametercheck``: Check the parameters in the input file."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:13
+msgid "Preflight checks"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:15
+msgid ""
+"Each diagnostic check should be performed when specifying ``JobSpec``. In"
+" this case, preflight checks will be performed before the job is finally "
+"submitted to Abaqus. If the preflight check **fails**, the job will not "
+"be submitted to Abaqus and immediately return in ``JobOutcome``."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:49
+msgid ""
+"If you don't want to perform the entire solver run, ``preflight_only`` "
+"option is given in :class:`~ABQflow.BatchAbaqusProcessor` to only perform"
+" preflight checks without running the solver."
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:63
+msgid "Dry Run"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:65
+msgid ""
+"Dry run is a feature in ``ABQflow`` to check the generated commands for "
+"each job without actually running the solver. It can be used to verify if"
+" the commands are generated correctly and if the job specifications are "
+"set up properly. Support two modes:"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:67
+msgid "``plan``: no command execution and directory creation"
+msgstr ""
+
+#: ../../../source/user_guide/diagnostics.rst:74
+msgid "``stage``: staging INP, no solver and extraction execution"
+msgstr ""
+

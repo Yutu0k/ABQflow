@@ -1,0 +1,47 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/user_guide/inp_template.rst:2
+msgid "Prepare INP Template"
+msgstr ""
+
+#: ../../../source/user_guide/inp_template.rst:4
+msgid ""
+"To run a batch of jobs, we need to prepare a batch of INP files. The "
+"simplest way is to prepare a single INP template file with "
+"``{{placeholders}}`` that get replaced per job."
+msgstr ""
+
+#: ../../../source/user_guide/inp_template.rst:8
+msgid ""
+"In the future, ABQflow plans to support extracting batch parameters from "
+"multiple existing INP files."
+msgstr ""
+
+#: ../../../source/user_guide/inp_template.rst:11
+msgid ""
+"This example gives a simple example of preparing an INP template file. "
+"The template file is located in "
+"``./examples/cae_file/planar_stress_template.inp``. Here we add two "
+"placeholders ``{{youngs_modulus}}`` and ``{{load_magnitude}}`` in the INP"
+" file. The following is a snippet of the template file:"
+msgstr ""
+

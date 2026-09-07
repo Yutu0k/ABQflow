@@ -1,0 +1,4666 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025–2026, yutu0k
+# This file is distributed under the same license as the ABQflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: ABQflow 0.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-07 20:57+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: zh_CN\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../../source/api/ABQflow.core.rst:4
+msgid "ABQflow.core package"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:7
+msgid "Subpackages"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:15
+msgid "Submodules"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:18
+msgid "ABQflow.core.abaqus\\_automation module"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:1 of
+msgid ""
+"Abaqus batch processing — orchestrator, resource planner, and public "
+"helpers."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:4 of
+msgid "Key classes"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:5 of
+msgid "AbaqusCalculation"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:6 of
+msgid "Thin assembly of JobContext + strategy; no side effects in ``__init__``."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:7 of
+msgid "BatchAbaqusProcessor"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:8 of
+msgid "Three-phase lifecycle: ``plan`` / ``prepare`` / ``run_batch``."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:9 of
+msgid "JobOutcome"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation:10 of
+msgid "Unified result envelope for a single job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:1
+#: ABQflow.core.abaqus_automation.JobOutcome:1
+#: ABQflow.core.abaqus_automation.JobPlan:1 ABQflow.core.context.JobContext:1
+#: ABQflow.core.diagnostics.SolverDiagnostics:1
+#: ABQflow.core.diagnostics.SolverResult:1 ABQflow.core.hosts.HostAssignment:1
+#: ABQflow.core.hosts.HostSpec:1 ABQflow.core.inp_include.ResolvedInp:1
+#: ABQflow.core.runner.AbaqusRunner:1 ABQflow.core.runner.CommandRecord:1
+#: ABQflow.core.runner.Timeouts:1 ABQflow.core.spec.HookSpec:1
+#: ABQflow.core.spec.JobSpec:1 ABQflow.core.spec.PreparationSpec:1
+#: ABQflow.core.spec.SubroutineSpec:1 ABQflow.core.status.JobStatusManager:1
+#: ABQflow.core.status.PhaseRecord:1
+#: ABQflow.core.strategies.SubroutineCompileStrategy:1 of
+msgid "Bases: :py:class:`object`"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:1 of
+msgid "Dry-run output for a single job — commands, paths, and resource summary."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:11
+#: ABQflow.core.abaqus_automation.JobOutcome:7
+#: ABQflow.core.abaqus_automation.JobPlan:4 ABQflow.core.context.JobContext:8
+#: ABQflow.core.diagnostics.SolverDiagnostics:4 ABQflow.core.hosts.HostSpec:4
+#: ABQflow.core.inp_include.ResolvedInp:8 ABQflow.core.runner.AbaqusRunner:10
+#: ABQflow.core.runner.Timeouts:17 ABQflow.core.spec.HookSpec:4
+#: ABQflow.core.spec.JobSpec:7 ABQflow.core.spec.PreparationSpec:4
+#: ABQflow.core.spec.SubroutineSpec:4 ABQflow.core.status.JobStatusManager:15
+#: ABQflow.core.status.PhaseRecord:4
+#: ABQflow.core.strategies.DatExtractionStrategy:19
+#: ABQflow.core.strategies.ExistingInpStrategy:10
+#: ABQflow.core.strategies.InpModifyStrategy:8
+#: ABQflow.core.strategies.InpPreparationStrategy:23
+#: ABQflow.core.strategies.ModelGenerationStrategy:8
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:8
+#: ABQflow.core.strategies.ModularWorkflowStrategy:17
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:9
+#: ABQflow.core.strategies.OdbExtractionStrategy:8
+#: ABQflow.core.strategies.SubroutineCompileStrategy:10 of
+msgid "Attributes"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:9
+#: ABQflow.core.abaqus_automation.JobOutcome:8
+#: ABQflow.core.abaqus_automation.JobPlan:5 ABQflow.core.context.JobContext:9
+#: ABQflow.core.diagnostics.diagnose:16 ABQflow.core.spec.JobSpec:8 of
+msgid "job_name"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:-1
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:-1
+#: ABQflow.core.abaqus_automation.JobOutcome:-1
+#: ABQflow.core.abaqus_automation.JobPlan:-1 ABQflow.core.context.JobContext:-1
+#: ABQflow.core.diagnostics.SolverDiagnostics:-1
+#: ABQflow.core.diagnostics.apply_truth_table:-1
+#: ABQflow.core.diagnostics.diagnose:-1 ABQflow.core.diagnostics.parse_sta:-1
+#: ABQflow.core.hosts.HostSpec:-1 ABQflow.core.inp_include.ResolvedInp:-1
+#: ABQflow.core.inp_include.resolve_include_tree:-1
+#: ABQflow.core.registry.register_extraction:-1
+#: ABQflow.core.registry.register_preparation:-1
+#: ABQflow.core.remote_launch.rewrite_includes:-1
+#: ABQflow.core.remote_launch.rewrite_includes:24
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:-1
+#: ABQflow.core.runner.AbaqusRunner.run_hook:-1
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:-1
+#: ABQflow.core.runner.extract_json:-1 ABQflow.core.spec.HookSpec:-1
+#: ABQflow.core.spec.JobSpec:-1 ABQflow.core.spec.PreparationSpec:-1
+#: ABQflow.core.spec.SubroutineSpec:-1
+#: ABQflow.core.status.JobStatusManager.mark_extracting:-1
+#: ABQflow.core.status.PhaseRecord:-1
+#: ABQflow.core.strategies.ExistingInpStrategy:-1
+#: ABQflow.core.strategies.InpModifyStrategy:-1
+#: ABQflow.core.strategies.InpPreparationStrategy:-1
+#: ABQflow.core.strategies.ModelGenerationStrategy:-1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:-1 of
+msgid "str"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:6 of
+msgid "Job identifier."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:7 of
+msgid "commands"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:-1 of
+msgid "list"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:8 of
+msgid "List of :class:`CommandRecord` instances."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:9 of
+msgid "paths"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:9
+#: ABQflow.core.abaqus_automation.JobPlan:-1
+#: ABQflow.core.diagnostics.SolverDiagnostics:-1
+#: ABQflow.core.inp_include.ResolvedInp:-1
+#: ABQflow.core.runner.AbaqusRunner.run_hook:-1 of
+msgid "dict[str, str]"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:10 of
+msgid "Expected file paths (``inp``, ``odb``, ``output_dir``)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:11 of
+msgid "resource_summary"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:18
+#: ABQflow.core.abaqus_automation.JobPlan:-1
+#: ABQflow.core.runner.AbaqusRunner.run_hook:38
+#: ABQflow.core.runner.extract_json:17 ABQflow.core.spec.JobSpec:-1
+#: ABQflow.core.spec.PreparationSpec:-1
+#: ABQflow.core.status.JobStatusManager.finalize_into:-1
+#: ABQflow.core.status.JobStatusManager.finalize_into:20
+#: ABQflow.core.status.JobStatusManager.record_extraction:-1
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:14
+#: ABQflow.core.strategies.ExtractionStrategy.extract:14
+#: ABQflow.core.strategies.InpModifyStrategy:-1
+#: ABQflow.core.strategies.InpPreparationStrategy:-1
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:14
+#: ABQflow.core.strategies.ModelGenerationStrategy:-1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:14
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:-1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:14
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:14 of
+msgid "dict"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobPlan:12 of
+msgid "Planned CPUs, token estimate, and parallelism info."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst
+#: ABQflow.core.abaqus_automation.AbaqusCalculation
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:2
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:15
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.host_for
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:7
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:13
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:10
+#: ABQflow.core.abaqus_automation.plan_parallelism:10
+#: ABQflow.core.abaqus_automation.solver_tokens:7
+#: ABQflow.core.diagnostics.SolverResult
+#: ABQflow.core.diagnostics.apply_truth_table:29
+#: ABQflow.core.diagnostics.diagnose:15
+#: ABQflow.core.diagnostics.harvest_errors:9
+#: ABQflow.core.diagnostics.parse_sta:4 ABQflow.core.hosts.HostAssignment
+#: ABQflow.core.hosts.HostSpec ABQflow.core.hosts.HostSpec.allocation_weight
+#: ABQflow.core.hosts.HostSpec.capacity:12 ABQflow.core.hosts.HostSpec.job_dir
+#: ABQflow.core.hosts.HostSpec.local
+#: ABQflow.core.hosts.HostSpec.resolved_abaqus_exe
+#: ABQflow.core.hosts.HostSpec.resolved_cores
+#: ABQflow.core.hosts.HostSpec.resolved_cpus
+#: ABQflow.core.hosts.HostSpec.usable_cores ABQflow.core.hosts.assign_hosts:13
+#: ABQflow.core.hosts.oversubscription_note:11 ABQflow.core.hosts.solver_tokens
+#: ABQflow.core.hosts.summarise_assignment ABQflow.core.hosts.total_capacity
+#: ABQflow.core.inp_include.read_inp_text
+#: ABQflow.core.inp_include.resolve_include_tree:4
+#: ABQflow.core.inp_include.resolve_target
+#: ABQflow.core.inp_include.write_inp_text
+#: ABQflow.core.registry.build_workflow:14
+#: ABQflow.core.registry.register_extraction:4
+#: ABQflow.core.registry.register_preparation:8
+#: ABQflow.core.remote_launch.build_cmd_line
+#: ABQflow.core.remote_launch.build_detach_script
+#: ABQflow.core.remote_launch.find_includes
+#: ABQflow.core.remote_launch.grace_period
+#: ABQflow.core.remote_launch.parse_detach_output
+#: ABQflow.core.remote_launch.parse_rc_sentinel
+#: ABQflow.core.remote_launch.poll_verdict ABQflow.core.remote_launch.quote_arg
+#: ABQflow.core.remote_launch.rewrite_includes:14
+#: ABQflow.core.remote_launch.wrap_cmd
+#: ABQflow.core.remote_launch.wrap_powershell ABQflow.core.runner.AbaqusRunner
+#: ABQflow.core.runner.AbaqusRunner.artifact_exists
+#: ABQflow.core.runner.AbaqusRunner.build_make_command
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:18
+#: ABQflow.core.runner.AbaqusRunner.build_solver_command
+#: ABQflow.core.runner.AbaqusRunner.fetch_results
+#: ABQflow.core.runner.AbaqusRunner.run_compile:16
+#: ABQflow.core.runner.AbaqusRunner.run_hook:16
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:7
+#: ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile
+#: ABQflow.core.runner.CommandRecord ABQflow.core.runner.compile_failure_marker
+#: ABQflow.core.runner.extract_json:11 ABQflow.core.status.JobStatusManager
+#: ABQflow.core.status.JobStatusManager.finalize_into:14
+#: ABQflow.core.status.JobStatusManager.mark_extracting:4
+#: ABQflow.core.status.JobStatusManager.record_compile:4
+#: ABQflow.core.status.JobStatusManager.record_extraction:9
+#: ABQflow.core.status.JobStatusManager.record_preflight:4
+#: ABQflow.core.status.JobStatusManager.record_preparation:4
+#: ABQflow.core.status.JobStatusManager.record_simulation:4
+#: ABQflow.core.strategies.DatExtractionStrategy
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:4
+#: ABQflow.core.strategies.ExtractionStrategy
+#: ABQflow.core.strategies.ExtractionStrategy.extract:4
+#: ABQflow.core.strategies.InpPreparationStrategy
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:4
+#: ABQflow.core.strategies.JobWorkflowStrategy
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:4
+#: ABQflow.core.strategies.ModelGenerationStrategy
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:4
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:4
+#: ABQflow.core.strategies.ModularWorkflowStrategy
+#: ABQflow.core.strategies.ModularWorkflowStrategy.execute
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:4
+#: ABQflow.core.strategies.OdbExtractionStrategy
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:4
+#: ABQflow.core.strategies.PreparationStrategy
+#: ABQflow.core.strategies.PreparationStrategy.prepare:4
+#: ABQflow.core.strategies.SubroutineCompileStrategy of
+msgid "Parameters"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:1 of
+msgid "Thin wrapper: assembles JobContext + AbaqusRunner, delegates to strategy."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:3 of
+msgid ""
+"No side effects in ``__init__`` (only creates the output directory and "
+"builds the immutable JobContext).  The logger is created lazily on the "
+"first call to :meth:`execute`."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:10 of
+msgid "Unique job identifier."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:11
+#: ABQflow.core.abaqus_automation.JobOutcome:27
+#: ABQflow.core.context.JobContext:11 of
+msgid "output_dir"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:12 of
+msgid "Working directory for this job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:13 of
+msgid "workflow_strategy"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:-1
+#: ABQflow.core.registry.build_workflow:22 of
+msgid "JobWorkflowStrategy"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:14 of
+msgid "The assembled workflow to execute."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:15
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:9
+#: ABQflow.core.abaqus_automation.plan_parallelism:13
+#: ABQflow.core.hosts.HostSpec:33 of
+msgid "cpus_per_job"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:-1
+#: ABQflow.core.abaqus_automation.plan_parallelism:-1
+#: ABQflow.core.abaqus_automation.plan_parallelism:27
+#: ABQflow.core.abaqus_automation.solver_tokens:-1
+#: ABQflow.core.abaqus_automation.solver_tokens:13
+#: ABQflow.core.context.JobContext:-1
+#: ABQflow.core.diagnostics.SolverDiagnostics:-1
+#: ABQflow.core.diagnostics.apply_truth_table:-1
+#: ABQflow.core.diagnostics.harvest_errors:-1 ABQflow.core.hosts.HostSpec:-1
+#: ABQflow.core.hosts.HostSpec.capacity:-1 ABQflow.core.hosts.assign_hosts:-1
+#: ABQflow.core.hosts.oversubscription_note:-1 of
+msgid "int"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:16 of
+msgid "Number of CPUs requested for the solver."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:17
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:11
+#: ABQflow.core.context.JobContext:15 ABQflow.core.hosts.HostSpec:20
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:23 of
+msgid "abaqus_exe"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:18 of
+msgid "Path to the Abaqus executable."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:19
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:22
+#: ABQflow.core.runner.AbaqusRunner:15 of
+msgid "timeout"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1
+#: ABQflow.core.abaqus_automation.JobOutcome:-1 ABQflow.core.hosts.HostSpec:-1
+#: ABQflow.core.runner.AbaqusRunner:-1 ABQflow.core.runner.Timeouts:-1
+#: ABQflow.core.status.PhaseRecord:-1 of
+msgid "float or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:20 of
+msgid "Per-subprocess timeout in seconds."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:21
+#: ABQflow.core.runner.AbaqusRunner:11
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:5
+#: ABQflow.core.strategies.ExtractionStrategy.extract:5
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:5
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:5
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:5
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:5
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:5
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:5
+#: ABQflow.core.strategies.PreparationStrategy.prepare:5 of
+msgid "ctx"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:-1
+#: ABQflow.core.runner.AbaqusRunner:-1
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.ExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:-1
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:-1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.PreparationStrategy.prepare:-1 of
+msgid "JobContext"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation:22 of
+msgid "Immutable context built from the constructor arguments."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:1 of
+msgid "Run the workflow (or a single phase of it) and return the result dict."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:3 of
+msgid ""
+"Creates the logger and the :class:`AbaqusRunner` on first call, then "
+"delegates to ``self.workflow_strategy.execute()`` (``phase='full'``) or "
+"to the matching ``<phase>_only`` method on the strategy."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:9
+#: ABQflow.core.status.PhaseRecord:5 of
+msgid "phase"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:10 of
+msgid ""
+"``'full'`` (default) runs the complete workflow. ``'prepare'``, "
+"``'simulate'``, or ``'extract'`` run only that phase via the strategy's "
+"``prepare_only``/``simulate_only``/``extract_only`` method (see "
+":class:`~ABQflow.core.strategies.JobWorkflowStrategy`'s optional phase-"
+"separated protocol)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:17
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:20
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:14
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:15
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:20
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:17
+#: ABQflow.core.abaqus_automation.plan_parallelism:26
+#: ABQflow.core.abaqus_automation.solver_tokens:12
+#: ABQflow.core.diagnostics.apply_truth_table:36
+#: ABQflow.core.diagnostics.diagnose:22
+#: ABQflow.core.diagnostics.harvest_errors:20
+#: ABQflow.core.diagnostics.parse_sta:9 ABQflow.core.hosts.assign_hosts:22
+#: ABQflow.core.inp_include.resolve_include_tree:27
+#: ABQflow.core.registry.build_workflow:21
+#: ABQflow.core.remote_launch.rewrite_includes:23
+#: ABQflow.core.runner.AbaqusRunner.build_preflight_command:4
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:34
+#: ABQflow.core.runner.AbaqusRunner.run_compile:21
+#: ABQflow.core.runner.AbaqusRunner.run_hook:37
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:12
+#: ABQflow.core.runner.AbaqusRunner.run_solver:20
+#: ABQflow.core.runner.AbaqusRunner.stage_inputs:12
+#: ABQflow.core.runner.extract_json:16
+#: ABQflow.core.status.JobStatusManager.finalize_into:19
+#: ABQflow.core.status.JobStatusManager.get_final_status:4
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:13
+#: ABQflow.core.strategies.ExtractionStrategy.extract:13
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:13
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:13
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:13
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:13
+#: ABQflow.core.strategies.ModularWorkflowStrategy.extract_only:9
+#: ABQflow.core.strategies.ModularWorkflowStrategy.prepare_only:9
+#: ABQflow.core.strategies.ModularWorkflowStrategy.simulate_only:11
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:13
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:13
+#: ABQflow.core.strategies.PreparationStrategy.prepare:13
+#: ABQflow.core.strategies.SubroutineCompileStrategy.compile:4 of
+msgid "Returns"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:19 of
+msgid "Must contain at least ``'status'``.  May include extracted values."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:22
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:13
+#: ABQflow.core.hosts.assign_hosts:27
+#: ABQflow.core.inp_include.resolve_include_tree:32
+#: ABQflow.core.registry.build_workflow:26 ABQflow.core.runner.extract_json:21
+#: of
+msgid "Raises"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:23 of
+msgid "NotImplementedError"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.AbaqusCalculation.execute:24 of
+msgid ""
+"If ``phase != 'full'`` and ``self.workflow_strategy`` does not implement "
+"the corresponding ``<phase>_only`` method (e.g. "
+":class:`~ABQflow.core.strategies.MonolithicWorkflowStrategy`)."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst
+#: ABQflow.core.abaqus_automation.AbaqusCalculation
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.assignment
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.host_for
+#: ABQflow.core.hosts.HostSpec ABQflow.core.hosts.HostSpec.allocation_weight
+#: ABQflow.core.hosts.HostSpec.job_dir ABQflow.core.hosts.HostSpec.local
+#: ABQflow.core.hosts.HostSpec.resolved_abaqus_exe
+#: ABQflow.core.hosts.HostSpec.resolved_cores
+#: ABQflow.core.hosts.HostSpec.resolved_cpus
+#: ABQflow.core.hosts.HostSpec.usable_cores ABQflow.core.hosts.physical_cores
+#: ABQflow.core.hosts.solver_tokens ABQflow.core.hosts.summarise_assignment
+#: ABQflow.core.hosts.total_capacity ABQflow.core.inp_include.read_inp_text
+#: ABQflow.core.inp_include.resolve_target
+#: ABQflow.core.inp_include.write_inp_text
+#: ABQflow.core.remote_launch.build_cmd_line
+#: ABQflow.core.remote_launch.build_detach_script
+#: ABQflow.core.remote_launch.find_includes
+#: ABQflow.core.remote_launch.grace_period
+#: ABQflow.core.remote_launch.parse_detach_output
+#: ABQflow.core.remote_launch.parse_rc_sentinel
+#: ABQflow.core.remote_launch.poll_verdict ABQflow.core.remote_launch.quote_arg
+#: ABQflow.core.remote_launch.wrap_cmd
+#: ABQflow.core.remote_launch.wrap_powershell ABQflow.core.runner.AbaqusRunner
+#: ABQflow.core.runner.AbaqusRunner.artifact_exists
+#: ABQflow.core.runner.AbaqusRunner.build_make_command
+#: ABQflow.core.runner.AbaqusRunner.build_solver_command
+#: ABQflow.core.runner.AbaqusRunner.fetch_results
+#: ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile
+#: ABQflow.core.runner.Timeouts.coerce
+#: ABQflow.core.runner.compile_failure_marker
+#: ABQflow.core.status.JobStatusManager
+#: ABQflow.core.strategies.DatExtractionStrategy
+#: ABQflow.core.strategies.ExtractionStrategy
+#: ABQflow.core.strategies.InpPreparationStrategy
+#: ABQflow.core.strategies.JobWorkflowStrategy
+#: ABQflow.core.strategies.ModelGenerationStrategy
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy
+#: ABQflow.core.strategies.ModularWorkflowStrategy
+#: ABQflow.core.strategies.ModularWorkflowStrategy.execute
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy
+#: ABQflow.core.strategies.OdbExtractionStrategy
+#: ABQflow.core.strategies.PreparationStrategy
+#: ABQflow.core.strategies.SubroutineCompileStrategy of
+msgid "Return type"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:1 of
+msgid "Unified result envelope returned from every job, pass or fail."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:3 of
+msgid ""
+"Status is normalised to a plain string (``JobStatus.value``) so it "
+"serialises cleanly across process boundaries."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:9 of
+msgid "Name of the job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:10
+#: ABQflow.core.status.PhaseRecord:8 of
+msgid "status"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:11 of
+msgid "String status, e.g. ``\"COMPLETED\"`` or ``\"SIMULATION_FAILED\"``."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:12
+#: ABQflow.core.status.JobStatusManager.finalize_into:15
+#: ABQflow.core.status.JobStatusManager.record_extraction:10 of
+msgid "results"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:-1 of
+msgid "dict or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:13 of
+msgid ""
+"Extracted result values, keyed by ``result_name``.  An **empty dict** — "
+"not ``None`` — when the job failed before extraction, since the reserved "
+"keys (``status``/``error``/``diagnostics``/ ``_phase_history``) are "
+"popped out of it into their own fields. ``None`` only when the job "
+"produced no dict at all, i.e. an exception escaped the worker."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:19
+#: ABQflow.core.status.JobStatusManager.record_compile:8
+#: ABQflow.core.status.JobStatusManager.record_preflight:7
+#: ABQflow.core.status.JobStatusManager.record_preparation:7
+#: ABQflow.core.status.JobStatusManager.record_simulation:7
+#: ABQflow.core.status.PhaseRecord:17 of
+msgid "error"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:-1
+#: ABQflow.core.diagnostics.harvest_errors:-1 ABQflow.core.hosts.HostSpec:-1
+#: ABQflow.core.spec.JobSpec:-1 ABQflow.core.status.JobStatusManager:-1
+#: ABQflow.core.status.JobStatusManager.record_compile:-1
+#: ABQflow.core.status.JobStatusManager.record_preflight:-1
+#: ABQflow.core.status.JobStatusManager.record_preparation:-1
+#: ABQflow.core.status.JobStatusManager.record_simulation:-1
+#: ABQflow.core.status.PhaseRecord:-1
+#: ABQflow.core.strategies.ModularWorkflowStrategy:-1 of
+msgid "str or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:20 of
+msgid ""
+"Why the job failed; ``None`` on success.  Carries the first terminal "
+"failure's message "
+"(:attr:`~ABQflow.core.status.JobStatusManager.error_message`), or a "
+"formatted traceback when an exception escaped the worker."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:23 of
+msgid "diagnostics"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:24 of
+msgid ""
+"Solver diagnostics snapshot.  Populated on failure and on the ``rc≠0 + "
+"COMPLETED`` edge case.  ``None`` for clean success or jobs that never "
+"reached the solver phase."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:28 of
+msgid ""
+"This job's directory, used to resolve sidecar result files "
+"(:func:`~ABQflow.load_field`).  ``None`` only on an outcome built outside"
+" the normal worker path."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:31 of
+msgid "phases"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:-1 of
+msgid "list[dict] or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:32 of
+msgid ""
+"Phase-by-phase history (name/status/duration/error) collected from "
+":class:`~ABQflow.core.status.JobStatusManager`. ``None`` for strategies "
+"that don't populate it (e.g. monolithic workflows)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:35
+#: ABQflow.core.status.PhaseRecord:15 of
+msgid "duration_s"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.JobOutcome:36 of
+msgid ""
+"Wall-clock seconds spent in :meth:`AbaqusCalculation.execute` for this "
+"job.  ``None`` when the worker died without reporting."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.solver_tokens:1
+#: ABQflow.core.hosts.solver_tokens:1 of
+msgid "Estimate Abaqus license tokens needed for *n_cpus* cores."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.solver_tokens:3 of
+msgid ""
+"Formula: ``token(n) = ceil(5 * n^0.422)``, an empirical approximation of "
+"Abaqus licensing behaviour."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.solver_tokens:8 of
+msgid "n_cpus"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.solver_tokens:9 of
+msgid "Number of CPU cores per job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.solver_tokens:14 of
+msgid "Estimated token count."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:1 of
+msgid "Compute the actual number of concurrent jobs given license limits."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:3 of
+msgid ""
+"License tokens (if provided) are a hard cap — Abaqus will refuse to start"
+" a job it cannot license.  CPU cores are informational only: requesting "
+"more parallel jobs than physical cores support is allowed (CPU "
+"oversubscription), since small jobs rarely saturate a full core, but it "
+"is flagged with a warning so the user can see the allocation."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:11 of
+msgid "requested"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:12 of
+msgid "Desired number of parallel jobs."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:14 of
+msgid "CPUs each job will request."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:10
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:11
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:16
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:13
+#: ABQflow.core.abaqus_automation.plan_parallelism:15
+#: ABQflow.core.hosts.HostSpec:43 of
+msgid "license_tokens"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:-1
+#: ABQflow.core.abaqus_automation.plan_parallelism:-1
+#: ABQflow.core.hosts.HostSpec:-1 ABQflow.core.hosts.HostSpec.capacity:-1
+#: ABQflow.core.hosts.oversubscription_note:-1 of
+msgid "int or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:16 of
+msgid "Total license tokens available.  ``None`` means unconstrained."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:17
+#: ABQflow.core.hosts.HostSpec:57 of
+msgid "reserve_cores"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:18 of
+msgid "Cores to reserve for the OS and other processes (default 1)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:19 of
+msgid "total_cores"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:20 of
+msgid ""
+"Physical cores on the machine that will *execute* the jobs.  ``None`` "
+"(the default) means this machine, preserving existing behaviour; remote "
+"batches pass the target's core count so capacity is reasoned about on the"
+" executing host rather than the submitting one."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.plan_parallelism:28 of
+msgid "Feasible parallelism level (at least 1)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:1 of
+msgid "Orchestrate a batch of Abaqus jobs through a three-phase lifecycle."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:3 of
+msgid ""
+":meth:`plan` — inspect for directory conflicts, compute decisions. Pure "
+"computation; no side effects."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:5 of
+msgid ""
+":meth:`prepare` — apply decisions (delete, rename, skip) and build the "
+":class:`AbaqusCalculation` list."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:7 of
+msgid ""
+":meth:`run_batch` — execute via "
+":class:`~concurrent.futures.ProcessPoolExecutor`; one failure never "
+"affects sibling jobs."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:12 of
+msgid "specs"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:-1
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1 of
+msgid "list[JobSpec]"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:13 of
+msgid "Normalised list of job specifications."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:14 of
+msgid "calculations"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:-1 of
+msgid "list[AbaqusCalculation] or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:15 of
+msgid "Built calculations (populated by :meth:`prepare`)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:16
+#: ABQflow.core.inp_include.resolve_include_tree:23
+#: ABQflow.core.runner.AbaqusRunner:13
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:9
+#: ABQflow.core.strategies.ExtractionStrategy.extract:9
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:9
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:9
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:9
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:9
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:9
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:9
+#: ABQflow.core.strategies.PreparationStrategy.prepare:9 of
+msgid "logger"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:-1
+#: ABQflow.core.runner.AbaqusRunner:-1
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.ExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:-1
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:-1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.PreparationStrategy.prepare:-1 of
+msgid "logging.Logger"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor:17 of
+msgid "Logger writing to ``batch_processor.log`` in the output directory."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:3 of
+msgid "batch_data"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:4 of
+msgid ""
+"Job configs.  Build them directly, or with "
+":func:`~ABQflow.helpers.convert.generate_from_array` / "
+":func:`~ABQflow.helpers.convert.generate_from_inp_files`."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:7 of
+msgid "base_output_dir"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:8 of
+msgid "**Absolute** directory where all job subdirectories will be created."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:10 of
+msgid "Number of CPUs to request for each Abaqus job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:12 of
+msgid "**Absolute** path to the Abaqus executable (default ``'abaqus'``)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:13 of
+msgid "duplicate_mode"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:14 of
+msgid "How to handle existing job directories (default ``'fail'``):"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:16 of
+msgid "``'fail'`` — raise :class:`FileExistsError` on any conflict."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:17 of
+msgid "``'skip'`` — skip jobs whose directory already exists."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:18 of
+msgid "``'overwrite'`` — delete the existing directory and re-run."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:19 of
+msgid "``'interactive'`` — prompt the user for each conflict."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:20 of
+msgid "prompt_fn"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1
+#: ABQflow.core.registry.register_extraction:-1
+#: ABQflow.core.registry.register_preparation:-1
+#: ABQflow.core.remote_launch.rewrite_includes:-1 of
+msgid "callable"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:21 of
+msgid "Function for interactive prompts (default :func:`input`)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:23 of
+msgid "Per-subprocess timeout in seconds; ``None`` means no limit."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:24
+#: ABQflow.core.registry.build_workflow:17 of
+msgid "preflight_only"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1
+#: ABQflow.core.hosts.HostSpec:-1 ABQflow.core.inp_include.ResolvedInp:-1
+#: ABQflow.core.inp_include.resolve_include_tree:-1
+#: ABQflow.core.registry.build_workflow:-1
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:-1
+#: ABQflow.core.runner.AbaqusRunner.run_hook:-1
+#: ABQflow.core.spec.SubroutineSpec:-1
+#: ABQflow.core.status.JobStatusManager.record_compile:-1
+#: ABQflow.core.status.JobStatusManager.record_preflight:-1
+#: ABQflow.core.status.JobStatusManager.record_preparation:-1
+#: ABQflow.core.status.JobStatusManager.record_simulation:-1
+#: ABQflow.core.strategies.ExistingInpStrategy:-1
+#: ABQflow.core.strategies.InpPreparationStrategy:-1
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:14
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:14
+#: ABQflow.core.strategies.PreparationStrategy.prepare:14
+#: ABQflow.core.strategies.SubroutineCompileStrategy:-1 of
+msgid "bool"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:25 of
+msgid "If ``True``, only run preparation + preflight, skip solver & extraction."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:27
+#: ABQflow.core.hosts.assign_hosts:16 of
+msgid "hosts"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:-1 of
+msgid "list[HostSpec] or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:28 of
+msgid ""
+"Machines to distribute jobs over.  ``None`` (the default) runs everything"
+" locally, exactly as before — the remote code path is unreachable without"
+" this argument."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:32 of
+msgid ""
+"Jobs are spread by :func:`~ABQflow.core.hosts.assign_hosts` in proportion"
+" to each machine's ``weight``; when a machine has no explicit weight, its"
+" concurrency capacity is used instead.  How many jobs each machine runs "
+"*at once* is a separate knob, ``HostSpec.max_concurrent``, enforced "
+"during execution — so a batch can send two concurrent jobs to one machine"
+" and one to another.  Neither knob changes ``cpus=``: that is "
+"``cpus_per_job``, per batch or per host, and nothing rewrites it."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.__init__:41 of
+msgid ""
+"Core counts are measured, not assumed — a remote machine that leaves "
+"``cpus_total`` unset is probed over SSH once, before any job is "
+"dispatched.  As in a host-less batch, cores are advisory: asking for more"
+" than a machine has is logged as oversubscription and then run anyway."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.host_for:1 of
+msgid "Machine assigned to *job_name*; ``None`` when running locally."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.assignment:1 of
+#, python-brace-format
+msgid "``{host_name: [job_name, ...]}`` for the configured pool."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.assignment:3 of
+msgid ""
+"Useful before running: it shows how the batch will be spread without "
+"executing anything."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:1 of
+msgid "Inspect what the batch would do without executing it."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:3 of
+msgid "Two levels:"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:5 of
+msgid "``'plan'`` (default)"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:6 of
+msgid ""
+"**Zero side effects.**  Inspects each spec and builds a command plan "
+"without touching the filesystem."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:8 of
+msgid "``'stage'``"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:9 of
+msgid ""
+"Runs the real preparation phase, but substitutes a ``record_only`` runner"
+" so solver and hook commands are logged, not executed.  **Has filesystem "
+"side effects** (``output_dir`` is created, INPs are staged)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:16 of
+msgid "level"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:17 of
+msgid "``'plan'`` (L1, default) or ``'stage'`` (L2)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:21 of
+msgid "list[JobPlan]"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.dry_run:22 of
+msgid "One plan per job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:1 of
+msgid "Inspect output directory for existing job subdirectories."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:3 of
+msgid ""
+"Pure read-only check — no directories are created, deleted, or renamed.  "
+"The decision for each job is one of: ``'run'``, ``'skip'``, "
+"``'overwrite'``, or a new name string (rename)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:10 of
+#, python-brace-format
+msgid "``{job_name: decision}`` mapping."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:14 of
+msgid "FileExistsError"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.plan:15 of
+msgid "If ``duplicate_mode='fail'`` and any job directory already exists."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:1 of
+msgid "Apply plan decisions and build the :class:`AbaqusCalculation` list."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:3 of
+msgid ""
+"Side effects: directories may be deleted (``'overwrite'``) or specs may "
+"be renamed (``'rename'``).  Results are stored in ``self.calculations``."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:9 of
+msgid "decisions"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:-1 of
+msgid "dict[str, str] or None"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.prepare:10 of
+msgid ""
+"Decision map from :meth:`plan`.  If ``None``, :meth:`plan` is called "
+"first."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:1 of
+msgid ""
+"Execute all prepared calculations via "
+":class:`~concurrent.futures.ProcessPoolExecutor`."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:3 of
+msgid ""
+"If :meth:`prepare` has not been called yet it is invoked with a fresh "
+"call to :meth:`plan`."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:8
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:9
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:14
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:11 of
+msgid "num_parallel_jobs"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:9 of
+msgid "Desired maximum concurrent jobs."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:11
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:12
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:17
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:14 of
+msgid "Total license tokens available; ``None`` means no license limit."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:15
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:16
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:21
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:18 of
+msgid "list[JobOutcome]"
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_batch:16 of
+msgid ""
+"One outcome per executed job.  Failed jobs are included with their error "
+"state — they do not halt the batch."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:1 of
+msgid ""
+"Run only the preparation phase (produce INPs, and compile a subroutine if"
+" configured) for every spec in ``self.specs``."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:4 of
+msgid ""
+"Builds :class:`AbaqusCalculation`\\ s directly from ``self.specs`` (see "
+":meth:`_build_calc`) rather than through :meth:`plan`/ :meth:`prepare`'s "
+"duplicate-directory handling — call :meth:`plan`/ :meth:`prepare` first "
+"if you need overwrite/rename/skip semantics. Only ``workflow='modular'`` "
+"specs are supported; a ``monolithic`` spec raises "
+":class:`NotImplementedError` (it has no separable preparation phase)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:10
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:15
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:12 of
+msgid "Desired maximum concurrent jobs (default ``1``)."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:17
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_preparation:22
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:19 of
+msgid "One outcome per job."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:1 of
+msgid "Run only the solver phase (pre-extraction + solve) for every spec."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_simulation:3 of
+msgid ""
+"Assumes ``ctx.inp_path`` already exists for every job (e.g. from a prior "
+":meth:`run_preparation` call — possibly in an earlier process/session; "
+"reconstruct the :class:`BatchAbaqusProcessor` with the same "
+"``batch_data``/``base_output_dir`` to resume). Only "
+"``workflow='modular'`` specs are supported."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:1 of
+msgid "Run only the post-extraction phase for every spec."
+msgstr ""
+
+#: ABQflow.core.abaqus_automation.BatchAbaqusProcessor.run_extraction:3 of
+msgid ""
+"Assumes ``ctx.odb_path`` already exists for every job (e.g. from a prior "
+":meth:`run_simulation` call). Only ``workflow='modular'`` specs are "
+"supported."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:25
+msgid "ABQflow.core.context module"
+msgstr ""
+
+#: ABQflow.core.context:1 of
+msgid "JobContext — frozen data contract that strategies read but cannot mutate."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:1 of
+msgid "Immutable data contract holding all information a strategy can observe."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:3 of
+msgid ""
+"Strategies depend on this object but cannot mutate it, preventing "
+"accidental cross-strategy side effects.  Every field is read-only after "
+"construction."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:10 of
+msgid "Unique identifier for this job (also used as directory name)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:12 of
+msgid "Absolute path to the job's working directory."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:13 of
+msgid "cpus"
+msgstr ""
+
+#: ABQflow.core.context.JobContext:14 of
+msgid "Number of CPUs requested for the Abaqus solver run."
+msgstr ""
+
+#: ABQflow.core.context.JobContext:16 of
+msgid "Path or command name for the Abaqus executable (default ``\"abaqus\"``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.inp_path:1 of
+msgid "Absolute path to the input file (``<output_dir>/<job_name>.inp``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.odb_path:1 of
+msgid "Absolute path to the output database (``<output_dir>/<job_name>.odb``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.log_path:1 of
+msgid ""
+"Absolute path to Abaqus's own native job log "
+"(``<output_dir>/<job_name>.log``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.log_path:3 of
+msgid ""
+"This file is owned and written by the Abaqus solver process itself "
+"(``abaqus job=... interactive`` writes it as a side effect). ABQflow "
+"never opens this path for writing — see :attr:`exec_log_path` for "
+"ABQflow's own execution log, which uses a distinct filename to avoid "
+"colliding with this one."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.exec_log_path:1 of
+msgid ""
+"Absolute path to ABQflow's own execution log "
+"(``<output_dir>/<job_name>_abqflow.log``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.exec_log_path:3 of
+msgid ""
+"Deliberately distinct from :attr:`log_path` (Abaqus's native job log) so "
+"the two writers never collide on the same file."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.sta_path:1 of
+msgid "Absolute path to the status file (``<output_dir>/<job_name>.sta``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.msg_path:1 of
+msgid "Absolute path to the message file (``<output_dir>/<job_name>.msg``)."
+msgstr ""
+
+#: ABQflow.core.context.JobContext.dat_path:1 of
+msgid "Absolute path to the data file (``<output_dir>/<job_name>.dat``)."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:32
+msgid "ABQflow.core.diagnostics module"
+msgstr ""
+
+#: ABQflow.core.diagnostics:1 of
+msgid ""
+"Solver diagnostics — .sta verdict, .msg/.dat error harvesting, truth "
+"table."
+msgstr ""
+
+#: ABQflow.core.diagnostics:3 of
+msgid ""
+"Provides authoritative job success/failure determination by cross-"
+"referencing the subprocess return code with the .sta file's completion "
+"marker, and harvests actionable error lines from .msg/.dat files."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:1 of
+msgid "Diagnostic snapshot harvested after a solver run."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:5
+#: ABQflow.core.diagnostics.apply_truth_table:10
+#: ABQflow.core.diagnostics.apply_truth_table:32 of
+msgid "sta_verdict"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:6 of
+msgid ""
+"Raw verdict from .sta parsing: ``'COMPLETED'`` | ``'NOT_COMPLETED'`` | "
+"``'ABORTED'`` | ``'INDETERMINATE'``."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:8 of
+msgid "errors"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:-1
+#: ABQflow.core.hosts.assign_hosts:-1
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:35 of
+msgid "list[str]"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:9 of
+msgid "Deduplicated, truncated error lines (at most *k_errors* entries)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:10 of
+msgid "error_total"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:11 of
+msgid "Total ERROR lines found before dedup/truncation."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:12 of
+msgid "warning_total"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:13 of
+msgid "Total WARNING lines found."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:14 of
+msgid "increments"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:15 of
+msgid "Completed increment count from .sta (best-effort)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:16 of
+msgid "source_files"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:17 of
+msgid ""
+"Map of kind (``'sta'``, ``'msg'``, ``'dat'``, ``'log'``) to absolute path"
+" for every file that was actually read."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:19 of
+msgid "solver_type"
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverDiagnostics:20 of
+msgid "``'standard'`` | ``'explicit'`` | ``'unknown'``."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverResult:1 of
+msgid "Returned by :meth:`AbaqusRunner.run_solver`."
+msgstr ""
+
+#: ABQflow.core.diagnostics.SolverResult:3 of
+msgid ""
+"Wraps the raw diagnostics with the combined truth-table success "
+"determination so callers get a single authoritative answer."
+msgstr ""
+
+#: ABQflow.core.diagnostics.parse_sta:1 of
+msgid "Parse an Abaqus .sta file for verdict, increment count, and solver type."
+msgstr ""
+
+#: ABQflow.core.diagnostics.parse_sta:5 of
+msgid "path"
+msgstr ""
+
+#: ABQflow.core.diagnostics.parse_sta:6 of
+msgid "Absolute path to the ``.sta`` file."
+msgstr ""
+
+#: ABQflow.core.diagnostics.parse_sta:10 of
+msgid "tuple[str, int, str]"
+msgstr ""
+
+#: ABQflow.core.diagnostics.parse_sta:11 of
+msgid ""
+"``(verdict, increments, solver_type)`` where *verdict* is one of "
+"``'COMPLETED'``, ``'NOT_COMPLETED'``, ``'ABORTED'``, or "
+"``'INDETERMINATE'``."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:1 of
+msgid "Stream-scan .msg and .dat files for ERROR / WARNING lines."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:3 of
+msgid ""
+"Reads files line-by-line so multi-GB .msg files never blow memory. "
+"Consecutive identical errors are folded into one entry with a repeat "
+"count.  Results are truncated to at most *k_errors* entries, each clipped"
+" to *k_chars* characters."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:10 of
+msgid "msg_path"
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:11 of
+msgid "Path to the ``.msg`` file (may be ``None`` or missing)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:12 of
+msgid "dat_path"
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:13 of
+msgid "Path to the ``.dat`` file (may be ``None`` or missing)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:14 of
+msgid "k_errors"
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:15 of
+msgid "Maximum number of error lines to retain (default 5)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:16 of
+msgid "k_chars"
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:17 of
+msgid "Maximum characters per retained error line (default 500)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:21 of
+msgid "tuple[list[str], int, int]"
+msgstr ""
+
+#: ABQflow.core.diagnostics.harvest_errors:22 of
+msgid "``(errors, error_total, warning_total)``."
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:1 of
+msgid "Run full diagnostics on a completed (or failed) Abaqus job."
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:3 of
+msgid "Reads files in the following order of importance:"
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:5 of
+msgid ""
+"1. ``.dat`` — pre-processing errors (INP syntax, mesh, materials). If the"
+" job died before the analysis phase the .sta may not exist; .dat is the "
+"only clue. 2. ``.msg`` — Standard solver errors & warnings (convergence, "
+"increments). 3. ``.sta`` — authoritative completion marker + increment "
+"progress. Explicit solver errors also appear in the .sta tail. 4. "
+"``.log`` — fallback: the one-line ``COMPLETED`` / ``exited with errors`` "
+"conclusion."
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:17 of
+msgid "Abaqus job name (used to derive file names)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:18 of
+msgid "work_dir"
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:19 of
+msgid "Job output directory containing the result files."
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:23 of
+msgid "SolverDiagnostics"
+msgstr ""
+
+#: ABQflow.core.diagnostics.diagnose:24 of
+msgid "Populated diagnostic snapshot."
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:1 of
+msgid "Combine subprocess return code and .sta verdict into a single judgment."
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:3 of
+msgid ""
+"The principle: **.sta's ``COMPLETED`` marker is the only success "
+"certificate; the return code is merely corroborating evidence.**"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:6 of
+msgid "Truth table"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:9
+#: ABQflow.core.diagnostics.apply_truth_table:30 of
+msgid "returncode"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:11 of
+msgid "result"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:12
+#: ABQflow.core.diagnostics.apply_truth_table:15
+#: ABQflow.core.diagnostics.apply_truth_table:18 of
+msgid "0"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:13
+#: ABQflow.core.diagnostics.apply_truth_table:22
+#: ABQflow.core.status.JobStatus:7 of
+msgid "COMPLETED"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:14 of
+msgid "**success**"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:16 of
+msgid "NOT_COMPLETED / ABORTED"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:17
+#: ABQflow.core.diagnostics.apply_truth_table:26 of
+msgid "failure"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:19 of
+msgid "INDETERMINATE"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:20 of
+msgid "failure (rc=0 but no .sta marker)"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:21
+#: ABQflow.core.diagnostics.apply_truth_table:24 of
+msgid "!=0"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:23 of
+msgid "**success** (warning: cleanup error)"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:25 of
+msgid "any other"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:31 of
+msgid "Subprocess exit code (0 = clean exit)."
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:33 of
+msgid "Verdict from :func:`parse_sta`."
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:37 of
+msgid "tuple[bool, str | None]"
+msgstr ""
+
+#: ABQflow.core.diagnostics.apply_truth_table:38 of
+msgid ""
+"``(is_success, warning_message)``.  *warning_message* is only populated "
+"for the ``rc≠0 + COMPLETED`` edge case."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:39
+msgid "ABQflow.core.hosts module"
+msgstr ""
+
+#: ABQflow.core.hosts:1 of
+msgid ""
+"HostSpec — a machine that can execute Abaqus jobs, and how work is spread"
+" over several."
+msgstr ""
+
+#: ABQflow.core.hosts:3 of
+msgid ""
+"A batch with no host runs locally, exactly as it always has.  Supplying "
+"one or more :class:`~ABQflow.core.hosts.HostSpec` objects is the only way"
+" to reach the remote code path, so remote execution is strictly opt-in."
+msgstr ""
+
+#: ABQflow.core.hosts:7 of
+msgid ""
+"Two independent knobs control multi-machine behaviour, and conflating "
+"them is the mistake this module exists to prevent:"
+msgstr ""
+
+#: ABQflow.core.hosts:10 of
+msgid "``max_concurrent``"
+msgstr ""
+
+#: ABQflow.core.hosts:11 of
+msgid ""
+"How many jobs may run on a machine **at the same time**.  A capacity "
+"limit, enforced by a semaphore during execution."
+msgstr ""
+
+#: ABQflow.core.hosts:14 of
+msgid "``weight``"
+msgstr ""
+
+#: ABQflow.core.hosts:15 of
+msgid ""
+"What **share of the batch** a machine should receive.  A throughput "
+"preference, applied when jobs are assigned."
+msgstr ""
+
+#: ABQflow.core.hosts:18 of
+#, python-format
+msgid ""
+"They are not the same thing, and measurement showed why: of two machines "
+"tested, the one with half the cores finished the same job 60% faster.  "
+"Ranking purely by core count would have sent most of the work to the "
+"slower machine. So ``weight`` defaults to ``max_concurrent`` (a "
+"reasonable proxy) but can be set explicitly once you know how fast a "
+"machine actually is."
+msgstr ""
+
+#: ABQflow.core.hosts.physical_cores:1 of
+msgid "Physical core count of *this* machine, with a safe fallback."
+msgstr ""
+
+#: ABQflow.core.hosts.physical_cores:3 of
+msgid ""
+"``psutil`` is preferred; without it the count is of *logical* processors,"
+" which over-estimates on an SMT machine.  Core count is only ever "
+"advisory (licence tokens are the hard cap), so erring high is harmless."
+msgstr ""
+
+#: ABQflow.core.hosts.solver_tokens:3 of
+msgid ""
+"``ceil(5 * n ** 0.422)`` — re-exported from "
+":mod:`~ABQflow.core.abaqus_automation` semantics so this module can be "
+"read on its own.  Sublinear: 1→5, 2→7, 4→9, 8→13, 16→17 tokens, which "
+"means widening a job costs far fewer tokens than running more jobs."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:1 of
+msgid "A machine that can execute Abaqus jobs."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:5 of
+msgid "name"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:6 of
+msgid ""
+"Short identifier used in logs, in per-host cache-marker filenames, and to"
+" namespace fetched results.  Must be unique within a batch."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:8 of
+msgid "hostname"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:9 of
+msgid ""
+"Hostname, or a **bare** IPv6/IPv4 literal — no square brackets, since "
+"this goes straight to :func:`socket.getaddrinfo`.  A Windows link-local "
+"address needs a *numeric* zone index (``fe80::1%12``), not an interface "
+"name.  ``None`` designates the local machine."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:13 of
+msgid "username, password"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:14 of
+msgid ""
+"Password authentication.  Prefer sourcing these from the environment; "
+"never commit them."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:16 of
+msgid "key_filename"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:17 of
+msgid "Private-key path.  Takes precedence over *password* when set."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:18 of
+msgid "port"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:19 of
+msgid "SSH port."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:21 of
+msgid ""
+"**Absolute** path to ``abaqus.bat`` on this machine.  Empty means "
+"\"inherit the batch default\", which is what a local host normally wants;"
+" a remote host must set it, and the constructor refuses one that does "
+"not."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:26 of
+msgid ""
+"A bare ``'abaqus'`` frequently fails under a non-interactive SSH session,"
+" which inherits machine- and user-level environment but not whatever a "
+"login shell profile adds — and installers often put Abaqus on the "
+"installing user's PATH only.  Failing at construction beats discovering "
+"it after the batch has been dispatched."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:31 of
+msgid "work_root"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:32 of
+msgid "Directory under which per-job working directories are created."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:34 of
+msgid ""
+"``cpus=`` for jobs sent here.  ``None`` inherits the batch default, which"
+" is what keeps a homogeneous batch simple."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:36 of
+msgid "cpus_total"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:37 of
+msgid ""
+"Physical cores.  Used to derive :meth:`capacity` when *max_concurrent* is"
+" not given, and to report CPU oversubscription. ``None`` enables probe: "
+"the local machine is read directly, and a remote machine is probed over "
+"SSH once per batch "
+"(:meth:`~ABQflow.core.backends.base.ExecutionBackend.probe_cores`). "
+"Setting it explicitly skips the probe."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:44 of
+msgid ""
+"Token budget for this machine.  A **hard** cap on concurrency — Abaqus "
+"refuses to start a job it cannot license, whereas oversubscribing cores "
+"merely slows things down."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:47 of
+msgid "max_concurrent"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:48 of
+msgid ""
+"Explicit cap on simultaneous jobs here.  ``None`` derives one from cores "
+"and tokens.  This is what lets a batch send, say, two jobs to one machine"
+" and one to another."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:51 of
+msgid "weight"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:52 of
+msgid ""
+"Share of the batch this machine should receive, relative to the others.  "
+"``None`` falls back to :meth:`capacity`, so machines are fed in "
+"proportion to how much they can run at once.  Set it explicitly when a "
+"machine is faster per job than its core count suggests."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:58 of
+msgid "Cores left free for the OS when deriving capacity."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:59 of
+msgid "max_sessions"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:60 of
+msgid ""
+"Cap on concurrent SSH connections; keep below sshd's ``MaxSessions`` "
+"(default 10), above which refusals look like random network errors."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:62 of
+msgid "fetch_globs"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:-1 ABQflow.core.inp_include.ResolvedInp:-1
+#: ABQflow.core.inp_include.resolve_include_tree:-1
+#: ABQflow.core.runner.AbaqusRunner.run_hook:-1 of
+msgid "tuple[str, ...]"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:63 of
+msgid "Filename patterns pulled back after each phase."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:64 of
+msgid "fetch_odb"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:65 of
+msgid ""
+"Also retrieve the ``.odb``.  Default ``False``: ODBs are frequently "
+"multi-gigabyte and leaving them where the solver wrote them is the point "
+"of running remotely."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:68 of
+msgid "cleanup"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:69 of
+msgid ""
+"``'never'`` (default) | ``'on_success'`` | ``'always'``.  Defaults to "
+"keeping everything, because a remote job whose directory was deleted "
+"cannot be debugged."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:72 of
+msgid "connect_timeout"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:-1 of
+msgid "float"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:73 of
+msgid "Seconds to wait for the SSH handshake."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:74 of
+msgid "poll_interval"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:75 of
+msgid ""
+"Initial seconds between completion polls; backs off to "
+"*poll_max_interval*."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:77 of
+msgid "poll_max_interval"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec:78 of
+msgid "Ceiling for the poll backoff."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.local:1 of
+msgid "This machine, as a pool member."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.local:3 of
+msgid ""
+"Mixing it with remote hosts lets a batch use the submitting machine's "
+"spare capacity alongside the others::"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.local:11 of
+msgid ""
+"Everything a local host runs goes through :class:`LocalBackend`, so it "
+"behaves exactly as a host-less batch does — no staging, no fetch, no SSH."
+"  ``cpus_total`` is measured if not given."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.is_remote:1 of
+msgid "Whether this spec designates a machine reached over SSH."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.shared_dir:1 of
+msgid "Directory holding files reused across this machine's jobs."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.shared_dir:3 of
+msgid ""
+"``*INCLUDE`` targets land here rather than in each job directory: a "
+"shared mesh is often far larger than the deck that references it, and "
+"uploading it once per job would make transfer, not solving, the dominant "
+"cost of a batch.  Contents are content-addressed, so they survive between"
+" batches and are never invalidated by a stale name."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.shared_dir:9 of
+msgid ""
+"Not touched by ``cleanup``, which only ever removes job directories — "
+"this is a cache, and keeping it is the whole point."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.job_dir:1 of
+msgid "Working directory for *job_name* on this machine."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.job_dir:3 of
+msgid ""
+"Windows path separators: both ends of the tested deployment are Windows."
+"  Joining is deliberately confined to this method so a POSIX target later"
+" needs one change, not a search across the package."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.resolved_cpus:1 of
+msgid "``cpus=`` for jobs on this machine, falling back to the batch value."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.resolved_abaqus_exe:1 of
+msgid "Abaqus command for this machine, falling back to the batch value."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.resolved_abaqus_exe:3 of
+msgid ""
+"A remote host always has its own (the constructor insists on it); a local"
+" host normally inherits whatever the batch was configured with."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.resolved_cores:1 of
+msgid "Physical cores on this machine, or ``None`` when unknown."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.resolved_cores:3 of
+msgid ""
+"Order: an explicit *cpus_total* always wins, then a value *probed* from "
+"the machine itself, then — for the local host only — a direct "
+"measurement.  A remote host with neither a configured nor a probed count "
+"is genuinely unknown, and saying so beats guessing."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.usable_cores:1 of
+msgid "Cores available to jobs, i.e. :meth:`resolved_cores` less the reserve."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:1 of
+msgid "How many jobs may run here at once."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:3 of
+msgid "Resolution order:"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:5 of
+msgid "*max_concurrent*, when set — an explicit answer always wins."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:6 of
+msgid ""
+"Otherwise derived from cores and tokens, with tokens as a hard cap and "
+"cores advisory."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:9 of
+msgid "Always at least 1: a machine worth configuring can run one job."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:13 ABQflow.core.hosts.assign_hosts:18
+#: ABQflow.core.hosts.oversubscription_note:16 of
+msgid "batch_cpus_per_job"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:14 of
+msgid "Batch default used when this host does not set ``cpus_per_job``."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:15
+#: ABQflow.core.hosts.oversubscription_note:18 of
+msgid "probed_cores"
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.capacity:16 of
+msgid ""
+"Core count measured on the machine itself, used when ``cpus_total`` was "
+"left unset.  See :meth:`resolved_cores`."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.allocation_weight:1 of
+msgid "Share of the batch this machine should receive."
+msgstr ""
+
+#: ABQflow.core.hosts.HostSpec.allocation_weight:3 of
+msgid ""
+"An explicit *weight* wins.  Otherwise the machine's concurrency capacity "
+"is used, so by default work is spread in proportion to how much each "
+"machine can run at once."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:1 of
+msgid "Describe CPU oversubscription on *host*, or ``None`` when the work fits."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:3 of
+msgid ""
+"Cores are **advisory**, never a cap: a small job rarely saturates a core,"
+" and Abaqus will happily run oversubscribed — only licence tokens can "
+"stop it starting.  So this returns a message for the caller to log and "
+"then proceed, matching what "
+":func:`~ABQflow.core.abaqus_automation.plan_parallelism` does for a host-"
+"less batch.  ``None`` is also returned when the core count is unknown, "
+"since there is nothing to compare against."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:12 of
+msgid "host"
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:-1 of
+msgid "HostSpec"
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:13 of
+msgid "Machine being checked."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:14 of
+msgid "concurrency"
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:15 of
+msgid "Jobs that will run there at once — normally :meth:`HostSpec.capacity`."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:17 of
+msgid "Batch default used when *host* does not set ``cpus_per_job``."
+msgstr ""
+
+#: ABQflow.core.hosts.oversubscription_note:19 of
+msgid "Core count measured on the machine, when ``cpus_total`` was not set."
+msgstr ""
+
+#: ../../../../docstring ABQflow.core.hosts.LOCAL_HOST:1 of
+msgid "run everything on this machine, exactly as before."
+msgstr ""
+
+#: ../../../../docstring ABQflow.core.hosts.LOCAL_HOST of
+msgid "type"
+msgstr ""
+
+#: ../../../../docstring ABQflow.core.hosts.LOCAL_HOST:3 of
+msgid "The default"
+msgstr ""
+
+#: ABQflow.core.hosts.HostAssignment:1 of
+msgid "One job placed on one machine."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:1 of
+msgid "Distribute *job_names* over *hosts* in proportion to their weights."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:3 of
+msgid ""
+"Jobs are dealt out one at a time to whichever machine is currently *least"
+" loaded relative to its own weight*, so a machine with weight 3 receives "
+"roughly three times as much work as one with weight 1.  With a single "
+"host this is the identity assignment, which is what lets the remote path "
+"be adopted without changing single-machine behaviour."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:9 of
+msgid ""
+"Weights come from :meth:`HostSpec.allocation_weight`: an explicit "
+"``weight`` if configured, otherwise the machine's concurrency capacity."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:14 of
+msgid "job_names"
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:15 of
+msgid "Jobs to place, in order."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:-1 of
+msgid "list[HostSpec]"
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:17 of
+msgid "Candidate machines; must be non-empty and uniquely named."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:19 of
+msgid "Batch default used when a host does not set its own ``cpus_per_job``."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:23 of
+msgid "dict[str, HostSpec]"
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:24 of
+#, python-brace-format
+msgid "``{job_name: host}`` for every job."
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:28 ABQflow.core.registry.build_workflow:27
+#: ABQflow.core.runner.extract_json:22 of
+msgid "ValueError"
+msgstr ""
+
+#: ABQflow.core.hosts.assign_hosts:29 of
+msgid ""
+"If *hosts* is empty, or two hosts share a name — silently dropping jobs "
+"or merging machines would both be worse than failing here."
+msgstr ""
+
+#: ABQflow.core.hosts.summarise_assignment:1 of
+#, python-brace-format
+msgid "Group an assignment into ``{host_name: [job_name, ...]}`` for logging."
+msgstr ""
+
+#: ABQflow.core.hosts.total_capacity:1 of
+msgid "Sum of every machine's concurrency capacity."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:46
+msgid "ABQflow.core.inp\\_include module"
+msgstr ""
+
+#: ABQflow.core.inp_include:1 of
+msgid ""
+"Resolution of an INP file's ``*INCLUDE`` tree — shared by every INP-based"
+" preparation."
+msgstr ""
+
+#: ABQflow.core.inp_include:4 of
+msgid "Why this is one module rather than logic inside each strategy"
+msgstr ""
+
+#: ABQflow.core.inp_include:5 of
+msgid ""
+"``InpModifyStrategy`` and ``ExistingInpStrategy`` were solving two halves"
+" of the same problem and neither half was complete: the first substituted"
+" ``{{placeholder}}`` tokens but left ``*INCLUDE`` paths alone (so a "
+"template written into the job directory pointed its relative includes at "
+"the *job* directory, where they do not exist), the second rewrote "
+"includes but rejected templates outright.  A deck that is both "
+"parameterised *and* modular — the common shape for a scenario file that "
+"includes a shared mesh and a material fragment — could not be expressed "
+"at all."
+msgstr ""
+
+#: ABQflow.core.inp_include:14 of
+#, python-brace-format
+msgid ""
+"Resolving the whole tree in one place makes ``existing_inp`` simply the "
+"``params={}`` case of ``inp_based``, and gives the two strategies the "
+"same behaviour on nested includes for free."
+msgstr ""
+
+#: ABQflow.core.inp_include:19 of
+msgid "The two tiers"
+msgstr ""
+
+#: ABQflow.core.inp_include:20 of
+msgid "Every file in the tree is classified once:"
+msgstr ""
+
+#: ABQflow.core.inp_include:22 of
+msgid ""
+"**parameterised** — it contains ``{{...}}`` of its own, *or* one of its "
+"descendants does.  The descendant clause matters: if a static fragment "
+"includes a parameterised one, the fragment's own ``*INCLUDE`` line has to"
+" be rewritten to point at the per-job copy, so the fragment cannot be "
+"shared either.  Parameterised files are substituted and written into the "
+"job directory, and the directive naming them becomes a **bare filename** "
+"(Abaqus resolves those against the job's working directory)."
+msgstr ""
+
+#: ABQflow.core.inp_include:30 of
+msgid ""
+"**static** — everything else, typically the large mesh or geometry that "
+"is identical across the batch.  The file is left alone on disk and the "
+"directive naming it becomes its **local absolute path**, so the deck "
+"resolves from any working directory."
+msgstr ""
+
+#: ABQflow.core.inp_include:35 of
+msgid ""
+"That split is deliberately readable back off the deck: after resolution a"
+" bare filename *means* \"per-job file, sitting in the job directory\" and"
+" an absolute path *means* \"shared file that N jobs point at\".  Remote "
+"staging can therefore decide where each target belongs by looking at the "
+"deck alone, without a manifest threaded through from preparation."
+msgstr ""
+
+#: ABQflow.core.inp_include.IncludeResolutionError:1 of
+msgid "Bases: :py:class:`Exception`"
+msgstr ""
+
+#: ABQflow.core.inp_include.IncludeResolutionError:1 of
+msgid "An ``*INCLUDE`` tree could not be resolved."
+msgstr ""
+
+#: ABQflow.core.inp_include.IncludeResolutionError:3 of
+msgid ""
+"Raised for a target that does not exist on disk, a file that cannot be "
+"read, or a cycle.  Carries the referencing file and the path the "
+"directive resolved to, because \"file not found\" without both of those "
+"is nearly useless when includes nest."
+msgstr ""
+
+#: ABQflow.core.inp_include.read_inp_text:1 of
+msgid "Read an INP file without depending on the machine's locale."
+msgstr ""
+
+#: ABQflow.core.inp_include.read_inp_text:3 of
+msgid ""
+"Python's text mode defaults to the system encoding — GBK on a Chinese "
+"Windows, cp1252 elsewhere — so a plain ``open(path)`` raises on any deck "
+"those codecs reject.  A UTF-8 byte-order mark is enough to trigger it, "
+"which makes decks exported by many editors unreadable on exactly the "
+"machines this package targets."
+msgstr ""
+
+#: ABQflow.core.inp_include.read_inp_text:9 of
+msgid ""
+"Decoding order: UTF-8 (BOM stripped if present), then latin-1, which "
+"never fails and preserves the bytes.  Abaqus keywords are ASCII either "
+"way, so the fallback only affects comments and free-text fields."
+msgstr ""
+
+#: ABQflow.core.inp_include.write_inp_text:1 of
+msgid "Write INP text as UTF-8, leaving line endings exactly as given."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:1 of
+msgid "Outcome of walking one ``*INCLUDE`` tree — text only, nothing written."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:3 of
+msgid ""
+"Keeping the writes in the caller means a tree that fails validation (an "
+"uncovered placeholder, a missing ``*STEP``) leaves no half-built job "
+"directory behind."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:9 of
+msgid "root_text"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:10 of
+msgid ""
+"The root deck, includes rewritten and placeholders substituted, ready to "
+"be written to ``ctx.inp_path``."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:12 of
+msgid "materialized"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:13 of
+#, python-brace-format
+msgid ""
+"``{filename: content}`` for every parameterised include.  Each must be "
+"written into the job directory under exactly that filename — the "
+"rewritten directives name them without a path."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:16 of
+msgid "shared"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:17 of
+msgid ""
+"Absolute local paths of the static includes the tree points at, in first-"
+"seen order.  Informational here; remote staging re-derives the same set "
+"from the deck."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:20 of
+msgid "placeholders"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:-1 of
+msgid "frozenset[str]"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:21 of
+msgid ""
+"Every ``{{name}}`` seen anywhere in the tree, so the caller can check "
+"parameter coverage across all files rather than only the root."
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:23 of
+msgid "has_step"
+msgstr ""
+
+#: ABQflow.core.inp_include.ResolvedInp:24 of
+msgid "Whether any file in the tree contains a ``*STEP`` keyword."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_target:1 of
+msgid "Resolve one raw ``INPUT=`` value against the file that referenced it."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_target:3 of
+msgid ""
+"Relative targets are resolved against the *referencing file's* directory,"
+" which is what Abaqus does and what makes a directory of scenario decks "
+"portable.  Separators are normalised both ways: decks are routinely "
+"authored on one platform and run on another, and Abaqus accepts either."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:1 of
+msgid "Walk *root_path*'s include tree, substituting params and rewriting paths."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:5 of
+msgid "root_path"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:6 of
+msgid ""
+"The deck to resolve.  Always treated as per-job: its text comes back in "
+":attr:`ResolvedInp.root_text` rather than in ``materialized``."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:8
+#: ABQflow.core.spec.PreparationSpec:39
+#: ABQflow.core.strategies.InpModifyStrategy:11
+#: ABQflow.core.strategies.InpPreparationStrategy:26
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:12 of
+msgid "params"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:-1 of
+msgid "dict, optional"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:9 of
+msgid ""
+"``{{placeholder}}`` substitutions, applied to every file in the tree. A "
+"placeholder with no matching key is left **untouched** rather than "
+"raising, so the caller can report the full set of missing parameters at "
+"once instead of failing on the first one."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:13 of
+msgid "reserved_names"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:14 of
+msgid ""
+"Filenames already spoken for in the job directory (at minimum the job's "
+"own ``<job_name>.inp``).  A parameterised include whose basename collides"
+" with one of these — or with another include already placed — is renamed "
+"with a short digest of its source path rather than overwriting it."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:19 of
+msgid "follow_includes"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:20 of
+msgid ""
+"If ``False``, the root is substituted but its ``*INCLUDE`` lines are left"
+" exactly as written.  Escape hatch for decks whose includes are resolved "
+"by something outside ABQflow."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:-1 of
+msgid "logging.Logger, optional"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:24 of
+msgid "Progress destination; a module logger is used if omitted."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:28 of
+msgid "ResolvedInp"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:29 of
+msgid "Text to write, plus what the caller needs to validate it."
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:33 of
+msgid "IncludeResolutionError"
+msgstr ""
+
+#: ABQflow.core.inp_include.resolve_include_tree:34 of
+msgid "A target is missing or unreadable, or the tree contains a cycle."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:53
+msgid "ABQflow.core.registry module"
+msgstr ""
+
+#: ABQflow.core.registry:1 of
+msgid "Strategy registry — open/closed mapping from preparation kind to factory."
+msgstr ""
+
+#: ABQflow.core.registry:3 of
+msgid ""
+"Replaces hardcoded ``if/else`` dispatch.  Users can add custom "
+"preparation strategies at runtime via :func:`register_preparation` "
+"without modifying framework code."
+msgstr ""
+
+#: ABQflow.core.registry.register_extraction:1 of
+msgid "Register a post-extraction strategy for a :attr:`HookSpec.source` value."
+msgstr ""
+
+#: ABQflow.core.registry.register_extraction:5 ABQflow.core.spec.HookSpec:10 of
+msgid "source"
+msgstr ""
+
+#: ABQflow.core.registry.register_extraction:6 of
+msgid ""
+"Value users will put in ``HookSpec(source=...)``.  Add it to "
+":data:`~ABQflow.core.spec.HOOK_SOURCES` as well, or ``HookSpec`` rejects "
+"it before :func:`build_workflow` is ever reached."
+msgstr ""
+
+#: ABQflow.core.registry.register_extraction:9
+#: ABQflow.core.registry.register_preparation:12 of
+msgid "factory"
+msgstr ""
+
+#: ABQflow.core.registry.register_extraction:10 of
+msgid ""
+"Callable that receives a ``list[HookSpec]`` and returns an "
+":class:`~ABQflow.core.strategies.ExtractionStrategy`."
+msgstr ""
+
+#: ABQflow.core.registry.register_preparation:1 of
+msgid "Register a custom preparation strategy for use in modular workflows."
+msgstr ""
+
+#: ABQflow.core.registry.register_preparation:3 of
+msgid ""
+"After registration, users can set ``PreparationSpec.kind`` to *kind* and "
+":func:`build_workflow` will dispatch to *factory* automatically — no "
+"framework source changes required."
+msgstr ""
+
+#: ABQflow.core.registry.register_preparation:9
+#: ABQflow.core.spec.PreparationSpec:5 of
+msgid "kind"
+msgstr ""
+
+#: ABQflow.core.registry.register_preparation:10 of
+msgid ""
+"Unique key for the preparation strategy (referenced in "
+":class:`PreparationSpec.kind <abaqus_batch_pack.spec.PreparationSpec>`)."
+msgstr ""
+
+#: ABQflow.core.registry.register_preparation:13 of
+msgid ""
+"Callable that receives a :class:`~abaqus_batch_pack.spec.PreparationSpec`"
+" and returns a "
+":class:`~abaqus_batch_pack.strategies.PreparationStrategy`."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:1 of
+msgid ""
+"Assemble a concrete "
+":class:`~abaqus_batch_pack.strategies.JobWorkflowStrategy` from a spec."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:3 of
+msgid ""
+"Monolithic specs produce a "
+":class:`~abaqus_batch_pack.strategies.MonolithicWorkflowStrategy`."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:4 of
+msgid ""
+"Modular specs look up the preparation kind in "
+":data:`PREPARATION_REGISTRY`, wrap pre/post-extraction hooks, and return "
+"a :class:`~abaqus_batch_pack.strategies.ModularWorkflowStrategy`."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:8 of
+msgid ""
+"Post-extraction hooks are grouped into consecutive runs sharing a "
+":attr:`~ABQflow.core.spec.HookSpec.source` and each run is handed to the "
+"matching factory in :data:`EXTRACTION_REGISTRY`, so declaration order "
+"survives a list that mixes ``'odb'`` and ``'dat'`` hooks."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:15 of
+msgid "spec"
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:-1 of
+msgid "JobSpec"
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:16 of
+msgid "Validated job configuration."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:18 of
+msgid "If ``True``, the workflow stops after preflight."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:23 of
+msgid "Ready-to-execute strategy chain."
+msgstr ""
+
+#: ABQflow.core.registry.build_workflow:28 of
+msgid "If ``spec.preparation.kind`` or a hook's ``source`` is not registered."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:60
+msgid "ABQflow.core.remote\\_launch module"
+msgstr ""
+
+#: ABQflow.core.remote_launch:1 of
+msgid "Pure builders for detached remote execution — no I/O, no network."
+msgstr ""
+
+#: ABQflow.core.remote_launch:3 of
+msgid ""
+"Kept separate from the SSH backend so every decision here is unit-"
+"testable with plain strings, in the same spirit as "
+":meth:`AbaqusRunner.build_solver_command`."
+msgstr ""
+
+#: ABQflow.core.remote_launch:8 of
+msgid "Why the solver must be detached at all"
+msgstr ""
+
+#: ABQflow.core.remote_launch:9 of
+msgid ""
+"Holding an SSH channel open for the duration of a solve makes the job as "
+"fragile as the connection: a laptop sleeping, a Wi-Fi roam, a VPN "
+"reconnect or sshd's ``ClientAliveInterval`` closes the channel, and "
+"Windows OpenSSH terminates the session's process tree with it.  A six-"
+"hour job dies at hour four.  So the solver is launched detached and "
+"progress is read from files on the remote disk, which makes the poll loop"
+" stateless: it can lose the connection, reconnect, and resume with "
+"nothing lost."
+msgstr ""
+
+#: ABQflow.core.remote_launch:17 of
+msgid ""
+"Measured on the target machines (2026-08-30): ``Win32_Process.Create`` "
+"survives channel close and reports a usable PID.  ``schtasks`` was "
+"rejected outright, and ``start /b`` returned success and then never ran "
+"the batch file at all — a *silent* failure, which is why the launcher is "
+"verified by looking for output rather than by trusting a return code."
+msgstr ""
+
+#: ../../../../docstring ABQflow.core.remote_launch.WORKDIR_FAILED_RC:1 of
+msgid ""
+"Return code the launcher writes when it cannot enter the working "
+"directory. Deliberately outside the range Abaqus itself uses, so the "
+"sentinel says *which* failure happened rather than just \"non-zero\"."
+msgstr ""
+
+#: ABQflow.core.remote_launch.find_includes:1 of
+msgid "Return the raw ``INPUT=`` paths of every ``*INCLUDE`` in *text*."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:1 of
+msgid "Rewrite every ``*INCLUDE, INPUT=`` path through *resolver*."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:3 of
+msgid ""
+"``ExistingInpStrategy`` deliberately rewrites includes to **local "
+"absolute paths**, which are guaranteed not to exist on another machine — "
+"so every job with an include would fail remotely with a cryptic Abaqus "
+"preprocessing error.  This is the substitution step that fixes that; the "
+"caller decides *what* each path becomes."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:9 of
+msgid ""
+"Kept free of I/O on purpose: the caller resolves and uploads first, then "
+"hands in a finished mapping, so this stays a pure function that a unit "
+"test can drive with plain strings."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:15
+#: ABQflow.core.runner.extract_json:12 of
+msgid "text"
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:16 of
+msgid "INP contents."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:17 of
+msgid "resolver"
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:18 of
+msgid ""
+"``(original_path) -> str or None``.  ``None`` leaves that directive "
+"untouched, which is what an unresolvable path should do — silently "
+"rewriting it to something that does not exist would be worse."
+msgstr ""
+
+#: ABQflow.core.remote_launch.rewrite_includes:25 of
+msgid "The rewritten deck."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_launcher_bat:1 of
+msgid ""
+"Render the ``.bat`` wrapper that runs the solver and writes the rc "
+"sentinel."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_launcher_bat:3 of
+#, python-format
+msgid ""
+"``interactive`` is kept deliberately: it is what makes ``abaqus.bat`` "
+"block, so ``%ERRORLEVEL%`` refers to the solver and not to the launcher."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_launcher_bat:7 of
+#, python-format
+msgid ""
+"The parentheses around the final ``echo`` are load-bearing. ``echo "
+"%ERRORLEVEL%> file`` expands to ``echo 0> file``, and cmd.exe reads a "
+"digit immediately before ``>`` as a **file-descriptor number** — so it "
+"redirects stdin and the sentinel ends up with no return code in it.  "
+"Wrapping the echo in a command block keeps any digit away from the "
+"redirection operator.  This was observed in practice, not theory."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_detach_script:1 of
+msgid "Render the PowerShell that launches *bat_path* detached."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_detach_script:3 of
+msgid ""
+"``Win32_Process.Create`` re-parents the new process to ``WmiPrvSE.exe`` "
+"rather than the sshd session, so closing the SSH channel cannot reap it, "
+"and it returns the real PID that the terminate ladder needs."
+msgstr ""
+
+#: ABQflow.core.remote_launch.parse_detach_output:1 of
+msgid "Parse ``(ReturnValue, ProcessId)`` from the launcher's output."
+msgstr ""
+
+#: ABQflow.core.remote_launch.parse_detach_output:3 of
+msgid "``ReturnValue`` 0 means the process was created."
+msgstr ""
+
+#: ABQflow.core.remote_launch.parse_rc_sentinel:1 of
+msgid "Extract the solver return code from ``<job>.abqflow.rc`` contents."
+msgstr ""
+
+#: ABQflow.core.remote_launch.poll_verdict:1 of
+msgid "Classify one poll tick as ``'running'`` / ``'finished'`` / ``'timeout'``."
+msgstr ""
+
+#: ABQflow.core.remote_launch.poll_verdict:3 of
+msgid ""
+"The rc sentinel is the only authoritative completion signal.  ``.lck`` "
+"absence never means finished on its own: Abaqus does not create it for "
+"the first few seconds after launch (measured: still absent at t=2 s, "
+"present at t=5 s), so treating \"no lck\" as \"done\" reports success "
+"before the solver has started."
+msgstr ""
+
+#: ABQflow.core.remote_launch.grace_period:1 of
+msgid "G = clamp(0.05 x T, 30, 300) seconds — same formula as the local ladder."
+msgstr ""
+
+#: ABQflow.core.remote_launch.quote_arg:1 of
+msgid "Quote *arg* for a Windows command line if it needs it."
+msgstr ""
+
+#: ABQflow.core.remote_launch.build_cmd_line:1 of
+msgid "Join *argv* into a single Windows command line."
+msgstr ""
+
+#: ABQflow.core.remote_launch.wrap_cmd:1 of
+msgid "Wrap *argv* as ``cmd /s /c \"…\"`` — shell-agnostic and quote-safe."
+msgstr ""
+
+#: ABQflow.core.remote_launch.wrap_cmd:3 of
+msgid ""
+"``/s`` gives cmd's one well-defined quoting rule: strip exactly the first"
+" and last quote character and treat the rest literally.  Wrapping "
+"explicitly means the command works whether sshd's default shell is "
+"``cmd.exe`` or PowerShell, without touching the ``DefaultShell`` registry"
+" key on the target."
+msgstr ""
+
+#: ABQflow.core.remote_launch.wrap_powershell:1 of
+msgid "Wrap a PowerShell *script* as a quote-free ``-EncodedCommand`` call."
+msgstr ""
+
+#: ABQflow.core.remote_launch.wrap_powershell:3 of
+msgid ""
+"Base64-of-UTF-16LE carries no quotes at all, so the command line survives"
+" any intermediate shell untouched — this removes an entire class of "
+"Windows quoting bugs rather than trying to escape around them."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:67
+msgid "ABQflow.core.runner module"
+msgstr ""
+
+#: ABQflow.core.runner:1 of
+msgid ""
+"AbaqusRunner — subprocess gateway that encapsulates every shell call a "
+"strategy needs."
+msgstr ""
+
+#: ABQflow.core.runner:3 of
+msgid ""
+"Provides environment detection (abqpy / CAE kernel / odbAccess), "
+"sentinel-based JSON extraction, timeout-safe command execution, solver "
+"diagnostics, and a ``record_only`` dry-run mode."
+msgstr ""
+
+#: ABQflow.core.runner.compile_failure_marker:1 of
+msgid "First failure marker present in *stdout*/*stderr*, or ``None``."
+msgstr ""
+
+#: ABQflow.core.runner.compile_failure_marker:3 of
+msgid ""
+"Used to second-guess a zero exit code from ``abaqus make``.  Returning "
+"the marker rather than a bool lets the caller say *why* it overrode the "
+"rc."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:1 of
+msgid "Per-stage time limits."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:3 of
+msgid ""
+"These were once a single number applied to five very different things — "
+"the solver wait, preflight, subroutine compilation, hook scripts and "
+"every other command.  That coupling made the obvious response to a long "
+"solve (\"raise the timeout\") also hand a hung hook script the same many-"
+" hour budget, so the stages are separated here."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:9 of
+msgid ""
+"``solver`` defaults to ``None`` — no wall-clock cap at all.  That is safe"
+" because completion is no longer decided by elapsed time: the poll loop "
+"watches the rc sentinel *and* process liveness, so a job that dies is "
+"caught within a poll interval while one that is genuinely still solving "
+"is left alone.  A solve is worth waiting for; a hung hook is not, which "
+"is why the short stages keep finite defaults."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:18 ABQflow.core.spec.SubroutineSpec:10 of
+msgid "solver"
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:19 of
+msgid "Wall-clock cap on the solver run.  ``None`` means none."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:20 ABQflow.core.spec.JobSpec:16 of
+msgid "preflight"
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:21 of
+msgid ""
+"Cap on ``syntaxcheck`` / ``datacheck``.  Generous, because preprocessing "
+"a large deck legitimately takes minutes."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:23 of
+msgid "compile"
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:24 of
+msgid "Cap on ``abaqus make``."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:25 of
+msgid "hook"
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts:26 of
+msgid ""
+"Cap on extraction hooks and any other command routed through "
+":meth:`AbaqusRunner._run`."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts.coerce:1 of
+msgid "Build a :class:`Timeouts` from a scalar, a mapping, or itself."
+msgstr ""
+
+#: ABQflow.core.runner.Timeouts.coerce:3 of
+msgid ""
+"A bare number keeps the historical meaning — the same limit everywhere — "
+"so existing callers passing ``timeout=3600`` behave exactly as before.  "
+"``None`` selects the per-stage defaults above."
+msgstr ""
+
+#: ABQflow.core.runner.CommandRecord:1 of
+msgid "One command that was (or would be) executed."
+msgstr ""
+
+#: ABQflow.core.runner.extract_json:1 of
+msgid "Extract a JSON object from subprocess stdout."
+msgstr ""
+
+#: ABQflow.core.runner.extract_json:3 of
+msgid ""
+"Protocol: the script wraps its JSON payload between sentinel markers "
+"``===ABQ_RESULT_BEGIN===`` and ``===ABQ_RESULT_END===``.  Only that form "
+"is accepted — Abaqus prints a banner before user code runs and hooks are "
+"free to print whatever they like, so guessing at an unmarked payload "
+"picks up whichever brace happens to come last.  :mod:`ABQflow.hookkit` "
+"emits the markers for you."
+msgstr ""
+
+#: ABQflow.core.runner.extract_json:13 of
+msgid "Raw stdout captured from a subprocess call."
+msgstr ""
+
+#: ABQflow.core.runner.extract_json:18 of
+msgid "Parsed JSON payload."
+msgstr ""
+
+#: ABQflow.core.runner.extract_json:23 of
+msgid "If the sentinel markers are absent, or the payload is not valid JSON."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:1 of
+msgid "Encapsulates every subprocess call a strategy may need."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:3 of
+msgid "Detects the execution environment and routes commands accordingly:"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:5 of
+msgid "**abqpy installed** — uses plain ``python`` (abqpy wraps the Abaqus API)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:6 of
+msgid "**Needs CAE kernel** (``mdb``) — uses ``abaqus cae noGUI=<script>``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:7 of
+msgid "**Only needs odbAccess** — uses ``abaqus python <script>``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:12 of
+msgid "Frozen context providing job name, paths, CPU count, and Abaqus exe."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:14 of
+msgid "Logger instance for this runner."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner:16 of
+msgid "Per-command timeout in seconds; ``None`` means no limit."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.is_remote:1 of
+msgid "Whether this runner executes on another machine."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.artifact_exists:1 of
+msgid "Whether *local_path*'s twin exists on the **executing** machine."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.artifact_exists:3 of
+msgid ""
+"Strategies guard on artifacts with plain ``os.path.exists``, which is "
+"correct locally but wrong once the solver runs elsewhere: the ``.odb`` "
+"only ever exists on the remote machine, so a local check would make every"
+" remote extraction silently return all-``None``.  Pass the *local* path "
+"here and the runner maps it for you."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.local_backend:1 of
+msgid "A backend that always runs on **this** machine."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.local_backend:3 of
+msgid ""
+"Preparation happens locally by design — the INP is built here and then "
+"shipped — so preparation commands must not be routed to the remote "
+"backend, whose ``abaqus_exe`` and paths belong to a different machine."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.stage_inputs:1 of
+msgid "Upload everything the solver needs onto the executing machine."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.stage_inputs:3 of
+msgid ""
+"Handles the ``*INCLUDE`` problem found during the remote spike: the "
+"directives point at local paths that cannot exist on the far side, so any"
+" deck with an include fails remotely with an opaque preprocessing error."
+"  The whole tree is walked — see :meth:`_rewrite_deck` — and each target "
+"is placed by tier: per-job files travel with the job, static ones land in"
+" the machine's shared directory, once per machine rather than once per "
+"job.  See :meth:`_stage_include`."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.stage_inputs:13 of
+msgid "bool or None"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.stage_inputs:14 of
+msgid ""
+"``None`` when running locally (nothing to do), otherwise whether staging "
+"succeeded."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.fetch_results:1 of
+msgid "Copy the executing machine's small artifacts into the local job dir."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.fetch_results:3 of
+msgid ""
+"This is what lets :func:`~ABQflow.core.diagnostics.diagnose` stay "
+"completely unchanged: ``.sta`` / ``.msg`` / ``.dat`` are kilobytes to "
+"megabytes and come back, while the multi-gigabyte ``.odb`` stays put. A "
+"no-op when running locally."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:1 of
+msgid "Select the correct interpreter and Abaqus entry-point for *script*."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:3 of
+msgid ""
+"Pure function — no instance state required — so both the real execution "
+"path (:meth:`_base_command`) and dry-run planning "
+"(:meth:`~abaqus_batch_pack.abaqus_automation.BatchAbaqusProcessor._dry_run_plan`)"
+" can share one definition instead of maintaining separate copies."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:8 of
+msgid "Decision logic (first match wins):"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:10 of
+msgid "``interpreter='host'`` — ``[sys.executable, script]``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:11 of
+msgid "``abqpy`` available — ``['python', script]``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:12 of
+msgid ""
+"``needs_cae_kernel`` is True — ``[exe, 'cae', 'noGUI=<script>', '--']``. "
+"The ``'--'`` separator prevents custom args from being consumed by the "
+"Abaqus CLI."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:15 of
+msgid "Otherwise — ``[exe, 'python', script]`` (``odbAccess``-only scripts)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:19 of
+msgid "script"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:20 of
+msgid "Path to the Python script to execute."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:21
+#: ABQflow.core.runner.AbaqusRunner.run_hook:24 of
+msgid "needs_cae_kernel"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:22 of
+msgid "Whether the script requires the CAE kernel (``mdb`` access)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:24 of
+msgid "Path or command name for the Abaqus executable."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:25 of
+msgid "has_abqpy"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:26 of
+msgid "Whether the ``abqpy`` package is importable in this environment."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:27
+#: ABQflow.core.runner.AbaqusRunner.run_hook:26 of
+msgid "interpreter"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:28 of
+msgid ""
+"``'abaqus'`` (default) or ``'host'``.  ``'host'`` outranks both "
+"*has_abqpy* and *needs_cae_kernel*: it is a statement about the artifact "
+"— a ``.dat`` is plain text — not about the environment, so no Abaqus "
+"entry point applies however this machine is set up."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_script_command:36 of
+msgid "Command line as a list of tokens ready for ``subprocess.run``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_solver_command:1 of
+msgid ""
+"Build the ``abaqus job=... input=... cpus=... [user=...] interactive`` "
+"command line."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_solver_command:3 of
+msgid ""
+"Pure function of *ctx* — shared by :meth:`run_solver` and dry-run "
+"planning so the two never drift apart. ``user=<ctx.user_subroutine>`` is "
+"inserted (before ``interactive``) when a subroutine is configured."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_preflight_command:1 of
+msgid ""
+"Build the ``abaqus <mode> job=<job>_chk input=... [user=...]`` command "
+"line."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_preflight_command:5 of
+msgid "tuple[list[str], str]"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_preflight_command:6 of
+msgid ""
+"``(cmd, chk_name)`` — *chk_name* is the temporary job name used so "
+"preflight output never overwrites the real job's files."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_make_command:1 of
+msgid "Build the ``abaqus make library=<source> [explicit|cfd]`` command line."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.build_make_command:3 of
+msgid ""
+"Pure function shared by :meth:`run_compile` and dry-run planning. "
+"``solver='standard'`` needs no extra flag; ``'explicit'``/``'cfd'`` are "
+"appended as bare flags — mirrors the convention documented in ``reference"
+"/abaqus-cli`` (verify against the installed Abaqus version before relying"
+" on this in production)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:1 of
+msgid "Submit the INP file to the Abaqus solver and wait for completion."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:3 of
+msgid ""
+"Uses :class:`~subprocess.Popen` with process-group isolation so that the "
+"terminate escalation ladder can reach solver child processes "
+"(``standard.exe`` / ``explicit.exe``) — something ``subprocess.run`` "
+"cannot do."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:8 of
+msgid "Escalation ladder:"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:10 of
+msgid "Normal wait up to ``self.timeout``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:11 of
+msgid "Graceful: ``abaqus terminate job=<name>``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:12 of
+msgid "Grace period G = clamp(0.05 × T, 30, 300) s."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:13 of
+msgid "Force-kill the process tree (``taskkill /T`` or ``os.killpg``)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:14 of
+msgid "Remove ``<job>.lck`` so the job can be re-run."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:16 of
+msgid ""
+"After the solver process exits (by any means), :func:`diagnose` is called"
+" and the truth table applied."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:21 of
+msgid "SolverResult"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_solver:22 of
+msgid "Success/failure judgment with diagnostics."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:1 of
+msgid "Run an Abaqus syntax/datacheck on the INP before the real solve."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:3 of
+msgid ""
+"Uses a temporary job name ``<job>_chk`` so preflight output files "
+"(``.dat``, ``.odb``) never overwrite the real job's files."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:8 of
+msgid "mode"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:9 of
+msgid "``'syntaxcheck'`` or ``'datacheck'``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:13 of
+msgid "tuple[bool, list[str]]"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_preflight:14 of
+msgid ""
+"``(passed, errors)`` — *errors* are harvested from the temporary ``.dat``"
+" file via :func:`harvest_errors`."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile:1 of
+msgid ""
+"Return ``True`` if *subroutine* has changed since the last successful "
+"compile."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile:3 of
+msgid ""
+"Compares the sha256 of ``subroutine.source_path`` against a sidecar hash "
+"file written by :meth:`_record_compile_hash` after a successful compile "
+"(same hash-compare-and-skip pattern as :meth:`_stage_hookkit`). Always "
+"``True`` if no prior compile record exists."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:1 of
+msgid "Run ``abaqus make`` to compile *subroutine*."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:3 of
+msgid ""
+"No regex parsing of compiler errors is performed — stdout/stderr are "
+"captured and returned as-is for the caller to log (matches the reference "
+"tool's approach: compiler-error classification is left to a human/LLM "
+"reading the raw output, not this library)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:8 of
+msgid ""
+"The exit code alone is not trusted, however.  ``abaqus make`` can exit 0 "
+"on a failed build (see :data:`_COMPILE_FAILURE_MARKERS`), so the captured"
+" output is additionally scanned for driver-level failure markers.  "
+"Without that check a subroutine that never compiled is reported as "
+"``COMPILED`` and the job dies later as a bare ``SIMULATION_FAILED`` with "
+"no ``.dat``/``.msg`` to explain it."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:17 ABQflow.core.spec.JobSpec:33
+#: ABQflow.core.strategies.SubroutineCompileStrategy:11 of
+msgid "subroutine"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:-1
+#: ABQflow.core.strategies.SubroutineCompileStrategy:-1 of
+msgid "SubroutineSpec"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:18
+#: ABQflow.core.strategies.SubroutineCompileStrategy:12 of
+msgid "Subroutine to compile."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:22 of
+msgid "tuple[bool, str, str]"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_compile:23 of
+msgid "``(success, stdout, stderr)``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:1 of
+msgid "Execute a hook script with a JSON task list, return per-task results."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:3 of
+msgid ""
+"Writes tasks to a temporary JSON file, launches the script via "
+":meth:`_base_command` (so the correct environment is used), appends "
+"``common_args``, ``--job_name``, and ``--tasks_json``, then extracts the "
+"JSON result payload from stdout."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:8 of
+msgid ""
+"Before execution, :meth:`_stage_hookkit` copies ``hookkit.py`` into the "
+"job output directory so hooks can ``import hookkit``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:11 of
+msgid ""
+"After execution, every sidecar envelope in the results dict passes "
+"through :meth:`_validate_envelope` for path-safety, existence, and "
+"metadata-augmentation checks."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:17 ABQflow.core.spec.HookSpec:5
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:10 of
+msgid "script_path"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:18 of
+msgid "Path to the hook script."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:19 ABQflow.core.spec.HookSpec:7 of
+msgid "tasks"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:-1 ABQflow.core.spec.HookSpec:-1
+#: of
+msgid "list[dict]"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:20 of
+msgid "List of task descriptors, each expected to contain a ``result_name`` key."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:22 of
+msgid "common_args"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:23 of
+msgid "Extra CLI arguments forwarded to every task (e.g. ``--odb_path``)."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:25 of
+msgid "Passed through to :meth:`_base_command` for environment selection."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:27 of
+msgid ""
+"``'abaqus'`` (default) or ``'host'``.  A ``'host'`` hook runs on **this**"
+" machine under this process's Python even when the backend is remote — "
+"its artifact is plain text that was fetched here, so there is nothing to "
+"ship, no path to remap, and its sidecar CSVs are written straight into "
+"the local job directory."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:32 of
+msgid "extra_modules"
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:33 of
+msgid ""
+"Single-file modules to stage beside ``hookkit.py``, e.g. "
+"``('datkit.py',)``."
+msgstr ""
+
+#: ABQflow.core.runner.AbaqusRunner.run_hook:39 of
+#, python-brace-format
+msgid ""
+"Mapping ``{result_name: value, ...}``.  Tasks that could not run map to "
+"``None``.  Returns an empty dict when ``tasks`` is empty."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:74
+msgid "ABQflow.core.spec module"
+msgstr ""
+
+#: ABQflow.core.spec:1 of
+msgid ""
+"JobSpec and related configuration dataclasses — typed, validated at "
+"construction."
+msgstr ""
+
+#: ABQflow.core.spec:3 of
+msgid ""
+"Replaces the legacy dict-based config format.  "
+":class:`~ABQflow.core.spec.JobSpec` validates itself in ``__post_init__``"
+" so errors are caught before batch execution begins."
+msgstr ""
+
+#: ABQflow.core.spec.HookSpec:1 of
+msgid "Description of one extraction/pre-extraction hook script and its tasks."
+msgstr ""
+
+#: ABQflow.core.spec.HookSpec:6 of
+msgid "Path to the Python script that processes the hook."
+msgstr ""
+
+#: ABQflow.core.spec.HookSpec:8 of
+msgid ""
+"List of task descriptors; each dict typically contains ``result_name``, "
+"``script_path``, and task-specific parameters."
+msgstr ""
+
+#: ABQflow.core.spec.HookSpec:11 of
+msgid ""
+"Which artifact the hook reads — ``'odb'`` (default) or ``'dat'``. "
+"Consulted for ``post_extraction`` only; ``pre_extraction`` always reads "
+"the INP through the CAE kernel."
+msgstr ""
+
+#: ABQflow.core.spec.HookSpec:15 of
+msgid ""
+"``'dat'`` selects "
+":class:`~ABQflow.core.strategies.DatExtractionStrategy`, which runs the "
+"hook under the host Python instead of ``abaqus python``: a ``.dat`` is "
+"plain text, so reading it needs neither the solver nor a license token.  "
+"Use it for values written by ``*NODE PRINT`` / ``*EL PRINT`` when the ODB"
+" is too large to open."
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:1 of
+msgid "Specification for an Abaqus user subroutine (UMAT/VUMAT/UEL/...)."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:25 ABQflow.core.spec.SubroutineSpec:5
+#: ABQflow.core.strategies.ExistingInpStrategy:11
+#: ABQflow.core.strategies.InpModifyStrategy:9
+#: ABQflow.core.strategies.InpPreparationStrategy:24 of
+msgid "source_path"
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:6 of
+msgid ""
+"Path to the subroutine source file (or, when ``precompiled=True``, to the"
+" already-compiled object/library)."
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:8 of
+msgid "language"
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:9 of
+msgid "``'fortran'`` (default), ``'c'``, or ``'cpp'``."
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:11 of
+msgid ""
+"Target solver: ``'standard'`` (default), ``'explicit'``, or ``'cfd'``. "
+"Controls the flag passed to ``abaqus make`` (see "
+":meth:`~ABQflow.core.runner.AbaqusRunner.build_make_command`)."
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:14 of
+msgid "precompiled"
+msgstr ""
+
+#: ABQflow.core.spec.SubroutineSpec:15 of
+msgid ""
+"If ``True``, skip the compile phase entirely and pass ``source_path`` "
+"straight through to ``user=`` on the solver/preflight commands. Default "
+"``False``."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:1 of
+msgid "Specification for the preparation phase of a modular workflow."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:6 of
+msgid ""
+"Preparation strategy identifier: ``'inp_based'``, ``'existing_inp'``, or "
+"``'model_generation'``."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:9 of
+msgid ""
+"The first two are one implementation "
+"(:class:`~ABQflow.core.strategies.InpPreparationStrategy`) under two "
+"names, because \"fill in a template\" and \"use a finished deck\" are the"
+" same pipeline with a different amount of work in its first step.  What "
+"separates them is **what varies across the batch**, and therefore which "
+"generator you pair the spec with:"
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:16 of
+msgid ""
+"``'inp_based'`` — one template, N parameter sets.  Pair with "
+":func:`~ABQflow.helpers.convert.generate_from_array`, or set ``params`` "
+"yourself."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:19 of
+msgid ""
+"``'existing_inp'`` — N already-written decks.  Pair with "
+":func:`~ABQflow.helpers.convert.generate_from_inp_files`, which fills "
+"``kind`` and ``source_path`` in for you.  Uses no ``params``, and reports"
+" a leftover ``{{placeholder}}`` as \"you handed a template to a batch of "
+"finished decks\" rather than as a missing parameter."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:26 of
+msgid ""
+"Path to the template or finished INP (for ``inp_based`` / "
+"``existing_inp``) or the model-generation script (for "
+"``model_generation``)."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:30 of
+msgid ""
+"**Optional when a generator supplies it.** "
+":func:`~ABQflow.helpers.convert.generate_from_inp_files` fills it in per "
+"file, so a base spec headed for that generator should leave it empty "
+"rather than naming an unrelated INP — the same way a base spec headed for"
+" :func:`~ABQflow.helpers.convert.generate_from_array` leaves ``params`` "
+"empty.  Setting it anyway is not silently accepted: the generator warns "
+"that your value is being discarded.  A spec that reaches preparation with"
+" it still empty fails with a message naming both ways to fix it."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:40 of
+msgid ""
+"Key-value parameters forwarded to the preparation strategy: "
+"``{{placeholder}}`` replacements for ``inp_based``, CLI arguments for "
+"``model_generation``.  Not used by ``existing_inp``.  Left empty when "
+":func:`~ABQflow.helpers.convert.generate_from_array` supplies it."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:44 of
+msgid "options"
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:45 of
+msgid ""
+"Additional options.  **Unknown keys raise** rather than being ignored, so"
+" a typo or an option borrowed from another kind fails loudly."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:48 of
+msgid ""
+"``'resolve_includes'`` (bool, default ``True``): whether to walk and "
+"rewrite the ``*INCLUDE`` tree.  Understood by ``inp_based`` and "
+"``existing_inp``; see :mod:`ABQflow.core.inp_include` for what the walk "
+"does with parameterized versus static includes."
+msgstr ""
+
+#: ABQflow.core.spec.PreparationSpec:52 of
+msgid ""
+"``'include_staging'`` (str, default ``'reference'``): what to do with the"
+" *static* includes.  ``'reference'`` leaves them in place and points the "
+"deck at their absolute paths, so a shared mesh is never copied.  "
+"Parameterized includes have no such choice — their content exists nowhere"
+" on disk, so they are always written into the job directory."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:1 of
+msgid "Single-job configuration validated at construction time."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:3 of
+msgid ""
+"Fails fast — validation runs in ``__post_init__`` so invalid configs are "
+"rejected before any Abaqus process is launched."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:9 of
+msgid "Unique name for this job (also used as the working directory name)."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:10 of
+msgid "workflow"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:11 of
+msgid ""
+"``'modular'`` (default, 4-phase pipeline) or ``'monolithic'`` (single-"
+"script)."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:13 of
+msgid "preparation"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:-1 of
+msgid "PreparationSpec or None"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:14 of
+msgid ""
+"Preparation spec; required when ``workflow='modular'``, ignored for "
+"monolithic."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:-1 of
+msgid "str, default=None"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:17 of
+msgid ""
+"Preflight mode for modular workflows. - None: No preflight checks "
+"(default) - 'syntaxcheck': Run abaqus syntax check - 'datacheck': Run "
+"abaqus datacheck"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:21 of
+msgid "monolithic_script"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:22 of
+msgid "Path to the monolithic script; required when ``workflow='monolithic'``."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:24 of
+msgid "monolithic_params"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:25 of
+msgid "Parameters forwarded to the monolithic script as ``--key value`` args."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:26 of
+msgid "pre_extraction"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:-1
+#: ABQflow.core.strategies.DatExtractionStrategy:-1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:-1
+#: ABQflow.core.strategies.OdbExtractionStrategy:-1 of
+msgid "list[HookSpec]"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:27 of
+msgid "Hooks run *before* the solver (e.g. model property extraction)."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:28 of
+msgid "post_extraction"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:29 of
+msgid ""
+"Hooks run *after* the solver.  Each entry's :attr:`HookSpec.source` picks"
+" the artifact it reads — ``'odb'`` (default) or ``'dat'`` — and hooks "
+"execute in declaration order whether or not they read the same one."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:-1 of
+msgid "SubroutineSpec or None"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:34 of
+msgid ""
+"User subroutine to compile and pass via ``user=`` to the solver (modular "
+"workflow only; ignored for ``workflow='monolithic'``)."
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:36 of
+msgid "meta"
+msgstr ""
+
+#: ABQflow.core.spec.JobSpec:37 of
+msgid "Arbitrary user metadata"
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:81
+msgid "ABQflow.core.status module"
+msgstr ""
+
+#: ABQflow.core.status:1 of
+msgid "Job status enumeration and state machine — terminal-state protection."
+msgstr ""
+
+#: ABQflow.core.status:3 of
+msgid ""
+"Tracks every job through its lifecycle, from ``CREATED`` to ``COMPLETED``"
+" or a terminal failure state.  Once a job enters a failure state no "
+"further state transitions are allowed."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:1 of
+msgid "Bases: :py:class:`~enum.Enum`"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:1 of
+msgid "Lifecycle state for a single batch job."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:4 of
+msgid "Key values"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:5 of
+msgid "CREATED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:6 of
+msgid "Initial state — job has been constructed but not yet started."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:8 of
+msgid "Terminal success — the full workflow finished without error."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:9 of
+msgid "PREPARATION_FAILED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:10 of
+msgid "Terminal failure — the preparation phase could not produce an INP."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:11 of
+msgid "SIMULATION_FAILED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:12 of
+msgid "Terminal failure — the Abaqus solver exited with an error."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:13 of
+msgid "EXTRACTION_FAILED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:14 of
+msgid "Terminal failure — one or more post-extraction tasks returned ``None``."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:15 of
+msgid "MONOLITHIC_SCRIPT_FAILED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:16 of
+msgid "Terminal failure — the monolithic script exited with a non-zero code."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:17 of
+msgid "JSON_DECODE_ERROR"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:18 of
+msgid ""
+"Terminal failure — monolithic or hook script output could not be parsed "
+"as JSON."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:20 of
+msgid "SCRIPT_ERROR"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:21 of
+msgid ""
+"Terminal failure — an unhandled exception occurred in a hook or "
+"monolithic script."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:23 of
+msgid "SUBROUTINE_COMPILE_FAILED"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:24 of
+msgid ""
+"Terminal failure — ``abaqus make`` (user subroutine compilation) exited "
+"with an error."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:26 of
+msgid "UNKNOWN_ERROR"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:27 of
+msgid "Terminal failure — an exception escaped the worker process."
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:28 of
+msgid "UNKNOWN"
+msgstr ""
+
+#: ABQflow.core.status.JobStatus:29 of
+msgid "Fallback value used when no explicit status is available."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:1 of
+msgid "One phase's start/end/outcome — the unit of a job's phase history."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:6 of
+msgid ""
+"``'compile'`` | ``'preparation'`` | ``'preflight'`` | "
+"``'pre_extraction'`` | ``'simulation'`` | ``'post_extraction'``."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:9 of
+msgid ""
+"Phase outcome string (e.g. ``'RUNNING'`` while open, then a "
+":class:`JobStatus` value or ``'PASSED'``/``'COMPILED'`` once closed)."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:11 of
+msgid "started_at"
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:12 of
+msgid "``time.time()`` when the phase was opened."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:13 of
+msgid "ended_at"
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:14 of
+msgid "``time.time()`` when the phase was closed."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:16 of
+msgid "``ended_at - started_at``, populated on close."
+msgstr ""
+
+#: ABQflow.core.status.PhaseRecord:18 of
+msgid "Error message if the phase failed."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager:1 of
+msgid "State machine for a single job with terminal-state protection."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager:3 of
+msgid ""
+"Calling :meth:`record_preparation`, :meth:`record_simulation`, or "
+":meth:`record_extraction` advances the state.  Once a terminal failure "
+"state is reached, all subsequent transitions are silently ignored — the "
+"first failure is the one that is kept."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager:8 of
+msgid ""
+"The ``mark_*`` methods set the *live* in-progress status (``PREPARING``/ "
+"``SIMULATING``/``EXTRACTING``) and open a :class:`PhaseRecord`; the "
+"paired ``record_*`` method closes it.  ``mark_*`` calls are optional — "
+"callers that only care about the final outcome (as before) can skip them "
+"and just call ``record_*`` directly."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager:16 of
+msgid "error_message"
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager:17 of
+msgid "Error message from the first terminal failure, or ``None``."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.error_message:1 of
+msgid "Read-only access to the first-failure error message."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.current_status:1 of
+msgid ""
+"Read-only access to the *live* status (updated at phase start, not just "
+"at the end)."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.phase_history:1 of
+msgid ""
+"Closed phases so far, as plain dicts (picklable across process "
+"boundaries)."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_compiling:1 of
+msgid "Mark the start of subroutine compilation."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_preparing:1 of
+msgid "Mark the start of the preparation phase."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_preflight:1 of
+msgid "Mark the start of the preflight check."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_simulating:1 of
+msgid "Mark the start of the solver run."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_extracting:1 of
+msgid "Mark the start of an extraction phase."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_extracting:5 of
+msgid "label"
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.mark_extracting:6 of
+msgid ""
+"``'pre_extraction'`` or ``'post_extraction'`` — distinguishes the two "
+"extraction phases in :attr:`phase_history`."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_compile:1 of
+msgid "Record the outcome of user-subroutine compilation."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_compile:5
+#: ABQflow.core.status.JobStatusManager.record_preflight:5
+#: ABQflow.core.status.JobStatusManager.record_preparation:5
+#: ABQflow.core.status.JobStatusManager.record_simulation:5 of
+msgid "success"
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_compile:6 of
+msgid "``True`` if ``abaqus make`` (or an equivalent compile step) succeeded."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_compile:9
+#: ABQflow.core.status.JobStatusManager.record_preflight:8
+#: ABQflow.core.status.JobStatusManager.record_preparation:8
+#: ABQflow.core.status.JobStatusManager.record_simulation:8 of
+msgid "Error message on failure; a default is used if omitted."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_preparation:1 of
+msgid "Record the outcome of the preparation phase."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_preparation:6 of
+msgid "``True`` if the INP was produced successfully."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_preflight:1 of
+msgid "Record the outcome of the preflight phase."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_preflight:6 of
+msgid "``True`` if syntax/datacheck passed."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_simulation:1 of
+msgid "Record the outcome of the Abaqus solver run."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_simulation:6 of
+msgid "``True`` if the solver exited with code 0."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_extraction:1 of
+msgid "Record extraction results; fails if any task returned ``None``."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_extraction:3 of
+msgid ""
+"On success this now sets :attr:`current_status` to "
+"``JobStatus.EXTRACTION_SUCCESS`` (previously a no-op — the final status "
+"reported by :meth:`get_final_status` is unaffected, since "
+"``EXTRACTION_SUCCESS`` is not a terminal state)."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.record_extraction:11 of
+#, python-brace-format
+msgid ""
+"``{result_name: value}`` mapping.  Any ``None`` value triggers "
+"``EXTRACTION_FAILED``."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.get_final_status:1 of
+msgid "Return the current state or ``COMPLETED`` if no failure was recorded."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.get_final_status:5 of
+msgid "JobStatus"
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.get_final_status:6 of
+msgid ""
+"The terminal failure state if one was reached, otherwise "
+"``JobStatus.COMPLETED``."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.finalize_into:1 of
+msgid "Stamp this job's status, phase history and error onto *results*."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.finalize_into:3 of
+msgid ""
+"The single place a workflow hands its state to "
+":func:`~ABQflow.core.abaqus_automation._worker`, which pops all three "
+"keys back off into the matching :class:`~ABQflow.JobOutcome` fields."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.finalize_into:7 of
+msgid ""
+"``error`` matters most: without it the failure reason reaches the caller "
+"only inside ``phases``, so ``JobOutcome.error`` read ``None`` on a job "
+"that plainly failed.  Keeping the three writes together here is what "
+"stops a new early-return in a workflow from reintroducing that — the "
+"previous nine hand-written copies each had to remember."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.finalize_into:16 of
+msgid "Result dict to stamp, modified in place."
+msgstr ""
+
+#: ABQflow.core.status.JobStatusManager.finalize_into:21 of
+#, python-brace-format
+msgid "The same *results* object, for use as ``return sm.finalize_into({})``."
+msgstr ""
+
+#: ../../../source/api/ABQflow.core.rst:88
+msgid "ABQflow.core.strategies module"
+msgstr ""
+
+#: ABQflow.core.strategies:1 of
+msgid ""
+"Job workflow strategies — the ABC hierarchy and all concrete "
+"implementations."
+msgstr ""
+
+#: ABQflow.core.strategies:3 of
+msgid ""
+"Strategies are stateless (configuration only in ``__init__``) and depend "
+"on three injected arguments at call time: "
+":class:`~abaqus_batch_pack.context.JobContext`, "
+":class:`~abaqus_batch_pack.runner.AbaqusRunner`, and ``logging.Logger``."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:1
+#: ABQflow.core.strategies.JobWorkflowStrategy:1
+#: ABQflow.core.strategies.PreparationStrategy:1 of
+msgid "Bases: :py:class:`~abc.ABC`"
+msgstr ""
+
+#: ABQflow.core.strategies.PreparationStrategy:1 of
+msgid "Interface for preparation: produce an INP file at ``ctx.inp_path``."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:4
+#: ABQflow.core.strategies.JobWorkflowStrategy:4
+#: ABQflow.core.strategies.PreparationStrategy:4 of
+msgid "Subclasses"
+msgstr ""
+
+#: ABQflow.core.strategies.PreparationStrategy:5 of
+msgid "InpPreparationStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.PreparationStrategy:6 of
+msgid "Template-based INP generation (``{{placeholder}}`` substitution)."
+msgstr ""
+
+#: ABQflow.core.strategies.PreparationStrategy:7 of
+msgid "ModelGenerationStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.PreparationStrategy:8 of
+msgid "Run an external script that produces the INP (requires CAE kernel)."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:1
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:1
+#: ABQflow.core.strategies.PreparationStrategy.prepare:1 of
+msgid "Produce the INP file."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:6
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:6
+#: ABQflow.core.strategies.PreparationStrategy.prepare:6 of
+msgid "Job context providing ``inp_path`` and ``output_dir``."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:7
+#: ABQflow.core.strategies.ExtractionStrategy.extract:7
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:7
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:7
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:7
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:7
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:7
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:7
+#: ABQflow.core.strategies.PreparationStrategy.prepare:7 of
+msgid "runner"
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.ExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:-1
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:-1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:-1
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:-1
+#: ABQflow.core.strategies.PreparationStrategy.prepare:-1 of
+msgid "AbaqusRunner"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:8
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:8
+#: ABQflow.core.strategies.PreparationStrategy.prepare:8 of
+msgid "Subprocess runner (may not be used by every strategy)."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:10
+#: ABQflow.core.strategies.ExtractionStrategy.extract:10
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:10
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:10
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:10
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:10
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:10
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:10
+#: ABQflow.core.strategies.PreparationStrategy.prepare:10 of
+msgid "Logger for progress and error messages."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy.prepare:15
+#: ABQflow.core.strategies.ModelGenerationStrategy.prepare:15
+#: ABQflow.core.strategies.PreparationStrategy.prepare:15 of
+msgid "``True`` if the INP was produced, ``False`` otherwise."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:1
+#: ABQflow.core.strategies.ModelGenerationStrategy:1 of
+msgid "Bases: :py:class:`~ABQflow.core.strategies.PreparationStrategy`"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:1 of
+msgid ""
+"Turn an INP file — template or finished deck — into a runnable job "
+"directory."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:3 of
+msgid ""
+"One pipeline serves both use cases, because they are the same pipeline "
+"with a different amount of work in the first step::"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:8 of
+msgid ""
+"*substitute* walks the ``*INCLUDE`` tree once, replacing "
+"``{{placeholder}}`` tokens and rewriting every directive (see "
+":mod:`ABQflow.core.inp_include` for the per-file rules).  With ``params``"
+" empty there is simply nothing to substitute, which is exactly the \"pre-"
+"existing INP\" case — it is not a separate strategy, just this one with "
+"an empty parameter set."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:14 of
+msgid ""
+"*validate* checks the resolved tree, never the root alone: a modular deck"
+" legitimately keeps its ``*STEP`` — or a ``{{placeholder}}`` — in an "
+"included fragment, so a root-only check gives the wrong answer on exactly"
+" the decks this class exists to support."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:19 of
+msgid ""
+"*stage* writes the result into the job directory.  Nothing is written "
+"until validation passes, so a rejected deck leaves no half-built job "
+"behind."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:25 of
+msgid "Template or finished INP to prepare."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:27 of
+msgid ""
+"``{{placeholder}}`` substitutions, applied across the whole tree.  Empty "
+"or ``None`` means \"this deck is already finished\"."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:13
+#: ABQflow.core.strategies.InpPreparationStrategy:29 of
+msgid "resolve_includes"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:30 of
+msgid ""
+"If ``True`` (default), walk and rewrite the ``*INCLUDE`` tree.  Set to "
+"``False`` to leave the directives exactly as authored."
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:32 of
+msgid "assert_finished"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:33 of
+msgid ""
+"If ``True``, a leftover placeholder is reported as \"this is a template, "
+"you meant to pass params\" rather than as a missing parameter.  Set by "
+"the ``existing_inp`` preset, whose whole point is that assertion."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:16
+#: ABQflow.core.strategies.InpPreparationStrategy:36 of
+msgid "include_staging"
+msgstr ""
+
+#: ABQflow.core.strategies.InpPreparationStrategy:37 of
+msgid ""
+"What to do with the *static* includes — the ones no parameter touches. "
+"``'reference'`` (default and, today, the only implemented value) leaves "
+"them where they are and points the deck at their absolute paths, so a "
+"shared mesh is never copied.  See :meth:`_check_include_staging` for why "
+"this axis is not the same thing as the old ``staging_mode``."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:1
+#: ABQflow.core.strategies.InpModifyStrategy:1 of
+msgid "Bases: :py:class:`~ABQflow.core.strategies.InpPreparationStrategy`"
+msgstr ""
+
+#: ABQflow.core.strategies.InpModifyStrategy:1 of
+msgid "Preset of :class:`InpPreparationStrategy` that substitutes parameters."
+msgstr ""
+
+#: ABQflow.core.strategies.InpModifyStrategy:3 of
+msgid ""
+"Backs ``kind='inp_based'``.  Kept as its own name because the two presets"
+" state different intents at the call site — this one says \"this deck is "
+"a template\"."
+msgstr ""
+
+#: ABQflow.core.strategies.InpModifyStrategy:10 of
+msgid "Template INP containing ``{{key}}`` placeholders."
+msgstr ""
+
+#: ABQflow.core.strategies.InpModifyStrategy:12 of
+msgid "Mapping of placeholder names to substitution values."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:1 of
+msgid "Run a model-generation script (requires CAE kernel / ``mdb`` access)."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:3 of
+msgid ""
+"The script is launched via ``abaqus cae noGUI=<script>`` and is expected "
+"to produce an INP file at ``ctx.inp_path``.  Common arguments "
+"(``--job_name``, user params) are forwarded as CLI flags."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:9 of
+msgid "model_script_path"
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:10 of
+msgid "Path to the model-generation script."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:11 of
+msgid "script_params"
+msgstr ""
+
+#: ABQflow.core.strategies.ModelGenerationStrategy:12 of
+msgid "Key-value pairs forwarded as ``--key value`` arguments."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:1 of
+msgid ""
+"Preset of :class:`InpPreparationStrategy` that asserts the deck is "
+"finished."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:3 of
+msgid ""
+"Backs ``kind='existing_inp'``, the UC-03 \"pre-existing INP batch\" case."
+" Mechanically it is the parent with an empty parameter set; what it adds "
+"is an *assertion*: a ``{{placeholder}}`` anywhere in the tree is reported"
+" as \"you handed a template to a batch of finished decks\", which is the "
+"mistake actually being made, rather than as a missing parameter."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:12 of
+msgid "Absolute or relative path to the existing INP file."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:14 of
+msgid ""
+"If ``True`` (default), rewrite ``*INCLUDE, INPUT=rel_path`` to use "
+"absolute paths resolved against the referencing file's directory."
+msgstr ""
+
+#: ABQflow.core.strategies.ExistingInpStrategy:17 of
+msgid ""
+"See :class:`InpPreparationStrategy`.  Replaces the old ``staging_mode``, "
+"which asked a per-job question that no longer has one answer."
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy:1 of
+msgid "Compiles a user subroutine via ``abaqus make`` before preparation."
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy:3 of
+msgid ""
+"Not part of the :class:`PreparationStrategy`/:class:`ExtractionStrategy` "
+"ABC hierarchies — compilation is its own concern with a single "
+"implementation today (YAGNI; add a registry like "
+":data:`~ABQflow.core.registry.PREPARATION_REGISTRY` if multiple compile "
+"backends are ever needed)."
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy:13 of
+msgid "cache"
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy:14 of
+msgid ""
+"If ``True`` (default), skip recompilation when the source file's content "
+"hash matches the last successful compile (see "
+":meth:`~ABQflow.core.runner.AbaqusRunner.subroutine_needs_recompile`)."
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy.compile:1 of
+msgid "Compile the subroutine, or skip if precompiled/cached."
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy.compile:5 of
+msgid "tuple[bool, str]"
+msgstr ""
+
+#: ABQflow.core.strategies.SubroutineCompileStrategy.compile:6 of
+msgid ""
+"``(success, message)`` — *message* is empty on success (or a skip note), "
+"or the compiler's raw stdout+stderr on failure. No regex parsing of "
+"compiler errors is performed (see "
+":meth:`~ABQflow.core.runner.AbaqusRunner.run_compile`)."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:1 of
+msgid "Interface for extraction: read results from model or ODB files."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:5 of
+msgid "OdbExtractionStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:6 of
+msgid "Post-simulation extraction from ODB (requires ``odbAccess``)."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:7 of
+msgid "DatExtractionStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:8 of
+msgid ""
+"Post-simulation extraction from the printed ``.dat`` output (plain text —"
+" runs under the host Python, no Abaqus)."
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:10 of
+msgid "ModelPropertiesExtractionStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ExtractionStrategy:11 of
+msgid "Pre-simulation extraction from INP (requires ``mdb`` / CAE kernel)."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:1
+#: ABQflow.core.strategies.ExtractionStrategy.extract:1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:1
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:1 of
+msgid "Extract results."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:6
+#: ABQflow.core.strategies.ExtractionStrategy.extract:6
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:6
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:6 of
+msgid "Job context providing file paths."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:8
+#: ABQflow.core.strategies.ExtractionStrategy.extract:8
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:8
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:8 of
+msgid "Subprocess runner for launching hook scripts."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy.extract:15
+#: ABQflow.core.strategies.ExtractionStrategy.extract:15
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy.extract:15
+#: ABQflow.core.strategies.OdbExtractionStrategy.extract:15 of
+#, python-brace-format
+msgid "``{result_name: value, ...}``.  Failed tasks map to ``None``."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:1
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:1
+#: ABQflow.core.strategies.OdbExtractionStrategy:1 of
+msgid "Bases: :py:class:`~ABQflow.core.strategies.ExtractionStrategy`"
+msgstr ""
+
+#: ABQflow.core.strategies.OdbExtractionStrategy:1 of
+msgid "Extract results from the ODB file via hook scripts."
+msgstr ""
+
+#: ABQflow.core.strategies.OdbExtractionStrategy:3 of
+msgid ""
+"Runs in the ``odbAccess`` environment (``abaqus python``), NOT the CAE "
+"kernel.  Each hook script receives ``--odb_path`` as a common argument "
+"and a JSON task list via ``--tasks_json``."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:20
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:9
+#: ABQflow.core.strategies.OdbExtractionStrategy:9 of
+msgid "hooks"
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:21
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:10
+#: ABQflow.core.strategies.OdbExtractionStrategy:10 of
+msgid "List of hook descriptors, each with ``script_path`` and ``tasks``."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:1 of
+msgid "Extract results from the ``.dat`` file via hook scripts."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:3 of
+msgid ""
+"An ODB is often too large to open just to read a few numbers; adding "
+"``*NODE PRINT`` / ``*EL PRINT`` to the deck makes Abaqus write the same "
+"values as text into ``<job>.dat``, and this strategy reads them back."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:7 of
+msgid ""
+"Runs the hook under the **host** Python, not ``abaqus python``: a "
+"``.dat`` is plain text, so parsing it needs neither the Abaqus kernel nor"
+" a license token — which is most of the point.  With a remote backend the"
+" file is fetched into the local job directory first and the hook then "
+"runs here; shipping a text parser to the solver machine would buy nothing"
+" and would leave sidecar CSVs on the wrong host."
+msgstr ""
+
+#: ABQflow.core.strategies.DatExtractionStrategy:14 of
+msgid ""
+"Each hook script receives ``--dat_path`` as a common argument and a JSON "
+"task list via ``--tasks_json``.  ``datkit.py`` is staged alongside "
+"``hookkit.py`` so hooks can ``import datkit``."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:1 of
+msgid "Extract material/property data from the INP *before* simulation."
+msgstr ""
+
+#: ABQflow.core.strategies.ModelPropertiesExtractionStrategy:3 of
+msgid ""
+"Runs in the CAE kernel environment (``abaqus cae noGUI``) because it "
+"needs ``mdb`` access.  Each hook script receives ``--inp_path`` as a "
+"common argument and a JSON task list via ``--tasks_json``."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:1 of
+msgid "Interface for a complete job workflow."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:5 of
+msgid "MonolithicWorkflowStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:6 of
+msgid "Single-script workflow that handles everything itself."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:7 of
+msgid "ModularWorkflowStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:8 of
+msgid ""
+"Multi-phase pipeline: optional subroutine compile, preparation, optional "
+"preflight, pre-extraction, simulation, post-extraction."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:12 of
+msgid "Optional phase-separated protocol"
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy:13 of
+msgid ""
+"Subclasses *may* additionally implement ``prepare_only(ctx, runner, "
+"logger, status_manager=None) -> tuple[dict, JobStatusManager]``, "
+"``simulate_only(...) -> tuple[dict, JobStatusManager, bool]`` (the "
+"``bool`` signals whether the pipeline should stop), and "
+"``extract_only(...) -> tuple[dict, JobStatusManager]`` so that "
+":class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` can invoke a "
+"single phase (see its ``execute(phase=...)`` parameter). This is not "
+"required by the ABC — :class:`MonolithicWorkflowStrategy` and user-"
+"defined strategies that don't implement it simply raise "
+"``NotImplementedError`` when a phase-only call is attempted."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:1 of
+msgid "Run the full workflow and return a result dict."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:6
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:6 of
+msgid "Job context."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:8
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:8 of
+msgid "Subprocess runner for all subprocess calls."
+msgstr ""
+
+#: ABQflow.core.strategies.JobWorkflowStrategy.execute:15
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy.execute:15 of
+msgid ""
+"Must contain at least a ``'status'`` key (a :class:`JobStatus` or its "
+"string value).  May include extracted results."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:1
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:1 of
+msgid "Bases: :py:class:`~ABQflow.core.strategies.JobWorkflowStrategy`"
+msgstr ""
+
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:1 of
+msgid "Single-script workflow: one script does everything."
+msgstr ""
+
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:3 of
+msgid ""
+"The script is launched via the CAE kernel (``abaqus cae noGUI``) and must"
+" print its JSON results wrapped in the sentinel markers "
+"``===ABQ_RESULT_BEGIN===`` / ``===ABQ_RESULT_END===``.  The result dict "
+"is expected to contain at least a ``'status'`` key."
+msgstr ""
+
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:11 of
+msgid "Path to the monolithic script."
+msgstr ""
+
+#: ABQflow.core.strategies.MonolithicWorkflowStrategy:13 of
+msgid "Key-value parameters forwarded as ``--key value`` CLI arguments."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:1 of
+msgid ""
+"Multi-phase pipeline: [compile], preparation, [preflight], pre-"
+"extraction, simulation, post-extraction."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:3 of
+msgid ""
+"Uses a :class:`JobStatusManager` internally to track the job through each"
+" phase.  If any phase fails the pipeline stops and returns the terminal "
+"status immediately."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:7 of
+msgid ""
+"``execute()`` composes three independently callable phase methods — "
+":meth:`prepare_only`, :meth:`simulate_only`, :meth:`extract_only` — so "
+"that :class:`~ABQflow.core.abaqus_automation.AbaqusCalculation` (and "
+":class:`~ABQflow.core.abaqus_automation.BatchAbaqusProcessor`'s "
+"``run_preparation``/``run_simulation``/``run_extraction``) can invoke a "
+"single phase without running the rest of the pipeline. The external "
+"contract of ``execute()`` — return-dict shape and terminal-status "
+"semantics — is unchanged by this split."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:18 of
+msgid "preparation_strategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:-1 of
+msgid "PreparationStrategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:19 of
+msgid "Strategy that produces the INP file."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:20 of
+msgid "preflight_mode"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:21 of
+msgid "``'syntaxcheck'``, ``'datacheck'``, or ``None``."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:22 of
+msgid "pre_extraction_strategies"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:-1 of
+msgid "list[ExtractionStrategy]"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:23 of
+msgid "Strategies run before the solver (e.g. property extraction from INP)."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:24 of
+msgid "post_extraction_strategies"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:25 of
+msgid "Strategies run after the solver (e.g. result extraction from ODB)."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:26 of
+msgid "compile_strategy"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:-1 of
+msgid "SubroutineCompileStrategy or None"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy:27 of
+msgid "Optional user-subroutine compile step, run before preparation."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.prepare_only:1 of
+msgid "Phase 1: optional subroutine compile, preparation, optional preflight."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.prepare_only:3 of
+msgid ""
+"Standalone entry point for \"produce an INP (and compiled subroutine) "
+"only\". Does not run pre-extraction, the solver, or post-extraction — "
+"those live in :meth:`simulate_only` / :meth:`extract_only`."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.extract_only:10
+#: ABQflow.core.strategies.ModularWorkflowStrategy.prepare_only:10 of
+msgid "tuple[dict, JobStatusManager]"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.prepare_only:11 of
+msgid ""
+"``(results, status_manager)`` — *results* has at least ``'status'`` and "
+"``'_phase_history'`` (plus ``'error'`` on failure), all stamped by "
+":meth:`~ABQflow.core.status.JobStatusManager.finalize_into`; the manager "
+"is returned so :meth:`execute` can thread it into the next phase."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.simulate_only:1 of
+msgid "Phase 2: pre-extraction hooks, then the solver run."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.simulate_only:3 of
+msgid ""
+"Assumes ``ctx.inp_path`` already exists (produced by a prior "
+":meth:`prepare_only` call — possibly in an earlier process/session, e.g. "
+"via ``BatchAbaqusProcessor.run_simulation()``). Mirrors the original "
+"monolithic behavior: a pre-extraction failure does *not* stop the solver "
+"from running, but a solver failure does stop the pipeline."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.simulate_only:12 of
+msgid "tuple[dict, JobStatusManager, bool]"
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.simulate_only:13 of
+msgid ""
+"``(results, status_manager, stop)`` — *stop* is ``True`` when the caller "
+"(e.g. :meth:`execute`) should not proceed to :meth:`extract_only` (INP "
+"missing or solver failed)."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.extract_only:1 of
+msgid "Phase 3: post-extraction hooks only."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.extract_only:3 of
+msgid ""
+"Assumes ``ctx.odb_path`` already exists. No existence guard is needed — "
+":class:`OdbExtractionStrategy` already reports every task as ``None`` "
+"when the ODB is missing, and :meth:`JobStatusManager.record_extraction` "
+"already turns that into ``EXTRACTION_FAILED``."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.extract_only:11 of
+msgid "``(results, status_manager)``."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.execute:1 of
+msgid "Run the full modular workflow by composing the three phase methods."
+msgstr ""
+
+#: ABQflow.core.strategies.ModularWorkflowStrategy.execute:3 of
+msgid ""
+"Returns a dict with at least a ``'status'`` key plus any results from "
+"pre- and post-extraction hooks.  Failing early means later phases are "
+"skipped — return-dict shape and terminal-status semantics are unchanged "
+"from before the phase-separation refactor."
+msgstr ""
+
+#~ msgid ""
+#~ "Extracted result values, or ``None`` if"
+#~ " the job did not reach extraction."
+#~ msgstr ""
+
+#~ msgid "Error message if the job failed, ``None`` otherwise."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Solver diagnostics snapshot (IMP-02).  "
+#~ "Populated on failure and on the "
+#~ "``rc≠0 + COMPLETED`` edge case.  "
+#~ "``None`` for clean success or jobs "
+#~ "that never reached the solver phase."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Wall-clock seconds spent in "
+#~ ":meth:`AbaqusCalculation.execute` for this job."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "If ``True``, only run preparation + "
+#~ "preflight, skip solver & extraction "
+#~ "(IMP-04 batch inspection mode)."
+#~ msgstr ""
+
+#~ msgid "Two levels (see IMP-05):"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "IMP-01 + IMP-02: Provides authoritative "
+#~ "job success/failure determination by cross-"
+#~ "referencing the subprocess return code "
+#~ "with the .sta file's completion marker,"
+#~ " and harvests actionable error lines "
+#~ "from .msg/.dat files."
+#~ msgstr ""
+
+#~ msgid "If ``True``, the workflow stops after preflight (IMP-04)."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Provides environment detection (abqpy / "
+#~ "CAE kernel / odbAccess), sentinel-based"
+#~ " JSON extraction, timeout-safe command "
+#~ "execution, solver diagnostics, and a "
+#~ "``record_only`` dry-run mode (IMP-05)."
+#~ msgstr ""
+
+#~ msgid "Escalation ladder (IMP-03):"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``(passed, errors)`` — *errors* are "
+#~ "harvested from the temporary ``.dat`` "
+#~ "file via :func:`harvest_errors` (IMP-01/04 "
+#~ "synergy)."
+#~ msgstr ""
+
+#~ msgid "Record the outcome of the preflight phase (IMP-04)."
+#~ msgstr ""
+
+#~ msgid "``'syntaxcheck'``, ``'datacheck'``, or ``None`` (IMP-04)."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "``(results, status_manager)`` — *results* has"
+#~ " at least ``'status'`` and "
+#~ "``'_phase_history'``; the manager is returned"
+#~ " so :meth:`execute` can thread it "
+#~ "into the next phase."
+#~ msgstr ""
+
