@@ -1,3 +1,19 @@
+# 0.6.0
+
+## Added
+
+- [x] Post-processing from the printed `.dat` output, for when the ODB is too large to open — declare a hook with `HookSpec(script_path=..., source='dat', tasks=[...])` and it reads values written by `*NODE PRINT` / `*EL PRINT` (See `./examples/extraction_scripts/get_dat_results.py`)
+- [x] Add `ABQflow.datkit` — a generic parser for Abaqus printed tables (`N O D E` / `E L E M E N T` / `E N E R G Y` / `C O N T A C T` output), staged beside `hookkit.py` under the same stdlib-only, Python 2.7-compatible contract. Streams, so `parse(path, increments='last')` costs one increment however long the analysis ran
+- [x] Add `examples/extraction_scripts/get_dat_results.py` — a `.dat` hook written exactly like the ODB ones, with `datkit` in place of `odbAccess`
+- [x] Add the `abqflow-check-hook` command (`ABQflow.check_hook`) — self-checks a hook script against a real `.odb` / `.dat` / `.inp` before it goes into a `HookSpec`, by staging `hookkit.py` and building the command line through the same `build_script_command` / `extract_json` / `_validate_envelope` the framework uses. Grades Python 2.7 compatibility, sentinel pairing, `None` results, and sidecar CSVs
+- [x] Detect a remote job that died without finishing, by checking process liveness alongside the return-code sentinel. The sentinel is written only when the launcher runs to completion, so a reboot, an out-of-memory kill or someone else's `taskkill` used to leave the poll loop waiting out the whole timeout; such a job now reports `died` within a poll interval. An apparent death is confirmed by re-reading the sentinel, since the launcher's last act is to write it
+- [x] Split `timeout` into per-stage limits (`Timeouts(solver=, preflight=, compile=, hook=)`). One number used to govern the solver wait, preflight, compilation and every hook at once, so raising it for a long solve also handed a hung hook the same many-hour budget. `solver` now defaults to `None` — no wall-clock cap, which liveness detection makes safe — while the short stages keep finite defaults. A scalar `timeout=` still means the same limit everywhere
+
+## Fixed
+
+- [x] Fix the remote launcher running the solver in the wrong directory when `cd /d` fails — an unmounted drive or a stale path let it carry on regardless, so the files landed somewhere unexpected and `%ERRORLEVEL%` described the wrong thing. The `cd` is now checked before anything else runs, the failure writes a distinct sentinel code (250) plus a readable reason, and the sentinel and console-log paths are absolute so they reach the job directory whatever cmd's working directory turns out to be
+
+
 # 0.5.1
 
 ## Added
