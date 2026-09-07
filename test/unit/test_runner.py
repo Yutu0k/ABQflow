@@ -10,7 +10,7 @@ import sys
 import pytest
 
 from ABQflow import JobContext, SubroutineSpec
-from ABQflow.core.runner import AbaqusRunner
+from ABQflow.core.runner import AbaqusRunner, compile_failure_marker
 
 
 # ============================================================
@@ -263,3 +263,100 @@ def test_subroutine_needs_recompile_cache_sidecar(tmp_path, dummy_logger):
 
 	src.write_text('C v2 changed content')
 	assert runner.subroutine_needs_recompile(sub) is True  # content changed -> recompile
+
+
+# ============================================================
+# `abaqus make` failure detection despite a zero exit code
+# ============================================================
+
+# Both blobs are trimmed from real Abaqus 2026 output on Windows. The failing
+# one exits 0: the compile error reaches driverExceptions.report(), which
+# raises out of the i18n layer before the driver can set a non-zero rc.
+_MAKE_STDOUT_FAILED = """\
+:: initializing oneAPI environment...
+   Visual Studio command-line environment initialized for: 'x64'
+:  compiler -- latest
+'vars.bat' is not recognized as an internal or external command,
+Abaqus JOB umat_elastic.for
+'ifx' is not recognized as an internal or external command,
+Begin Compiling Abaqus/Standard User Subroutines
+Traceback (most recent call last):
+  File "SMAPylModules\\SMAPylDriverPy.m\\src\\make.py", line 1669, in <module>
+driverExceptions.CompileError: umat_elastic.for
+"""
+
+# Note the vswhere line: abaqus.bat probes for optional tools on the way in,
+# so "is not recognized" shows up in a build that goes on to succeed.
+_MAKE_STDOUT_OK = """\
+'vswhere.exe' is not recognized as an internal or external command,
+:: initializing oneAPI environment...
+:  compiler -- latest
+Abaqus JOB umat_elastic.for
+Begin Compiling Abaqus/Standard User Subroutines
+Intel(R) Fortran Compiler for applications running on Intel(R) 64, Version 2026.1.1
+End Compiling Abaqus/Standard User Subroutines
+Begin Linking Abaqus/Standard User Subroutines
+umat_elastic.obj : warning LNK4210: .CRT section exists
+End Linking Abaqus/Standard User Subroutines
+Abaqus JOB umat_elastic.for COMPLETED
+"""
+
+
+class _StubBackend:
+	"""Minimal backend that replays one canned ExecResult from `run`."""
+
+	is_remote = False
+	name = 'stub'
+
+	def __init__(self, result):
+		self.result = result
+
+	def map_context(self, ctx):
+		return ctx
+
+	def run(self, cmd, cwd, timeout=None):
+		return self.result
+
+
+def _compile_with(tmp_path, dummy_logger, rc, stdout, stderr=''):
+	from ABQflow.core.backends.base import ExecResult
+
+	src = tmp_path / 'umat.for'
+	src.write_text('C dummy')
+	ctx = JobContext(job_name='j', output_dir=str(tmp_path), cpus=1)
+	runner = AbaqusRunner(ctx, dummy_logger,
+						backend=_StubBackend(ExecResult(rc, stdout, stderr)))
+	return runner.run_compile(SubroutineSpec(str(src)))
+
+
+def test_compile_failure_marker_ignores_a_clean_build():
+	assert compile_failure_marker(_MAKE_STDOUT_OK, '') is None
+
+
+def test_compile_failure_marker_flags_a_driver_traceback():
+	assert compile_failure_marker(_MAKE_STDOUT_FAILED, '') is not None
+
+
+def test_compile_failure_marker_ignores_optional_tool_probes():
+	"""abaqus.bat probing for a missing vswhere.exe is not a build failure."""
+	noise = "'vswhere.exe' is not recognized as an internal or external command,"
+	assert compile_failure_marker(noise, '') is None
+
+
+def test_run_compile_rejects_a_failed_build_that_exited_zero(tmp_path, dummy_logger):
+	"""The regression this guards: rc=0 on a build that produced no library
+	was reported as COMPILED, and the job then died as a bare
+	SIMULATION_FAILED with no .dat/.msg to explain it."""
+	ok, stdout, _ = _compile_with(tmp_path, dummy_logger, 0, _MAKE_STDOUT_FAILED)
+	assert ok is False
+	assert 'CompileError' in stdout      # raw output still handed back to the caller
+
+
+def test_run_compile_accepts_a_clean_build(tmp_path, dummy_logger):
+	ok, _, _ = _compile_with(tmp_path, dummy_logger, 0, _MAKE_STDOUT_OK)
+	assert ok is True
+
+
+def test_run_compile_still_fails_on_a_non_zero_exit(tmp_path, dummy_logger):
+	ok, _, _ = _compile_with(tmp_path, dummy_logger, 1, 'some unrecognised output')
+	assert ok is False

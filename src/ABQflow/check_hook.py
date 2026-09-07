@@ -322,7 +322,7 @@ def run_hook(report, hook_path, artifact, kind, tasks, workdir, job_name,
 
 	try:
 		proc = subprocess.run(cmd, cwd=workdir, capture_output=True, text=True,
-								timeout=timeout)
+								errors='replace', timeout=timeout)
 	except FileNotFoundError:
 		report.fail('interpreter is launchable',
 					"cannot run '{0}' — is Abaqus on PATH? Pass --abaqus-exe with "

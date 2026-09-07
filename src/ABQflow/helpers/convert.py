@@ -18,8 +18,6 @@ import numpy as np
 
 from ..core.spec import JobSpec, PreparationSpec
 
-# ======================== IMP-06: sidecar CSV contract ========================
-
 _SIDECAR_KEY = '__file__'
 
 
@@ -307,7 +305,7 @@ def generate_from_inp_files(
 	naming: str = 'stem',
 	sort: bool = True,
 ) -> list[JobSpec]:
-	"""Create N :class:`JobSpec` objects from a list (or glob) of existing INP files.
+	"""Create N :class:`~ABQflow.core.spec.JobSpec` objects from a list (or glob) of existing INP files.
 
 	This is the batch-spec generator for the UC-03 "pre-existing INP batch"
 	use case.  Each INP file becomes a spec with ``kind='existing_inp'``.
@@ -325,11 +323,10 @@ def generate_from_inp_files(
 		your own keys survive alongside ``'source_inp'``.
 	naming : str
 		Job-name generation rule:
+		``'stem'`` (default) uses the INP filename without extension, sanitised
+		via :func:`sanitize_job_name`; ``'indexed'`` uses
+		``{base_spec.job_name}_{i:04d}``.
 
-		* ``'stem'`` (default) - use the INP filename without extension,
-		sanitised via :func:`sanitize_job_name`.
-		* ``'indexed'`` - ``{base_spec.job_name}_{i:04d}``.
-		
 	sort : bool
 		If ``True`` (default), sort files by natural key order.
 
@@ -411,7 +408,7 @@ def generate_from_inp_files(
 
 
 def generate_from_array(samples_array, param_names, base_spec) -> list[JobSpec]:
-	"""Create N :class:`JobSpec` objects from an (N, D) parameter array.
+	"""Create N :class:`~ABQflow.core.spec.JobSpec` objects from an (N, D) parameter array.
 
 	Each row of *samples_array* becomes a new spec via :func:`copy.deepcopy`
 	of *base_spec*, so every spec owns independent mutable state.

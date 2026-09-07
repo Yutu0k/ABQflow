@@ -59,7 +59,7 @@ class LocalBackend(ExecutionBackend):
 
 		A plain ``LocalBackend()`` returns the identical object, so a
 		host-less batch is byte-for-byte the behaviour it always had.  A
-		local :class:`HostSpec` may still override ``cpus_per_job``, which is
+		local :class:`~ABQflow.core.hosts.HostSpec` may still override ``cpus_per_job``, which is
 		what lets a mixed pool give this machine a different job width from
 		the remote ones.
 		"""
@@ -88,8 +88,15 @@ class LocalBackend(ExecutionBackend):
 	def run(self, cmd: list[str], cwd: str, timeout: float | None = None) -> ExecResult:
 		cmd = [resolve_local_exe(cmd[0]), *cmd[1:]] if cmd else cmd
 		try:
+			# errors='replace' is not optional.  Abaqus shells out to the
+			# platform toolchain, and on a non-UTF-8 Windows locale the MSVC
+			# linker's own warnings are not decodable as that locale's codec
+			# (a GBK box raises on byte 0x93 in LNK4210).  The exception is
+			# raised inside subprocess's reader *thread*, so it does not
+			# propagate here — it silently discards the output instead, which
+			# is exactly the stream a failed compile needs to be diagnosed from.
 			proc = subprocess.run(cmd, cwd=cwd, capture_output=True,
-								text=True, timeout=timeout)
+								text=True, errors='replace', timeout=timeout)
 			return ExecResult(proc.returncode, proc.stdout or '', proc.stderr or '')
 		except subprocess.TimeoutExpired:
 			return ExecResult(None, '', f'timeout after {timeout}s')

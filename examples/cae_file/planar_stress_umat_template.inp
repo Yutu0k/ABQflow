@@ -3691,7 +3691,7 @@
 *Elset, elset=_PickedSet2, internal, generate
     1,  1811,     1
 ** Section: Section_Solid
-*Solid Section, elset=_PickedSet2, material=Material
+*Solid Section, elset=_PickedSet2, material=umat_elastic, controls=EC-1
 1.,
 *End Part
 **  
@@ -3724,10 +3724,19 @@ __PickedSurf4_S4, S4
 __PickedSurf4_S2, S2
 __PickedSurf4_S1, S1
 *End Assembly
-** 
+**
+** ELEMENT CONTROLS
+**
+** CPS4R is reduced-integration, so Abaqus needs an hourglass stiffness it
+** cannot derive from a *User Material.  Enhanced hourglass control takes it
+** from the initial Jacobian the UMAT returns, so it tracks youngs_modulus
+** without a second parameter.
+*Section Controls, name=EC-1, hourglass=ENHANCED
+1., 1., 1.
+**
 ** MATERIALS
-** 
-*Material, name=Material
+**
+*Material, name=umat_elastic
 *Density
  2.7e-09,
 *User Material, constants=2

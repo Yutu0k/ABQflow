@@ -1,7 +1,7 @@
 """HostSpec — a machine that can execute Abaqus jobs, and how work is spread over several.
 
 A batch with no host runs locally, exactly as it always has.  Supplying one or
-more :class:`HostSpec` objects is the only way to reach the remote code path,
+more :class:`~ABQflow.core.hosts.HostSpec` objects is the only way to reach the remote code path,
 so remote execution is strictly opt-in.
 
 Two independent knobs control multi-machine behaviour, and conflating them is

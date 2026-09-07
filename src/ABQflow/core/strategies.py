@@ -707,7 +707,7 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 	preparation_strategy : PreparationStrategy
 		Strategy that produces the INP file.
 	preflight_mode : str or None
-		``'syntaxcheck'``, ``'datacheck'``, or ``None`` (IMP-04).
+		``'syntaxcheck'``, ``'datacheck'``, or ``None``.
 	pre_extraction_strategies : list[ExtractionStrategy]
 		Strategies run before the solver (e.g. property extraction from INP).
 	post_extraction_strategies : list[ExtractionStrategy]
@@ -745,8 +745,11 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		-------
 		tuple[dict, JobStatusManager]
 			``(results, status_manager)`` — *results* has at least
-			``'status'`` and ``'_phase_history'``; the manager is returned
-			so :meth:`execute` can thread it into the next phase.
+			``'status'`` and ``'_phase_history'`` (plus ``'error'`` on
+			failure), all stamped by
+			:meth:`~ABQflow.core.status.JobStatusManager.finalize_into`; the
+			manager is returned so :meth:`execute` can thread it into the
+			next phase.
 		"""
 		logger.info("Workflow Strategy [ModularWorkflow]: prepare_only phase...")
 		sm = status_manager or JobStatusManager()
@@ -758,20 +761,18 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 			ok, msg = self.compile_strategy.compile(ctx, runner, logger)
 			sm.record_compile(success=ok, error=None if ok else msg)
 			if not ok:
-				results['status'] = sm.get_final_status()
-				results['_phase_history'] = sm.phase_history
+				sm.finalize_into(results)
 				return results, sm
 
 		# 1. Preparation
 		sm.mark_preparing()
 		if not self.preparation_strategy.prepare(ctx, runner, logger):
 			sm.record_preparation(success=False)
-			results['status'] = sm.get_final_status()
-			results['_phase_history'] = sm.phase_history
+			sm.finalize_into(results)
 			return results, sm
 		sm.record_preparation(success=True)
 
-		# 2. Preflight (IMP-04: inserted before pre-extraction for fail-fast)
+		# 2. Preflight
 		if self.preflight_mode:
 			logger.info(f"Preflight [{self.preflight_mode}]: checking INP...")
 			sm.mark_preflight()
@@ -781,14 +782,12 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 					success=False,
 					error=pf_errors[0] if pf_errors else f"Preflight [{self.preflight_mode}] failed",
 				)
-				results['status'] = sm.get_final_status()
-				results['_phase_history'] = sm.phase_history
+				sm.finalize_into(results)
 				return results, sm
 			sm.record_preflight(success=True)
 			logger.info(f"Preflight [{self.preflight_mode}]: passed")
 
-		results['status'] = sm.get_final_status()
-		results['_phase_history'] = sm.phase_history
+		sm.finalize_into(results)
 		return results, sm
 
 	def simulate_only(self, ctx: JobContext, runner: AbaqusRunner, logger: logging.Logger,
@@ -818,8 +817,7 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 				success=False,
 				error=f"INP not found: {ctx.inp_path} (run preparation first)",
 			)
-			results['status'] = sm.get_final_status()
-			results['_phase_history'] = sm.phase_history
+			sm.finalize_into(results)
 			return results, sm, True
 
 		# 3. Pre-extraction
@@ -829,7 +827,7 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 			sm.record_extraction(pre_ext_results)
 			results.update(pre_ext_results)
 
-		# 4. Simulation (IMP-02: diagnostics-backed verdict)
+		# 4. Simulation
 		sm.mark_simulating()
 		solver_result = runner.run_solver()
 		# Attach diagnostics on failure and on the rc≠0+COMPLETED edge case
@@ -838,13 +836,11 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 				results['diagnostics'] = asdict(solver_result.diagnostics)
 		if not solver_result.success:
 			sm.record_simulation(success=False, error=solver_result.error)
-			results['status'] = sm.get_final_status()
-			results['_phase_history'] = sm.phase_history
+			sm.finalize_into(results)
 			return results, sm, True
 		sm.record_simulation(success=True)
 
-		results['status'] = sm.get_final_status()
-		results['_phase_history'] = sm.phase_history
+		sm.finalize_into(results)
 		return results, sm, False
 
 	def extract_only(self, ctx: JobContext, runner: AbaqusRunner, logger: logging.Logger,
@@ -872,8 +868,7 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 			sm.record_extraction(post_ext_results)
 			results.update(post_ext_results)
 
-		results['status'] = sm.get_final_status()
-		results['_phase_history'] = sm.phase_history
+		sm.finalize_into(results)
 		return results, sm
 
 	def execute(self, ctx: JobContext, runner: AbaqusRunner,
@@ -890,7 +885,7 @@ class ModularWorkflowStrategy(JobWorkflowStrategy):
 		results, sm = self.prepare_only(ctx, runner, logger)
 		if sm.get_final_status() != JobStatus.COMPLETED:
 			return results
-		# IMP-04: preflight_only mode — stop after preflight, skip solver & extraction
+
 		if self.preflight_only:
 			return results
 

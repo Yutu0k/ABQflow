@@ -190,7 +190,6 @@ class JobStatusManager:
 		self._phase_history.append(rec)
 		self._open_phase_record = None
 
-	# ---- phase-start markers (IMP: fix dead PREPARING/SIMULATING/EXTRACTING states) ----
 
 	def mark_compiling(self):
 		"""Mark the start of subroutine compilation."""
@@ -268,7 +267,7 @@ class JobStatusManager:
 			self._close_phase(JobStatus.PREPARATION_FAILED.value, msg)
 
 	def record_preflight(self, success: bool, error: str | None = None):
-		"""Record the outcome of the preflight phase (IMP-04).
+		"""Record the outcome of the preflight phase.
 
 		Parameters
 		----------
@@ -322,8 +321,11 @@ class JobStatusManager:
 		"""
 		if self._current_status in _TERMINAL_FAILURES:
 			return
-		if any(v is None for v in results.values()):
-			msg = "One or more extraction tasks failed."
+		if failed := sorted(k for k, v in results.items() if v is None):
+			# Naming the tasks matters: a hook typically returns several
+			# values, and "one or more failed" left the caller diffing the
+			# result dict by hand to find which.
+			msg = f"Extraction task(s) returned None: {', '.join(failed)}"
 			self._fail(JobStatus.EXTRACTION_FAILED, msg)
 			self._close_phase(JobStatus.EXTRACTION_FAILED.value, msg)
 		else:
@@ -342,3 +344,32 @@ class JobStatusManager:
 		if self._current_status in _TERMINAL_FAILURES:
 			return self._current_status
 		return JobStatus.COMPLETED
+
+	def finalize_into(self, results: dict) -> dict:
+		"""Stamp this job's status, phase history and error onto *results*.
+
+		The single place a workflow hands its state to
+		:func:`~ABQflow.core.abaqus_automation._worker`, which pops all three
+		keys back off into the matching :class:`~ABQflow.JobOutcome` fields.
+
+		``error`` matters most: without it the failure reason reaches the
+		caller only inside ``phases``, so ``JobOutcome.error`` read ``None`` on
+		a job that plainly failed.  Keeping the three writes together here is
+		what stops a new early-return in a workflow from reintroducing that —
+		the previous nine hand-written copies each had to remember.
+
+		Parameters
+		----------
+		results : dict
+			Result dict to stamp, modified in place.
+
+		Returns
+		-------
+		dict
+			The same *results* object, for use as ``return sm.finalize_into({})``.
+		"""
+		results['status'] = self.get_final_status()
+		results['_phase_history'] = self.phase_history
+		if self._error_message:
+			results['error'] = self._error_message
+		return results

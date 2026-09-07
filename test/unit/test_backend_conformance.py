@@ -172,6 +172,26 @@ def test_run_missing_executable_returns_none_rc(workdir):
 	assert res.stderr
 
 
+def test_run_survives_output_the_locale_codec_cannot_decode(workdir):
+	"""Undecodable bytes must not cost us the surrounding output.
+
+	Abaqus shells out to the platform toolchain, and on a non-UTF-8 Windows
+	locale the MSVC linker emits bytes that codec cannot decode.  The
+	UnicodeDecodeError is raised in subprocess's reader *thread*, so it never
+	reaches the caller — it just silently drops the whole stream, which is the
+	one thing a failed compile needs to be diagnosed from.
+
+	Local-only: RecordingBackend fabricates its output instead of spawning a
+	process, so there is no stream to decode.
+	"""
+	prog = ('import sys; '
+			r'sys.stdout.buffer.write(b"before\x93\xfeafter")')
+	res = LocalBackend().run([sys.executable, '-c', prog], workdir)
+	assert res.returncode == 0
+	assert 'before' in res.stdout
+	assert 'after' in res.stdout
+
+
 # ============================================================
 # detached execution + polling
 # ============================================================

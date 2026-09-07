@@ -146,7 +146,7 @@ def build_workflow(spec: JobSpec, preflight_only: bool = False) -> JobWorkflowSt
 	spec : JobSpec
 		Validated job configuration.
 	preflight_only : bool
-		If ``True``, the workflow stops after preflight (IMP-04).
+		If ``True``, the workflow stops after preflight.
 
 	Returns
 	-------

@@ -50,7 +50,7 @@ def _sftp_path(path: str) -> str:
 
 
 class SshBackend(ExecutionBackend):
-	"""Execute on a remote Windows machine described by a :class:`HostSpec`.
+	"""Execute on a remote Windows machine described by a :class:`~ABQflow.core.hosts.HostSpec`.
 
 	Parameters
 	----------
@@ -152,7 +152,7 @@ class SshBackend(ExecutionBackend):
 
 		One :func:`dataclasses.replace` handles both the path problem and the
 		"Abaqus lives elsewhere on that machine" problem, because every
-		derived path on :class:`JobContext` is a property computed from
+		derived path on :class:`~ABQflow.core.context.JobContext` is a property computed from
 		``output_dir``.  The command builders therefore need no changes and
 		``JobContext`` stays frozen and local-first.
 		"""

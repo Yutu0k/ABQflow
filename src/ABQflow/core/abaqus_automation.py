@@ -19,6 +19,7 @@ import os
 import shutil
 import threading
 import time
+import traceback
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
@@ -45,13 +46,8 @@ from .runner import AbaqusRunner, CommandRecord, _check_abqpy_installed
 from .spec import JobSpec
 from .status import JobStatus
 
-# Guards the clear-then-add sequence in _setup_logging.  Under
-# ProcessPoolExecutor each worker had its own logging registry and this was
-# safe by isolation; the remote path uses threads, which share one global
-# registry.  logging's own lock protects its dict, not our two-step update.
 _LOGGING_LOCK = threading.Lock()
 
-# ======================== IMP-05: dry-run data model ========================
 
 @dataclass
 class JobPlan:
@@ -120,11 +116,6 @@ class AbaqusCalculation:
 		self.abaqus_exe = abaqus_exe
 		self.timeout = timeout
 		self.user_subroutine = user_subroutine
-		# Which machine runs this job.  Deliberately per-calculation rather
-		# than per-batch: cpus_per_job and abaqus_exe are batch-level because
-		# they were never meant to vary per job, whereas the host *is*.
-		# Putting it here is what makes adding machines a change to
-		# assign_hosts alone.
 		self.host = host
 		self.logger: logging.Logger | None = None
 
@@ -194,11 +185,6 @@ class AbaqusCalculation:
 		return results
 
 	def _setup_logging(self) -> logging.Logger:
-		# Locked: the remote path runs workers as threads sharing one global
-		# logging registry, and clear-then-add is not atomic. Distinct job
-		# names give distinct loggers so a collision is unlikely, but "one
-		# job's lines land in another job's file" is exactly the sort of bug
-		# that surfaces weeks later.
 		with _LOGGING_LOCK:
 			logger = logging.getLogger(f"AbaqusCalculation_{self.job_name}")
 			if logger.hasHandlers():
@@ -228,21 +214,31 @@ class JobOutcome:
 	status : str
 		String status, e.g. ``"COMPLETED"`` or ``"SIMULATION_FAILED"``.
 	results : dict or None
-		Extracted result values, or ``None`` if the job did not reach
-		extraction.
+		Extracted result values, keyed by ``result_name``.  An **empty dict**
+		— not ``None`` — when the job failed before extraction, since the
+		reserved keys (``status``/``error``/``diagnostics``/
+		``_phase_history``) are popped out of it into their own fields.
+		``None`` only when the job produced no dict at all, i.e. an exception
+		escaped the worker.
 	error : str or None
-		Error message if the job failed, ``None`` otherwise.
+		Why the job failed; ``None`` on success.  Carries the first terminal
+		failure's message (:attr:`~ABQflow.core.status.JobStatusManager.error_message`),
+		or a formatted traceback when an exception escaped the worker.
 	diagnostics : dict or None
-		Solver diagnostics snapshot (IMP-02).  Populated on failure and
+		Solver diagnostics snapshot.  Populated on failure and
 		on the ``rc≠0 + COMPLETED`` edge case.  ``None`` for clean success
 		or jobs that never reached the solver phase.
+	output_dir : str or None
+		This job's directory, used to resolve sidecar result files
+		(:func:`~ABQflow.load_field`).  ``None`` only on an outcome built
+		outside the normal worker path.
 	phases : list[dict] or None
 		Phase-by-phase history (name/status/duration/error) collected from
 		:class:`~ABQflow.core.status.JobStatusManager`. ``None`` for
 		strategies that don't populate it (e.g. monolithic workflows).
 	duration_s : float or None
 		Wall-clock seconds spent in :meth:`AbaqusCalculation.execute` for
-		this job.
+		this job.  ``None`` when the worker died without reporting.
 	"""
 	job_name: str
 	status: str
@@ -354,15 +350,18 @@ def _worker(calc: AbaqusCalculation, phase: str = 'full') -> JobOutcome:
 		results = calc.execute(phase=phase)
 		raw = results.pop('status', JobStatus.UNKNOWN)
 		status = raw.value if isinstance(raw, JobStatus) else str(raw)
-		# IMP-02: promote solver diagnostics from results to top-level field
 		diag = results.pop('diagnostics', None)
 		phases = results.pop('_phase_history', None)
-		return JobOutcome(calc.job_name, status, results,
+		error = results.pop('error', None)
+		return JobOutcome(calc.job_name, status, results, error=error,
 						diagnostics=diag, output_dir=calc.ctx.output_dir,
 						phases=phases, duration_s=time.time() - started_at)
 	except Exception as e:
+		# Full traceback, not just "TypeError: x": this branch catches bugs
+		# escaping a worker, and the frame they escaped from is the whole
+		# diagnostic value.
 		return JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
-						error=f"{type(e).__name__}: {e}",
+						error=f"{type(e).__name__}: {e}\n{traceback.format_exc()}",
 						output_dir=calc.ctx.output_dir,
 						duration_s=time.time() - started_at)
 
@@ -443,7 +442,7 @@ class BatchAbaqusProcessor:
 			Per-subprocess timeout in seconds; ``None`` means no limit.
 		preflight_only : bool
 			If ``True``, only run preparation + preflight, skip solver &
-			extraction (IMP-04 batch inspection mode).
+			extraction.
 		hosts : list[HostSpec] or None
 			Machines to distribute jobs over.  ``None`` (the default) runs
 			everything locally, exactly as before — the remote code path is
@@ -596,12 +595,11 @@ class BatchAbaqusProcessor:
 		return logger
 
 
-	# ---- IMP-05: dry_run ----
 
 	def dry_run(self, level: str = 'plan') -> list[JobPlan]:
 		"""Inspect what the batch would do without executing it.
 
-		Two levels (see IMP-05):
+		Two levels:
 
 		``'plan'`` (default)
 			**Zero side effects.**  Inspects each spec and builds a command
@@ -636,7 +634,7 @@ class BatchAbaqusProcessor:
 		(``build_preflight_command`` / ``build_solver_command`` /
 		``build_script_command``) instead of re-deriving the Abaqus CLI
 		syntax here — the two paths would otherwise silently drift apart.
-		Constructing a :class:`JobContext` has no side effects (no directory
+		Constructing a :class:`~ABQflow.core.context.JobContext` has no side effects (no directory
 		is created), so L1 stays a pure read of the specs.
 		"""
 		has_abqpy = _check_abqpy_installed()
@@ -920,10 +918,16 @@ class BatchAbaqusProcessor:
 		:meth:`prepare`.
 		"""
 		self.logger.info(f"---- {oc.job_name}: {oc.status} ({oc.duration_s or 0:.1f}s) ----")
+		logged: set[str] = set()
 		for p in (oc.phases or []):
 			err = f" — {p['error']}" if p.get('error') else ""
+			if p.get('error'):
+				logged.add(p['error'])
 			self.logger.info(f"    [{p['phase']}] {p['status']} ({p.get('duration_s') or 0:.2f}s){err}")
-		if oc.error and not oc.phases:
+		# Previously gated on `not oc.phases`, which silently dropped the
+		# error whenever a job had both — the UNKNOWN_ERROR traceback from a
+		# workflow that had already recorded phases went unlogged entirely.
+		if oc.error and oc.error not in logged:
 			self.logger.info(f"    error: {oc.error}")
 
 	# ---- shared ProcessPoolExecutor driver ----
@@ -1020,21 +1024,30 @@ class BatchAbaqusProcessor:
 		with Progress(*progress_columns) as progress, \
 			executor_cls(max_workers=p) as pool:
 			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
+			# Keyed by the calculation, not just its name: when a worker dies
+			# without returning an outcome we still owe the caller an
+			# `output_dir` (sidecar loading needs it) and a real error.
 			if pooled:
 				futures = {
 					pool.submit(submit_fn, c, phase,
-								gates.get(c.host.name) if c.host else None): c.job_name
+								gates.get(c.host.name) if c.host else None): c
 					for c in calcs
 				}
 			else:
-				futures = {pool.submit(submit_fn, c, phase): c.job_name for c in calcs}
+				futures = {pool.submit(submit_fn, c, phase): c for c in calcs}
 
 			for fut in as_completed(futures):
+				calc = futures[fut]
 				try:
 					oc = fut.result()
 				except Exception as e:
-					oc = JobOutcome(futures[fut], JobStatus.UNKNOWN_ERROR.value,
-									error=str(e))
+					# A pool-level failure (worker died, result unpicklable).
+					# str(e) alone is often empty — name the type as well, and
+					# keep the traceback, since duration_s is genuinely
+					# unknowable here and this string is all the caller gets.
+					oc = JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
+									error=f"{type(e).__name__}: {e}\n{traceback.format_exc()}",
+									output_dir=calc.ctx.output_dir)
 				outcomes.append(oc)
 				self._log_job_summary(oc)
 				icon = "✅" if oc.status == "COMPLETED" else "❌"

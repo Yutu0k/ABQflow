@@ -1,6 +1,6 @@
 """JobSpec and related configuration dataclasses — typed, validated at construction.
 
-Replaces the legacy dict-based config format.  :class:`JobSpec` validates itself
+Replaces the legacy dict-based config format.  :class:`~ABQflow.core.spec.JobSpec` validates itself
 in ``__post_init__`` so errors are caught before batch execution begins.
 """
 
@@ -192,7 +192,7 @@ class JobSpec:
 	job_name: str
 	workflow: str = 'modular'
 	preparation: PreparationSpec | None = None
-	preflight: str | None = None  # IMP-04: None | 'syntaxcheck' | 'datacheck'
+	preflight: str | None = None
 	monolithic_script: str | None = None
 	monolithic_params: dict = field(default_factory=dict)
 	pre_extraction: list[HookSpec] = field(default_factory=list)

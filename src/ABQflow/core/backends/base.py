@@ -126,7 +126,7 @@ class ExecutionBackend(ABC):
 		(``inp_path`` / ``odb_path`` / ``sta_path`` / …) recomputes against
 		the remote work root — which is why the pure command builders
 		(:meth:`AbaqusRunner.build_solver_command` and friends) need no
-		changes at all, and :class:`JobContext` stays frozen and local-first.
+		changes at all, and :class:`~ABQflow.core.context.JobContext` stays frozen and local-first.
 		"""
 
 	# ---- synchronous execution ----

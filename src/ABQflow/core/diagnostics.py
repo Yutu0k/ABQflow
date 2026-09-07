@@ -1,6 +1,6 @@
 """Solver diagnostics — .sta verdict, .msg/.dat error harvesting, truth table.
 
-IMP-01 + IMP-02: Provides authoritative job success/failure determination by
+Provides authoritative job success/failure determination by
 cross-referencing the subprocess return code with the .sta file's completion
 marker, and harvests actionable error lines from .msg/.dat files.
 """
@@ -323,9 +323,6 @@ def diagnose(job_name: str, work_dir: str) -> SolverDiagnostics:
 	)
 
 
-# ---------------------------------------------------------------------------
-# Truth table (IMP-02 core)
-# ---------------------------------------------------------------------------
 
 def apply_truth_table(returncode: int, sta_verdict: str) -> tuple[bool, str | None]:
 	"""Combine subprocess return code and .sta verdict into a single judgment.

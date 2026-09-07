@@ -2,7 +2,7 @@
 
 Provides environment detection (abqpy / CAE kernel / odbAccess), sentinel-based
 JSON extraction, timeout-safe command execution, solver diagnostics, and a
-``record_only`` dry-run mode (IMP-05).
+``record_only`` dry-run mode.
 """
 
 from __future__ import annotations
@@ -59,11 +59,26 @@ def _host_python() -> str:
 	"""
 	return os.environ.get('ABQFLOW_HOST_PYTHON') or sys.executable
 
-# ---------------------------------------------------------------------------
-# IMP-03: escalation-ladder constants
-# ---------------------------------------------------------------------------
 _GRACE_MIN = 30    # minimum grace period for terminate to write ODB (s)
 _GRACE_MAX = 300   # maximum grace period (s) — beyond this terminate is stuck
+
+
+_COMPILE_FAILURE_MARKERS = (
+	'traceback (most recent call last)',
+	'compileerror',
+	'linkerror',
+	'abaqus error',
+)
+
+
+def compile_failure_marker(stdout: str, stderr: str) -> str | None:
+	"""First failure marker present in *stdout*/*stderr*, or ``None``.
+
+	Used to second-guess a zero exit code from ``abaqus make``.  Returning the
+	marker rather than a bool lets the caller say *why* it overrode the rc.
+	"""
+	blob = f'{stdout}\n{stderr}'.lower()
+	return next((m for m in _COMPILE_FAILURE_MARKERS if m in blob), None)
 
 
 @dataclass(frozen=True)
@@ -118,9 +133,6 @@ class Timeouts:
 			return cls(**value)
 		return cls(solver=value, preflight=value, compile=value, hook=value)
 
-# ---------------------------------------------------------------------------
-# IMP-05: dry-run data model
-# ---------------------------------------------------------------------------
 
 @dataclass
 class CommandRecord:
@@ -492,8 +504,6 @@ class AbaqusRunner:
 							len(fetched), self.backend.name, ', '.join(fetched))
 		return fetched
 
-	# ---- IMP-03: terminate escalation ladder helpers ----
-
 	def _grace_period(self) -> int:
 		"""Compute the grace period G = clamp(0.05 × T, 30, 300) seconds."""
 		if self.timeouts.solver is None:
@@ -505,7 +515,8 @@ class AbaqusRunner:
 		cmd = [self.ctx.abaqus_exe, 'terminate', f'job={self.ctx.job_name}']
 		self.logger.warning(f"Escalation level 1: {' '.join(cmd)}")
 		try:
-			subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+			subprocess.run(cmd, capture_output=True, text=True,
+						errors='replace', timeout=30)
 		except Exception as e:
 			self.logger.warning(f"terminate command failed: {e}")
 
@@ -767,7 +778,7 @@ class AbaqusRunner:
 		(``standard.exe`` / ``explicit.exe``) — something ``subprocess.run``
 		cannot do.
 
-		Escalation ladder (IMP-03):
+		Escalation ladder:
 
 		0. Normal wait up to ``self.timeout``.
 		1. Graceful: ``abaqus terminate job=<name>``.
@@ -872,7 +883,6 @@ class AbaqusRunner:
 
 		return SolverResult(success=success, error=error_msg, diagnostics=diag)
 
-	# ---- IMP-04: preflight ----
 
 	def run_preflight(self, mode: str) -> tuple[bool, list[str]]:
 		"""Run an Abaqus syntax/datacheck on the INP before the real solve.
@@ -889,7 +899,7 @@ class AbaqusRunner:
 		-------
 		tuple[bool, list[str]]
 			``(passed, errors)`` — *errors* are harvested from the temporary
-			``.dat`` file via :func:`harvest_errors` (IMP-01/04 synergy).
+			``.dat`` file via :func:`harvest_errors`.
 		"""
 		cmd, chk_name = self.build_preflight_command(self.exec_ctx, mode)
 
@@ -985,6 +995,13 @@ class AbaqusRunner:
 		reference tool's approach: compiler-error classification is left to
 		a human/LLM reading the raw output, not this library).
 
+		The exit code alone is not trusted, however.  ``abaqus make`` can exit
+		0 on a failed build (see :data:`_COMPILE_FAILURE_MARKERS`), so the
+		captured output is additionally scanned for driver-level failure
+		markers.  Without that check a subroutine that never compiled is
+		reported as ``COMPILED`` and the job dies later as a bare
+		``SIMULATION_FAILED`` with no ``.dat``/``.msg`` to explain it.
+
 		Parameters
 		----------
 		subroutine : SubroutineSpec
@@ -1027,6 +1044,14 @@ class AbaqusRunner:
 		if res.returncode != 0:
 			self.logger.error(f"Compile failed (rc={res.returncode}):\n"
 							f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
+			return (False, res.stdout, res.stderr)
+
+		marker = compile_failure_marker(res.stdout, res.stderr)
+		if marker is not None:
+			self.logger.error(
+				f"Compile reported rc=0 but its output contains {marker!r}, so "
+				f"no subroutine library was produced. Treating as a failure:\n"
+				f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}")
 			return (False, res.stdout, res.stderr)
 
 		return (True, res.stdout, res.stderr)
