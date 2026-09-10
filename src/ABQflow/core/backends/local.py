@@ -24,6 +24,33 @@ from ..context import JobContext
 from .base import ExecResult, ExecutionBackend, JobHandle
 
 
+def _win_creationflags(base: int = 0) -> int:
+	"""Windows creation flags, with the console window suppressed.
+
+	``abaqus.bat`` is a batch file, so Windows runs it through ``cmd.exe``.  A
+	console application launched from a parent that has **no console of its
+	own** gets a fresh console allocated — and that console is a visible
+	window.  Launched from a terminal (``pixi run``, a notebook kernel started
+	from a shell) the child simply inherits the existing console and nothing
+	pops up; launched from a windowless host process — MATLAB's out-of-process
+	Python host is the case that surfaced this — every job and every extraction
+	hook flashes its own ``cmd`` window.
+
+	``CREATE_NO_WINDOW`` suppresses that allocation.  Nothing is lost: both
+	call sites already redirect stdout/stderr (``DEVNULL`` for the detached
+	solver, pipes for captured runs), so the window never carried information
+	anyone could read.  It combines freely with ``CREATE_NEW_PROCESS_GROUP``;
+	it is only mutually exclusive with ``CREATE_NEW_CONSOLE``/
+	``DETACHED_PROCESS``, neither of which is used here.
+
+	Set ``ABQFLOW_SHOW_CONSOLE=1`` to get the windows back when debugging a
+	launch that fails before any output is captured.
+	"""
+	if os.environ.get('ABQFLOW_SHOW_CONSOLE', '') not in ('', '0'):
+		return base
+	return base | getattr(subprocess, 'CREATE_NO_WINDOW', 0x08000000)
+
+
 class LocalBackend(ExecutionBackend):
 	"""Execute on this machine via :mod:`subprocess`.
 
@@ -95,8 +122,12 @@ class LocalBackend(ExecutionBackend):
 			# raised inside subprocess's reader *thread*, so it does not
 			# propagate here — it silently discards the output instead, which
 			# is exactly the stream a failed compile needs to be diagnosed from.
+			kw: dict = {}
+			if sys.platform == 'win32':
+				kw['creationflags'] = _win_creationflags()
 			proc = subprocess.run(cmd, cwd=cwd, capture_output=True,
-								text=True, errors='replace', timeout=timeout)
+								text=True, errors='replace', timeout=timeout,
+								**kw)
 			return ExecResult(proc.returncode, proc.stdout or '', proc.stderr or '')
 		except subprocess.TimeoutExpired:
 			return ExecResult(None, '', f'timeout after {timeout}s')
@@ -123,7 +154,8 @@ class LocalBackend(ExecutionBackend):
 					'stdout': subprocess.DEVNULL,
 					'stderr': subprocess.DEVNULL}
 		if sys.platform == 'win32':
-			popts['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+			popts['creationflags'] = _win_creationflags(
+				subprocess.CREATE_NEW_PROCESS_GROUP)
 		else:
 			popts['start_new_session'] = True
 
@@ -212,7 +244,8 @@ class LocalBackend(ExecutionBackend):
 			try:
 				if sys.platform == 'win32':
 					subprocess.run(['taskkill', '/T', '/F', '/PID', str(handle.pid)],
-								capture_output=True, timeout=15)
+								capture_output=True, timeout=15,
+								creationflags=_win_creationflags())
 				else:
 					os.killpg(handle.pid, signal.SIGKILL)
 			except Exception as e:
