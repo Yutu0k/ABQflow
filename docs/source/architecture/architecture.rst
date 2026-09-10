@@ -3,48 +3,71 @@
 Architecture
 ============
 
-This page describes the design rationale and internals of ABQflow (v\ |release|).
+Overview
+--------
+
+ABQflow has a layered architecture shown in the diagram below. The diagram is generated using `Archify <https://github.com/tt-a1i/archify>`_.
+
+.. raw:: html
+
+   <div class="archify-embed">
+     <iframe src="../../_static/abqflow-architecture.html?embed=1"
+             title="ABQflow architecture diagram (interactive)"
+             loading="lazy"
+             allowfullscreen></iframe>
+   </div>
+
 
 Design Principles
 -----------------
 
 **Data + Service = Strategy**
 
-The core insight of v0.3 is splitting the old ``AbaqusCalculation`` God-object into
-two narrow contracts:
+Strategies depend only on ``(ctx, runner, logger)`` — never on
+``AbaqusCalculation`` internals.  This removes the circular import that used to
+require ``TYPE_CHECKING`` hacks, makes strategies independently testable (mock
+the runner), and gives each layer one responsibility.
 
-* :class:`~ABQflow.JobContext` — **frozen** data: paths, job name, CPU count.
-  Strategies see data, not implementation.
-* :class:`~ABQflow.AbaqusRunner` — a **service** with three public methods:
-  ``run_solver()``, ``run_hook()``, and the internal ``_base_command()``.
+**Every extension point is a registry, not an** ``if``
 
-Strategies depend only on ``(ctx, runner, logger)`` — not on ``AbaqusCalculation``
-private methods.  This eliminates the circular import that required
-``TYPE_CHECKING`` hacks, makes strategies independently testable (mock the
-runner), and gives each layer a clear responsibility.
+Preparation kinds and extraction sources resolve through dict lookups
+(:data:`~ABQflow.PREPARATION_REGISTRY`, :data:`~ABQflow.EXTRACTION_REGISTRY`),
+so adding a workflow means registering a factory rather than editing dispatch
+code.
 
-.. code-block:: text
+**Fail at construction, not at the solver**
 
-   ┌──────────────────────────────────────────────────┐
-   │ User Layer                                        │
-   │   JobSpec (dataclass, validate + deep-copy)       │
-   │   BatchSpec = list[JobSpec]                       │
-   └────────────────┬─────────────────────────────────┘
-                    │ StrategyRegistry.build(spec)
-   ┌────────────────▼─────────────────────────────────┐
-   │ Orchestration Layer  BatchAbaqusProcessor          │
-   │   plan()      — conflict detection (no side fx)   │
-   │   prepare()   — apply decisions, build calcs      │
-   │   run_batch() — ProcessPoolExecutor + fault-tol   │
-   │   ResourcePlanner — CPU / license constraints     │
-   └────────────────┬─────────────────────────────────┘
-                    │ JobContext (frozen) + AbaqusRunner
-   ┌────────────────▼─────────────────────────────────┐
-   │ Execution Layer                                    │
-   │   JobContext   — paths, name, resources            │
-   │   AbaqusRunner — run_solver / run_hook             │
-   │   Strategy     — depends on (ctx, runner, logger)  │
-   └──────────────────────────────────────────────────┘
+:class:`~ABQflow.JobSpec`, :class:`~ABQflow.HookSpec`,
+:class:`~ABQflow.SubroutineSpec` and the registry's option checking all validate
+eagerly.  A misconfigured batch raises before any Abaqus process — and any
+license token — is spent.
+
+Layers
+------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 30 48
+
+   * - Layer
+     - Modules
+     - Responsibility
+   * - Declaration
+     - ``core/spec.py``, ``helpers/convert.py``
+     - Typed job configuration, validated in ``__post_init__``.
+   * - Orchestration
+     - ``core/abaqus_automation.py``, ``core/hosts.py``, ``core/status.py``
+     - Conflict planning, host assignment, concurrency, fault isolation,
+       lifecycle state.
+   * - Assembly
+     - ``core/registry.py``, ``core/strategies.py``
+     - Turn a spec into a concrete strategy chain.
+   * - Execution gateway
+     - ``core/context.py``, ``core/runner.py``, ``core/backends/``
+     - Decide the command, the interpreter, and the machine it runs on.
+   * - Job directory
+     - ``hookkit.py``, ``datkit.py``, ``core/diagnostics.py``
+     - The Abaqus-side contract, and the verdict read back off disk.
 
 Strategy Pattern
 ----------------
@@ -54,12 +77,25 @@ Workflows are composed from three strategy types:
 :class:`~ABQflow.PreparationStrategy`
    Generates an INP file.  Built-in implementations:
 
-   * :class:`~ABQflow.InpModifyStrategy` — replace ``{{placeholders}}``
-     in a base INP file.  Validates coverage at prepare-time; missing parameters
-     produce a clear error, not a silently broken input file.
-   * :class:`~ABQflow.ModelGenerationStrategy` — run a Python script
-     (with CAE kernel) that builds the model and exports an INP.
+   * :class:`~ABQflow.InpModifyStrategy` (``kind='inp_based'``) — replace
+     ``{{placeholders}}`` in a base INP file.  Validates coverage at
+     prepare-time; missing parameters produce a clear error, not a silently
+     broken input file.
+   * :class:`~ABQflow.ExistingInpStrategy` (``kind='existing_inp'``) — the same
+     pipeline with an empty parameter set plus an assertion that none was
+     needed, for a batch of already-written decks.  A leftover
+     ``{{placeholder}}`` is reported as "you handed a template to a batch of
+     finished decks", not as a missing parameter.
+   * :class:`~ABQflow.ModelGenerationStrategy` (``kind='model_generation'``) —
+     run a Python script (with CAE kernel) that builds the model and exports an
+     INP.
    * *Custom* — register via :func:`~ABQflow.register_preparation`.
+
+   Both INP kinds walk the ``*INCLUDE`` tree (:mod:`ABQflow.core.inp_include`).
+   ``include_staging='reference'`` (the default) points the deck at the absolute
+   paths of *static* includes, so a shared mesh is never copied per job.
+   Parameterized includes have no such choice — their content exists nowhere on
+   disk, so they are always written into the job directory.
 
 :class:`~ABQflow.ExtractionStrategy`
    Extracts data from simulation outputs.  Built-in:
@@ -82,10 +118,16 @@ Workflows are composed from three strategy types:
 :class:`~ABQflow.JobWorkflowStrategy`
    Orchestrates the full pipeline:
 
-   * :class:`~ABQflow.ModularWorkflowStrategy` —
-     preparation → pre-extraction → simulation → post-extraction.
-   * :class:`~ABQflow.MonolithicWorkflowStrategy` —
-     single script handles everything; results returned as JSON on stdout.
+   * :class:`~ABQflow.ModularWorkflowStrategy` — preparation → (subroutine
+     compile) → pre-extraction → (preflight) → simulation → post-extraction.
+   * :class:`~ABQflow.MonolithicWorkflowStrategy` — single script handles
+     everything; results returned as JSON on stdout.
+
+   :class:`~ABQflow.SubroutineCompileStrategy` is inserted only when the spec
+   carries a :class:`~ABQflow.SubroutineSpec`, and skipped entirely when that
+   spec sets ``precompiled=True``.  ``preflight='syntaxcheck'`` or
+   ``'datacheck'`` inserts a cheap solver pass before the real run, so a broken
+   deck fails in seconds instead of after an hour of queueing.
 
 Execution Environments
 ----------------------
@@ -123,44 +165,90 @@ sidecar CSVs are written straight into the local job directory.  Set
 ``ABQFLOW_HOST_PYTHON`` to override the interpreter when ``sys.executable`` is
 a frozen or embedded binary.
 
-Resource Planning
------------------
+Execution Backends
+------------------
 
-The framework automatically caps parallelism to avoid oversubscribing Abaqus
-license tokens, since a job that cannot obtain a license will simply fail to
-start. CPU cores are not hard-capped — small jobs rarely saturate a full
-core, so requesting more parallel jobs than physical cores support (CPU
-oversubscription) is allowed, but it is flagged with a warning so the
-allocation stays visible.
+:class:`~ABQflow.ExecutionBackend` is the seam between *what* command to run and
+*where* it runs.  The runner builds one command line; the backend decides whose
+CPU executes it.
 
-**Abaqus license token formula** (official): a job using *n* CPU cores consumes
+* :class:`~ABQflow.LocalBackend` — reproduces plain ``subprocess`` behaviour
+  exactly, and is the default everywhere.  Remote execution is strictly opt-in.
+* ``SSHBackend`` — uploads the job directory, runs the command on the remote
+  machine, fetches the small text artifacts back.  Selected by giving a
+  :class:`~ABQflow.HostSpec` a ``hostname``; requires the ``remote`` extra.
+* :class:`~ABQflow.RecordingBackend` — records commands instead of running them,
+  which is what makes a dry run (and most of the test suite) possible.
 
-.. math::
+Two design decisions are worth stating explicitly.
 
-   T(n) = \lceil 5 \cdot n^{0.422} \rceil
+**There is no filesystem abstraction.**  After a remote solve, the small text
+artifacts (``.sta`` / ``.msg`` / ``.dat``, kilobytes to megabytes) are copied
+back into the job's *local* directory and the existing
+:func:`~ABQflow.diagnose` runs against them unchanged.  The multi-gigabyte
+``.odb`` stays where the solver wrote it.  That keeps ``diagnostics.py`` — the
+most carefully tested module in the package — at zero changes, and leaves the
+local job directory a complete, reproducible artifact.
 
-Example token counts: 1→5, 2→7, 4→9, 8→12, 16→16.
+**Paths are remapped, commands are not.**
+:meth:`~ABQflow.ExecutionBackend.map_context` rewrites a
+:class:`~ABQflow.JobContext` into the remote directory layout, so strategies
+build the same command line for every backend.
 
-**Parallelism limits:**
+Long solver runs use :meth:`~ABQflow.ExecutionBackend.submit_detached` rather
+than a held-open channel: the command is launched detached and its exit code
+lands in a ``<job>.abqflow.rc`` sentinel file, which the poller stats.  A
+dropped SSH connection therefore cannot orphan a running solve or report it as
+a failure.  Stale ``.abqflow.rc`` / ``.abqflow.out`` / ``.lck`` files are
+cleared before a re-run, so the previous attempt's verdict is never mistaken
+for this one's.
 
-.. math::
+Multi-Machine Scheduling
+------------------------
 
-   P_{cpu}     &= \lfloor (C - R) / c \rfloor \\
-   P_{license} &= \lfloor L / T(c) \rfloor \\
-   P_{actual}  &= \max(1, \min(P_{req}, P_{license}))
+A batch with no :class:`~ABQflow.HostSpec` runs locally, exactly as it always
+has.  Supplying hosts is the only way to reach the pooled code path.  Two
+independent knobs control the behaviour, and conflating them is the mistake
+:mod:`ABQflow.core.hosts` exists to prevent:
 
-where *C* = physical cores, *R* = reserved cores (default 1), *c* = cores per
-job, and *L* = available tokens. :math:`P_{cpu}` is computed only to decide
-whether to emit the CPU-oversubscription warning — it no longer bounds
-:math:`P_{actual}`.
+``max_concurrent``
+   How many jobs may run on a machine **at the same time** — a capacity limit,
+   enforced by a per-host :class:`threading.Semaphore` during execution.
 
-Use :func:`~ABQflow.plan_parallelism` to compute this directly.
+``weight``
+   What **share of the batch** a machine should receive — a throughput
+   preference, applied by :func:`~ABQflow.assign_hosts` when jobs are dealt out.
+
+They are not the same thing.  Of two machines measured during development, the
+one with half the cores finished the same job 60% faster; ranking purely by core
+count would have sent most of the work to the slower machine.  So ``weight``
+defaults to capacity (a reasonable proxy) but can be set explicitly once you
+know how fast a machine actually is.
+
+:func:`~ABQflow.assign_hosts` deals jobs out one at a time to whichever machine
+is currently *least loaded relative to its own weight*.  With a single host this
+is the identity assignment — which is what lets the remote path be adopted
+without changing single-machine behaviour.
+
+Where an unset ``max_concurrent`` leaves capacity to be derived,
+:meth:`HostSpec.capacity <ABQflow.HostSpec.capacity>` takes the minimum of a
+core-derived figure and a token-derived one; an unset ``cpus_total`` is
+*measured* (read locally, probed remotely) rather than assumed, so a host is
+never starved down to a capacity of 1 beside its peers.
+
+**Threads, not processes, for pooled batches.**  Remote work is upload → launch
+→ sleep → stat → download, and local work is ``Popen.wait()``; both release the
+GIL for their whole duration, so the solver processes run in parallel
+regardless.  Processes would buy nothing here, would make SSH connection reuse
+impossible, and cannot carry a paramiko client across the boundary at all —
+while the semaphores that enforce per-host limits only work inside one process.
+A host-less batch keeps :class:`~concurrent.futures.ProcessPoolExecutor`,
+unchanged.
 
 Fault Tolerance
 ---------------
 
-``run_batch`` uses :class:`concurrent.futures.ProcessPoolExecutor` with these
-guarantees:
+``run_batch`` gives these guarantees:
 
 * **Single-job isolation**: an exception in one worker returns as an error
   :class:`~ABQflow.JobOutcome` — it does not kill the batch.
@@ -168,6 +256,36 @@ guarantees:
   cleanup on completion or error.
 * **Pickle-safe workers**: the top-level ``_worker`` function (not a lambda or
   closure) is the entry point, ensuring Windows ``spawn`` compatibility.
+* **No silent disappearances**: futures are keyed by the calculation rather than
+  by its name, so a worker that dies without returning still yields an outcome
+  carrying a real error and a usable ``output_dir``.
+
+The three-phase lifecycle keeps side effects where you can see them:
+:meth:`~ABQflow.BatchAbaqusProcessor.plan` is pure computation over directory
+conflicts, :meth:`~ABQflow.BatchAbaqusProcessor.prepare` applies the decisions
+(``'fail'`` by default; also ``'skip'``, ``'overwrite'``, ``'interactive'``),
+and :meth:`~ABQflow.BatchAbaqusProcessor.run_batch` executes.  Nothing is
+deleted by a constructor.
+
+Status and Diagnostics
+----------------------
+
+:class:`~ABQflow.JobStatusManager` moves each job through a state machine —
+``CREATED`` → ``PREPARING`` → ``SIMULATING`` → ``EXTRACTING`` → ``COMPLETED`` —
+with terminal-state protection: once a job reaches a failure state
+(``PREPARATION_FAILED``, ``PREFLIGHT_FAILED``, ``SIMULATION_FAILED``,
+``EXTRACTION_FAILED``, ``SUBROUTINE_COMPILE_FAILED``, ``JSON_DECODE_ERROR``,
+``SCRIPT_ERROR``, ``UNKNOWN_ERROR``), no further transition is allowed.  The
+failure state names the phase, so a batch log says *where* a job died, not just
+that it did.
+
+The verdict itself does not come from the exit code alone.
+:func:`~ABQflow.parse_sta` reads the ``.sta`` file's completion marker,
+:func:`~ABQflow.harvest_errors` pulls deduplicated ERROR lines out of
+``.msg`` / ``.dat``, and :func:`~ABQflow.apply_truth_table` cross-references the
+two against the subprocess return code.  A zero exit code with no ``COMPLETED``
+marker in the ``.sta`` is a failure — Abaqus is perfectly capable of returning 0
+after aborting an analysis.
 
 JSON Protocol
 -------------
@@ -191,9 +309,9 @@ script output, so the last ``{`` is most likely the result).
 
 ``ABQflow.hookkit`` (staged into the job's working directory automatically)
 implements this protocol for hook scripts so authors never write sentinel
-markers or argparse plumbing by hand. It is single-file and stdlib-only —
+markers or argparse plumbing by hand.  It is single-file and stdlib-only —
 never imports ``ABQflow``, ``odbAccess``, ``abaqus``, or ``numpy`` — so it
-runs unmodified under the Abaqus Python interpreter (Py2.7 or Py3). It also
+runs unmodified under the Abaqus Python interpreter (Py2.7 or Py3).  It also
 adds a field-output mode (``hookkit.field()``) that spills large result sets
 (>10k rows or >1MB) to a CSV sidecar instead of inlining them in the JSON
 payload, keeping stdout small for bulky field quantities.
@@ -207,57 +325,37 @@ increments='last')`` costs one increment however long the analysis ran.
 ``test/unit/test_hookkit_py27.py`` enforces the Python 2.7 promise on both
 files with an AST scan.
 
-Configuration Validation
-------------------------
+The ``abqflow-check-hook`` command runs a hook exactly the way
+:meth:`~ABQflow.AbaqusRunner.run_hook` would — same staging, same command line,
+same envelope validation — and grades the output against the contract the
+framework will later hold it to.  A hook that passes there will run inside
+ABQflow; one that fails would have failed inside ABQflow with far less to go on.
 
-:class:`~ABQflow.JobSpec` validates at construction time:
+Extension Points
+----------------
 
-* ``workflow='modular'`` requires a ``preparation`` field.
-* ``workflow='monolithic'`` requires a ``monolithic_script`` field.
-* Unknown workflow values raise ``ValueError`` immediately.
+None of the following requires editing framework code:
 
-This means misconfiguration surfaces before any Abaqus process is launched —
-no silent ``KeyError`` at job initialization.
+.. list-table::
+   :header-rows: 1
+   :widths: 34 66
 
-Migration from v0.2
---------------------
+   * - To add
+     - Use
+   * - A preparation kind
+     - :func:`~ABQflow.register_preparation` (populates
+       :data:`~ABQflow.PREPARATION_REGISTRY`)
+   * - An extraction source
+     - :func:`~ABQflow.register_extraction` (populates
+       :data:`~ABQflow.EXTRACTION_REGISTRY`)
+   * - A custom strategy
+     - Subclass :class:`~ABQflow.PreparationStrategy` /
+       :class:`~ABQflow.ExtractionStrategy` /
+       :class:`~ABQflow.JobWorkflowStrategy` with the
+       ``(ctx, runner, logger)`` signature
+   * - An execution target
+     - Subclass :class:`~ABQflow.ExecutionBackend` and return it from
+       :func:`~ABQflow.make_backend`
+to override the interpreter when ``sys.executable`` is
+a frozen or embedded binary.
 
-v0.3 introduced breaking changes to fix structural defects (see the
-`design document <https://github.com/Yutu0k/ABQflow>`_ for the full
-analysis).
-
-**Dict config → JobSpec:**
-
-Old::
-
-   jobs = [{'job_name': 'x', 'type': 'inp_based', 'base_inp_path': '...', 'params': {...}}]
-
-New::
-
-   spec = JobSpec(job_name='x', preparation=PreparationSpec(kind='inp_based', source_path='...', params={...}))
-
-The ``JobSpec.from_dict`` bridge that accepted the old shape has been removed;
-``batch_data`` now rejects anything that is not a :class:`JobSpec`.
-
-**Batch result format:**
-
-Old: ``run_batch()`` returned ``list[dict]`` or ``dict[str, dict]``.
-New: returns ``list[JobOutcome]``.  The ``outcomes_to_list`` /
-``outcomes_to_dict`` converters have been removed — a :class:`JobOutcome`
-already exposes ``job_name``, ``status``, ``results``, ``error`` and
-``diagnostics``, so iterate the list directly, or build
-``{oc.job_name: oc for oc in outcomes}`` when you need it keyed.
-
-**Strategy signatures:**
-
-Custom strategies that subclasses ``PreparationStrategy`` / ``ExtractionStrategy`` /
-``JobWorkflowStrategy`` must change their method signatures from
-``(self, context: AbaqusCalculation)`` to
-``(self, ctx: JobContext, runner: AbaqusRunner, logger: Logger)``.
-
-**Constructor side-effects:**
-
-``BatchAbaqusProcessor.__init__`` no longer deletes directories or prompts for
-input.  Call ``plan()`` / ``prepare()`` explicitly, or let ``run_batch()``
-auto-call them.  The default ``duplicate_mode`` is now ``'fail'`` (was
-``'interactive'``).

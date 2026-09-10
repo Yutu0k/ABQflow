@@ -1,0 +1,43 @@
+.archify-embed {
+    --archify-avail: calc(100vw - 2rem);
+    --archify-width: max(100%, min(var(--archify-avail), var(--archify-max)));
+
+    width: var(--archify-width);
+    margin: 1.5rem 0 2rem calc(50% - var(--archify-width) / 2);
+}
+
+@media (min-width: 63em) {
+    .archify-embed {
+        --archify-avail: calc(100vw - 15em - 2rem);
+    }
+}
+
+@media (min-width: 67em) {
+    .archify-embed {
+        --archify-avail: calc(50vw + 18.5em - 2rem);
+    }
+}
+
+@media (min-width: 82em) {
+    .archify-embed {
+        --archify-avail: calc(50vw + 11em - 2rem);
+    }
+}
+
+.archify-embed iframe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1280 / 560;
+    min-height: 240px;
+    border: 1px solid var(--color-background-border, #d0d0d0);
+    border-radius: 8px;
+    background: var(--color-background-primary, #fff);
+    color-scheme: light dark;
+}
+
+.archify-embed .archify-caption {
+    margin-top: 0.6rem;
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: var(--color-foreground-secondary, #5a5c63);
+}

@@ -1,0 +1,449 @@
+{
+    "schema_version": 1,
+    "diagram_type": "architecture",
+    "meta": {
+        "title": "ABQflow 逻辑框架",
+        "locale": "zh-CN",
+        "quality_profile": "showcase"
+    },
+    "components": [
+        {
+            "id": "user",
+            "type": "external",
+            "label": "用户批处理脚本",
+            "sublabel": "参数 · 钩子 · 主机池",
+            "pos": [
+                40,
+                40
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "spec",
+            "type": "backend",
+            "label": "JobSpec 配置族",
+            "sublabel": "core/spec.py",
+            "tag": "构造即校验",
+            "pos": [
+                285,
+                40
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "proc",
+            "type": "backend",
+            "label": "BatchAbaqusProcessor",
+            "sublabel": "plan/prepare/run_batch",
+            "pos": [
+                530,
+                40
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "hosts",
+            "type": "cloud",
+            "label": "HostSpec 主机池",
+            "sublabel": "core/hosts.py",
+            "tag": "weight 加权分派",
+            "pos": [
+                775,
+                40
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "pool",
+            "type": "backend",
+            "label": "并发执行池",
+            "sublabel": "Thread / Process",
+            "tag": "每机 Semaphore",
+            "pos": [
+                1020,
+                40
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "status",
+            "type": "backend",
+            "label": "JobStatusManager",
+            "sublabel": "core/status.py",
+            "tag": "阶段状态机",
+            "pos": [
+                285,
+                152
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "registry",
+            "type": "backend",
+            "label": "策略注册表",
+            "sublabel": "core/registry.py",
+            "tag": "build_workflow",
+            "pos": [
+                530,
+                152
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "strategies",
+            "type": "backend",
+            "label": "工作流策略",
+            "sublabel": "core/strategies.py",
+            "tag": "Modular / Monolithic",
+            "pos": [
+                775,
+                152
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "calc",
+            "type": "backend",
+            "label": "AbaqusCalculation",
+            "sublabel": "装配 ctx + runner",
+            "tag": "execute(phase)",
+            "pos": [
+                1020,
+                152
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "backends",
+            "type": "cloud",
+            "label": "ExecutionBackend",
+            "sublabel": "core/backends/",
+            "tag": "Local / SSH / Rec",
+            "pos": [
+                530,
+                264
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "runner",
+            "type": "backend",
+            "label": "AbaqusRunner",
+            "sublabel": "core/runner.py",
+            "tag": "子进程唯一出口",
+            "pos": [
+                775,
+                264
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "ctx",
+            "type": "backend",
+            "label": "JobContext",
+            "sublabel": "core/context.py",
+            "tag": "frozen 路径契约",
+            "pos": [
+                1020,
+                264
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "diag",
+            "type": "backend",
+            "label": "SolverDiagnostics",
+            "sublabel": "core/diagnostics.py",
+            "tag": "parse_sta + 真值表",
+            "pos": [
+                285,
+                376
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "abaqus",
+            "type": "external",
+            "label": "Abaqus 求解器",
+            "sublabel": "abaqus python / cae",
+            "tag": "odbAccess",
+            "pos": [
+                530,
+                376
+            ],
+            "size": [
+                190,
+                56
+            ]
+        },
+        {
+            "id": "sidecar",
+            "type": "backend",
+            "label": "hookkit + datkit",
+            "sublabel": "Py2.7 单文件",
+            "tag": "哨兵 JSON 协议",
+            "pos": [
+                775,
+                376
+            ],
+            "size": [
+                190,
+                56
+            ]
+        }
+    ],
+    "boundaries": [
+        {
+            "kind": "region",
+            "label": "编排与装配",
+            "wraps": [
+                "spec",
+                "proc",
+                "hosts",
+                "pool",
+                "status",
+                "registry",
+                "strategies",
+                "calc"
+            ]
+        },
+        {
+            "kind": "region",
+            "label": "执行网关",
+            "wraps": [
+                "backends",
+                "runner",
+                "ctx"
+            ]
+        },
+        {
+            "kind": "region",
+            "label": "作业目录 · Abaqus 执行环境",
+            "wraps": [
+                "abaqus",
+                "sidecar"
+            ]
+        }
+    ],
+    "connections": [
+        {
+            "id": "user-spec",
+            "from": "user",
+            "to": "spec",
+            "label": "声明配置",
+            "variant": "emphasis"
+        },
+        {
+            "id": "spec-proc",
+            "from": "spec",
+            "to": "proc",
+            "label": "成批注入",
+            "variant": "emphasis"
+        },
+        {
+            "id": "proc-hosts",
+            "from": "proc",
+            "to": "hosts",
+            "label": "assign_hosts",
+            "labelDy": 52
+        },
+        {
+            "id": "hosts-pool",
+            "from": "hosts",
+            "to": "pool",
+            "label": "capacity → 信号量",
+            "labelDy": 52
+        },
+        {
+            "id": "proc-registry",
+            "from": "proc",
+            "to": "registry",
+            "label": "build_workflow(spec)",
+            "variant": "emphasis",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "registry-strategies",
+            "from": "registry",
+            "to": "strategies",
+            "label": "按 kind / source 查表",
+            "variant": "emphasis",
+            "labelDy": 52
+        },
+        {
+            "id": "strategies-calc",
+            "from": "strategies",
+            "to": "calc",
+            "label": "装入策略链"
+        },
+        {
+            "id": "pool-calc",
+            "from": "pool",
+            "to": "calc",
+            "label": "_worker(calc, phase)",
+            "variant": "emphasis",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "strategies-runner",
+            "from": "strategies",
+            "to": "runner",
+            "label": "execute(ctx, runner)",
+            "variant": "emphasis",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "calc-ctx",
+            "from": "calc",
+            "to": "ctx",
+            "label": "冻结上下文",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "ctx-runner",
+            "from": "ctx",
+            "to": "runner",
+            "label": "注入 ctx",
+            "labelDy": 52
+        },
+        {
+            "id": "runner-backends",
+            "from": "runner",
+            "to": "backends",
+            "label": "run / submit_detached",
+            "variant": "emphasis",
+            "labelDy": 52
+        },
+        {
+            "id": "backends-abaqus",
+            "from": "backends",
+            "to": "abaqus",
+            "label": "分离式启动 + rc 哨兵",
+            "variant": "emphasis",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "runner-sidecar",
+            "from": "runner",
+            "to": "sidecar",
+            "label": "staged 单文件模块",
+            "fromSide": "bottom",
+            "toSide": "top",
+            "labelDy": 24
+        },
+        {
+            "id": "sidecar-abaqus",
+            "from": "sidecar",
+            "to": "abaqus",
+            "label": "执行钩子脚本",
+            "variant": "dashed",
+            "labelDy": 52
+        },
+        {
+            "id": "abaqus-diag",
+            "from": "abaqus",
+            "to": "diag",
+            "label": "写出 .sta / .msg / .dat",
+            "labelDy": 52
+        },
+        {
+            "id": "diag-status",
+            "from": "diag",
+            "to": "status",
+            "label": "真值表判定回填",
+            "fromSide": "top",
+            "toSide": "bottom"
+        }
+    ],
+    "cards": [
+        {
+            "dot": "cyan",
+            "title": "编排与并发",
+            "items": [
+                "plan() 只读判重，prepare() 才落盘",
+                "assign_hosts 按 weight 加权分派",
+                "capacity 受 license_tokens 硬顶",
+                "每机 Semaphore 独立限流，单作业失败不拖垮整批"
+            ]
+        },
+        {
+            "dot": "emerald",
+            "title": "注册表决定策略",
+            "items": [
+                "kind → PREPARATION_REGISTRY 工厂",
+                "source → EXTRACTION_REGISTRY 工厂",
+                "连续同源分组，保留钩子声明顺序",
+                "register_* 运行时扩展，不改框架代码"
+            ]
+        },
+        {
+            "dot": "amber",
+            "title": "策略驱动 Runner",
+            "items": [
+                "execute(ctx, runner, logger) 三参注入",
+                "解释器：cae noGUI / abaqus python / host",
+                "map_context 重写远端路径，命令零改动",
+                "分离启动 + .abqflow.rc 哨兵判完成"
+            ]
+        },
+        {
+            "dot": "violet",
+            "title": "钩子契约与诊断",
+            "items": [
+                "hookkit 管协议：argparse + 哨兵 JSON",
+                "超阈值自动落 CSV sidecar 并校验信封",
+                "datkit 解析 .dat，跑宿主 Python 免许可证",
+                ".sta 的 COMPLETED 才是成功凭证"
+            ]
+        }
+    ]
+}

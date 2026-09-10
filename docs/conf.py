@@ -77,9 +77,12 @@ gettext_compact = False
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'furo'
-html_static_path = ['_static']
+# 'diagrams' holds the standalone archify HTML embedded by
+# source/architecture/architecture.rst.  Listing it here copies its contents to
+# ``_static/`` at build time so the iframe has something to point at.
+html_static_path = ['_static', 'diagrams']
 html_title = f"ABQflow {release}"
-html_css_files = ['language-switcher.css']
+html_css_files = ['language-switcher.css', 'archify-embed.css']
 html_js_files = ['language-switcher.js']
 
 # Furo theme options
