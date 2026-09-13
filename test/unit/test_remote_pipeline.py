@@ -747,6 +747,7 @@ def test_gated_worker_enforces_per_host_concurrency():
 
 	class _Calc:
 		job_name = 'j'
+		host = None
 
 		def execute(self, phase='full'):
 			with lock:
@@ -778,6 +779,7 @@ def test_gated_worker_releases_the_slot_on_failure():
 
 	class _Boom:
 		job_name = 'boom'
+		host = None
 
 		def execute(self, phase='full'):
 			raise RuntimeError('remote machine is down')
@@ -789,3 +791,150 @@ def test_gated_worker_releases_the_slot_on_failure():
 		outcome = _gated_worker(_Boom(), 'full', gate)
 		assert outcome.status == 'UNKNOWN_ERROR'
 	assert gate.acquire(blocking=False), "slot was leaked"
+
+
+# ---------------------------------------------------------------------------
+# dynamic dispatch: machines pull work rather than having it pushed at them
+# ---------------------------------------------------------------------------
+
+def _dispatcher():
+	"""A BatchAbaqusProcessor with just enough state for _dispatch_pooled.
+
+	Built without __init__ on purpose: the scheduler under test needs only a
+	logger, and going through the real constructor would drag in output
+	directories, duplicate planning and a batch log file for no gain.
+	"""
+	from ABQflow.core.abaqus_automation import BatchAbaqusProcessor
+
+	proc = BatchAbaqusProcessor.__new__(BatchAbaqusProcessor)
+	proc.logger = logging.getLogger('test_dispatch')
+	proc._log_job_summary = lambda oc: None
+	return proc
+
+
+def _columns():
+	from rich.progress import TextColumn
+	return [TextColumn("{task.description}")]
+
+
+class _SleepCalc:
+	"""Stands in for AbaqusCalculation: a job that takes a known time."""
+
+	def __init__(self, job_name, seconds, watcher=None):
+		self.job_name = job_name
+		self.seconds = seconds
+		self.host = None
+		self.watcher = watcher
+		self.ran_on = None
+
+		class _Ctx:
+			output_dir = '.'
+		self.ctx = _Ctx()
+
+	def execute(self, phase='full'):
+		self.ran_on = self.host.name
+		if self.watcher is not None:
+			self.watcher(self.host.name, +1)
+		try:
+			time.sleep(self.seconds)
+		finally:
+			if self.watcher is not None:
+				self.watcher(self.host.name, -1)
+		return {'status': 'COMPLETED'}
+
+
+def test_dispatch_keeps_a_free_machine_busy_instead_of_waiting_for_its_turn():
+	"""The regression this scheduler exists for.
+
+	One job is 30x longer than the rest.  With work pulled as slots free, the
+	machine not stuck on it must chew through nearly all the others; with the
+	old static assignment each machine would get exactly half the list and the
+	fast one would idle once its own share ran out.
+	"""
+	hosts = [HostSpec.local(name='slow_one', max_concurrent=1),
+			HostSpec.local(name='other', max_concurrent=1)]
+	caps = {'slow_one': 1, 'other': 1}
+
+	calcs = [_SleepCalc('long', 0.60)] + [_SleepCalc('j%d' % i, 0.02)
+										for i in range(8)]
+
+	outcomes = _dispatcher()._dispatch_pooled(
+		calcs, 'full', hosts, caps, 2, _columns())
+
+	assert len(outcomes) == 9
+	assert all(oc.status == 'COMPLETED' for oc in outcomes)
+
+	long_host = next(c.ran_on for c in calcs if c.job_name == 'long')
+	short_on_long_host = sum(1 for c in calcs
+							if c.job_name != 'long' and c.ran_on == long_host)
+	# The long job monopolises its machine; 0.60s of it against 8 x 0.02s
+	# leaves the other machine time for all of them.
+	assert short_on_long_host <= 2, (
+		"the machine stuck on the long job still took %d short jobs — work is "
+		"being pushed at machines, not pulled by them" % short_on_long_host)
+
+
+def test_dispatch_reports_the_machine_each_job_actually_ran_on():
+	"""JobOutcome.host must be the fact, not the plan — the plan is a forecast."""
+	hosts = [HostSpec.local(name='a', max_concurrent=1),
+			HostSpec.local(name='b', max_concurrent=1)]
+	calcs = [_SleepCalc('j%d' % i, 0.01) for i in range(6)]
+
+	outcomes = _dispatcher()._dispatch_pooled(
+		calcs, 'full', hosts, {'a': 1, 'b': 1}, 2, _columns())
+
+	by_name = {oc.job_name: oc.host for oc in outcomes}
+	assert set(by_name) == {c.job_name for c in calcs}
+	for c in calcs:
+		assert by_name[c.job_name] == c.ran_on
+	assert set(by_name.values()) <= {'a', 'b'}
+
+
+def test_dispatch_never_exceeds_a_machines_own_concurrency():
+	"""max_concurrent still caps each machine independently."""
+	live = {'a': 0, 'b': 0}
+	peak = {'a': 0, 'b': 0}
+	lock = threading.Lock()
+
+	def watch(name, delta):
+		with lock:
+			live[name] += delta
+			peak[name] = max(peak[name], live[name])
+
+	hosts = [HostSpec.local(name='a', max_concurrent=2),
+			HostSpec.local(name='b', max_concurrent=1)]
+	calcs = [_SleepCalc('j%d' % i, 0.03, watcher=watch) for i in range(12)]
+
+	outcomes = _dispatcher()._dispatch_pooled(
+		calcs, 'full', hosts, {'a': 2, 'b': 1}, 3, _columns())
+
+	assert len(outcomes) == 12
+	assert peak['a'] <= 2, "machine a ran %d jobs at once, cap was 2" % peak['a']
+	assert peak['b'] <= 1, "machine b ran %d jobs at once, cap was 1" % peak['b']
+
+
+def test_dispatch_spreads_a_global_cap_over_the_machines():
+	"""A num_parallel_jobs below the pool capacity drops slots round-robin.
+
+	Taking them all off the last machine would quietly idle it for the whole
+	batch, which is the failure this scheduler was written to remove.
+	"""
+	live = {'a': 0, 'b': 0}
+	peak = {'a': 0, 'b': 0}
+	lock = threading.Lock()
+
+	def watch(name, delta):
+		with lock:
+			live[name] += delta
+			peak[name] = max(peak[name], live[name])
+
+	hosts = [HostSpec.local(name='a', max_concurrent=2),
+			HostSpec.local(name='b', max_concurrent=2)]
+	calcs = [_SleepCalc('j%d' % i, 0.05, watcher=watch) for i in range(10)]
+
+	outcomes = _dispatcher()._dispatch_pooled(
+		calcs, 'full', hosts, {'a': 2, 'b': 2}, 3, _columns())
+
+	assert len(outcomes) == 10
+	assert peak['a'] + peak['b'] <= 3, "the global cap of 3 was exceeded"
+	assert peak['b'] >= 1, "the trimmed machine never got a slot at all"

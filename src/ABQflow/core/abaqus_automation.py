@@ -20,6 +20,7 @@ import shutil
 import threading
 import time
 import traceback
+from collections import deque
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 
@@ -239,6 +240,12 @@ class JobOutcome:
 	duration_s : float or None
 		Wall-clock seconds spent in :meth:`AbaqusCalculation.execute` for
 		this job.  ``None`` when the worker died without reporting.
+	host : str or None
+		Machine the job actually ran on.  Recorded separately from the
+		batch's assignment plan because dispatch is dynamic: which machine
+		picks a job up is decided when a slot frees, not up front, so the
+		plan is a forecast and this is the fact.  ``None`` for a host-less
+		(purely local) batch.
 	"""
 	job_name: str
 	status: str
@@ -248,6 +255,7 @@ class JobOutcome:
 	output_dir: str | None = None
 	phases: list[dict] | None = None
 	duration_s: float | None = None
+	host: str | None = None
 
 
 # ======================== Resource planning (fix Q2-2) ========================
@@ -355,7 +363,8 @@ def _worker(calc: AbaqusCalculation, phase: str = 'full') -> JobOutcome:
 		error = results.pop('error', None)
 		return JobOutcome(calc.job_name, status, results, error=error,
 						diagnostics=diag, output_dir=calc.ctx.output_dir,
-						phases=phases, duration_s=time.time() - started_at)
+						phases=phases, duration_s=time.time() - started_at,
+						host=calc.host.name if calc.host else None)
 	except Exception as e:
 		# Full traceback, not just "TypeError: x": this branch catches bugs
 		# escaping a worker, and the frame they escaped from is the whole
@@ -363,7 +372,8 @@ def _worker(calc: AbaqusCalculation, phase: str = 'full') -> JobOutcome:
 		return JobOutcome(calc.job_name, JobStatus.UNKNOWN_ERROR.value,
 						error=f"{type(e).__name__}: {e}\n{traceback.format_exc()}",
 						output_dir=calc.ctx.output_dir,
-						duration_s=time.time() - started_at)
+						duration_s=time.time() - started_at,
+						host=calc.host.name if calc.host else None)
 
 
 def _gated_worker(calc: AbaqusCalculation, phase: str = 'full',
@@ -375,6 +385,11 @@ def _gated_worker(calc: AbaqusCalculation, phase: str = 'full',
 	job at a time no matter how many were assigned to it, while a host with
 	``max_concurrent=2`` runs two.  It is held for the whole job and released
 	even on failure, so a broken machine cannot leak slots and stall the batch.
+
+	No longer on the batch dispatch path: :meth:`BatchAbaqusProcessor._dispatch_pooled`
+	caps each machine by running one worker per slot instead, which is what lets
+	a machine that is free take the next job rather than wait for one addressed
+	to it.  Kept for callers driving :func:`_worker` under their own semaphore.
 	"""
 	if gate is None:
 		return _worker(calc, phase)
@@ -967,17 +982,21 @@ class BatchAbaqusProcessor:
 		# purely local one.  The pool scheduler is what enforces per-host
 		# concurrency, so it must run for a mixed local+remote batch too.
 		pool_hosts = self._hosts_in(calcs)
+		if self.hosts:
+			# A machine the static plan happened to give no jobs is still a
+			# machine this batch can dispatch to, now that dispatch is dynamic.
+			seen = {h.name for h in pool_hosts}
+			pool_hosts = pool_hosts + [h for h in self.hosts if h.name not in seen]
 		pooled = bool(pool_hosts)
 
 		if pooled:
-			# Per-host semaphores are what let one machine take two jobs while
+			# Per-machine caps are what let one machine take two jobs while
 			# another takes one: HostSpec.max_concurrent (or the capacity
 			# derived from its cores and tokens) caps each machine
 			# independently, and num_parallel_jobs is only the global ceiling.
 			cores = self._pool_cores(pool_hosts)
 			caps = {h.name: h.capacity(self.cpus_per_job, cores.get(h.name))
 					for h in pool_hosts}
-			gates = {name: threading.Semaphore(c) for name, c in caps.items()}
 			capacity = sum(caps.values())
 			p = max(1, min(num_parallel_jobs or capacity, capacity, len(calcs)))
 			n_remote = sum(1 for h in pool_hosts if h.is_remote)
@@ -996,10 +1015,7 @@ class BatchAbaqusProcessor:
 				if note:
 					self.logger.warning(note)
 		else:
-			gates = {}
 			p = plan_parallelism(num_parallel_jobs, self.cpus_per_job, license_tokens)
-
-		outcomes: list[JobOutcome] = []
 
 		progress_columns = [
 			SpinnerColumn(),
@@ -1015,26 +1031,22 @@ class BatchAbaqusProcessor:
 		# GIL for their whole duration, so the solver processes run in
 		# parallel regardless.  Processes would buy nothing here, would make
 		# SSH connection reuse impossible, and cannot carry a paramiko client
-		# across the boundary at all — while the semaphores that enforce
-		# per-host limits only work inside one process.  A host-less batch
+		# across the boundary at all — while the per-machine bookkeeping that
+		# caps each host only works inside one process.  A host-less batch
 		# keeps ProcessPoolExecutor, unchanged.
-		executor_cls = ThreadPoolExecutor if pooled else ProcessPoolExecutor
-		submit_fn = _gated_worker if pooled else _worker
+		if pooled:
+			return self._dispatch_pooled(calcs, phase, pool_hosts, caps, p,
+										progress_columns)
+
+		outcomes: list[JobOutcome] = []
 
 		with Progress(*progress_columns) as progress, \
-			executor_cls(max_workers=p) as pool:
+			ProcessPoolExecutor(max_workers=p) as pool:
 			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
 			# Keyed by the calculation, not just its name: when a worker dies
 			# without returning an outcome we still owe the caller an
 			# `output_dir` (sidecar loading needs it) and a real error.
-			if pooled:
-				futures = {
-					pool.submit(submit_fn, c, phase,
-								gates.get(c.host.name) if c.host else None): c
-					for c in calcs
-				}
-			else:
-				futures = {pool.submit(submit_fn, c, phase): c for c in calcs}
+			futures = {pool.submit(_worker, c, phase): c for c in calcs}
 
 			for fut in as_completed(futures):
 				calc = futures[fut]
@@ -1053,6 +1065,133 @@ class BatchAbaqusProcessor:
 				icon = "✅" if oc.status == "COMPLETED" else "❌"
 				progress.update(task, advance=1,
 								description=f"{icon} {oc.job_name} ({oc.status})")
+
+		return outcomes
+
+	# ---- dynamic dispatch: machines pull work, work is not pushed at them ----
+	def _dispatch_pooled(
+		self,
+		calcs: list[AbaqusCalculation],
+		phase: str,
+		pool_hosts: list[HostSpec],
+		caps: dict[str, int],
+		ceiling: int,
+		progress_columns: list,
+	) -> list[JobOutcome]:
+		"""Run *calcs* over the machine pool, handing each job out as a slot frees.
+
+		One worker thread per **machine slot**, each pulling the next job off a
+		shared queue and binding it to its own machine at that moment.  The
+		static plan from :func:`~ABQflow.core.hosts.assign_hosts` stays a
+		forecast used for reporting; it decides nothing here.
+
+		This is what keeps a machine that finished early busy.  Pushing jobs at
+		machines instead — one future per job, its machine fixed before the
+		batch started, a per-host semaphore taken inside the worker — has two
+		failure modes that cost real wall-clock time on a long batch of
+		unequal jobs:
+
+		* a machine that finished early sat idle until a job *assigned to it*
+		  happened to reach the head of the pool's FIFO;
+		* a worker thread that picked up a job for a saturated machine blocked
+		  on that machine's semaphore while still holding a thread slot, so a
+		  couple of them could stall dispatch to machines that were free.
+
+		Binding the machine late is safe because :class:`AbaqusCalculation`
+		keeps nothing host-specific: ``ctx`` is local-first, and both the
+		remote work_root and that machine's ``abaqus_exe`` are derived inside
+		``execute()`` by ``backend.map_context(ctx)``.
+
+		Parameters
+		----------
+		calcs : list[AbaqusCalculation]
+			Jobs to run, in the order they should be dealt out.
+		phase : str
+			Forwarded to :func:`_worker` — ``'full'``, ``'prepare'``,
+			``'simulate'``, or ``'extract'``.
+		pool_hosts : list[HostSpec]
+			Machines available to this batch.
+		caps : dict[str, int]
+			How many jobs each machine may run at once.
+		ceiling : int
+			Global cap on simultaneous jobs (``num_parallel_jobs``).  Below the
+			pool's total capacity, the surplus slots are dropped round-robin so
+			the shortfall is spread over the machines rather than falling
+			entirely on the last one.
+		progress_columns : list
+			Columns for the rich progress bar.
+
+		Returns
+		-------
+		list[JobOutcome]
+			One outcome per job, in completion order.  Each carries the machine
+			it actually ran on in :attr:`JobOutcome.host`.
+		"""
+		slots: list[HostSpec] = []
+		remaining = {h.name: caps[h.name] for h in pool_hosts}
+		while len(slots) < ceiling and any(remaining.values()):
+			for h in pool_hosts:
+				if len(slots) >= ceiling:
+					break
+				if remaining[h.name] > 0:
+					slots.append(h)
+					remaining[h.name] -= 1
+		if not slots:                       # ceiling <= 0 — run one at a time
+			slots = [pool_hosts[0]]
+
+		if any(remaining.values()):
+			self.logger.warning(
+				"Global cap %d is below the pool capacity %d; these slots stay "
+				"unused: %s. Raise num_parallel_jobs to use the whole pool.",
+				ceiling, sum(caps.values()),
+				{k: v for k, v in remaining.items() if v})
+
+		pending = deque(calcs)
+		lock = threading.Lock()
+		outcomes: list[JobOutcome] = []
+
+		with Progress(*progress_columns) as progress, \
+			ThreadPoolExecutor(max_workers=len(slots)) as pool:
+			task = progress.add_task(f"[bold blue]Running ({phase})...", total=len(calcs))
+
+			def serve(host: HostSpec):
+				"""One machine slot: take the next job, run it, repeat."""
+				while True:
+					with lock:
+						if not pending:
+							return
+						calc = pending.popleft()
+					# Late binding — the whole point of this scheme.
+					calc.host = host
+					oc = _worker(calc, phase)
+					with lock:
+						outcomes.append(oc)
+						self._log_job_summary(oc)
+						icon = "✅" if oc.status == "COMPLETED" else "❌"
+						progress.update(
+							task, advance=1,
+							description=f"{icon} {oc.job_name} ({oc.status}) @{host.name}")
+
+			futures = [pool.submit(serve, h) for h in slots]
+			for fut in futures:
+				# _worker swallows per-job failures, so anything surfacing here
+				# killed a whole slot.  The jobs it never reached are still in
+				# `pending` and the other slots will take them; say so rather
+				# than losing a machine silently for the rest of the batch.
+				exc = fut.exception()
+				if exc is not None:
+					self.logger.error("A dispatch slot died: %r", exc)
+
+		if len(outcomes) < len(calcs):
+			# Every slot died before the queue drained.  The caller is owed one
+			# outcome per job, with an output_dir, or sidecar loading breaks.
+			done = {oc.job_name for oc in outcomes}
+			for c in calcs:
+				if c.job_name not in done:
+					outcomes.append(JobOutcome(
+						c.job_name, JobStatus.UNKNOWN_ERROR.value,
+						error="every dispatch slot died before this job ran",
+						output_dir=c.ctx.output_dir))
 
 		return outcomes
 

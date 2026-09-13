@@ -157,9 +157,11 @@ class _FakeCtx:
 class _FakeCalc:
 	"""Stands in for AbaqusCalculation: execute() replays a canned dict."""
 
-	def __init__(self, job_name, results, output_dir='/out', raises=None):
+	def __init__(self, job_name, results, output_dir='/out', raises=None,
+				host=None):
 		self.job_name = job_name
 		self.ctx = _FakeCtx(output_dir)
+		self.host = host
 		self._results = results
 		self._raises = raises
 
